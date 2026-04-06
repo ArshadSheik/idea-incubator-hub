@@ -12,7 +12,12 @@
             By continuing, you agree to our User Agreement and Privacy Policy.
         </p>
 
-        <button class="btn btn-outline-secondary w-100 mb-2 rounded-pill">
+        <button class="btn btn-outline-secondary w-100 mb-2 rounded-pill d-flex align-items-center justify-content-center gap-2">
+            📱 Continue With Phone Number
+        </button>
+
+        <button class="btn btn-outline-secondary w-100 mb-2 rounded-pill d-flex align-items-center justify-content-center gap-2">
+            <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg" width="18">
             Continue with Google
         </button>
 
@@ -24,10 +29,32 @@
 
         <input type="email" class="form-control mb-3" placeholder="Email">
 
+        <!-- <div class="mt-1"> -->
+            <div class="role-select mt-3">
+                <label class="form-label small text-muted">Select Your Role</label>
+
+                <!-- 伪输入框 -->
+                <div id="roleBox" class="role-box">
+                    <span id="roleText">Select your role</span>
+                    <span class="arrow">▾</span>
+                </div>
+
+                <!-- 下拉面板 -->
+                <div id="roleMenu" class="role-menu d-none">
+                    <div class="role-item">Startup Founder</div>
+                    <div class="role-item">Investor</div>
+                    <div class="role-item">Entrepreneur</div>
+                    <div class="role-item">Employee</div>
+                </div>
+            </div>
+        <!-- </div> -->
+
         <button class="btn btn-secondary w-100 rounded-pill">
             Continue
         </button>
 
         </div>
     </div>
+    
+    
 </div>
