@@ -72,7 +72,7 @@
     showAlert("success", "Registration successful! Redirecting to home page...");
     form.reset();
     window.setTimeout(function redirectToHome() {
-      window.location.href = "index.html";
+      window.location.href = "home.html";
     }, 1200);
   });
 })();
