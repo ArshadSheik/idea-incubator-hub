@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard — Idea Incubator Hub</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="assets/css/main.css">
+  <link rel="stylesheet" href="assets/css/landing.css">
+  <link rel="stylesheet" href="assets/css/dashboard.css">
+</head>
+<body data-page="dashboard">
+
+  <!-- ═══════════ NAVBAR (logged-in) ═══════════ -->
+  <nav class="navbar navbar-iih navbar-expand-lg">
+    <div class="container-iih w-100 d-flex align-items-center justify-content-between">
+      <a class="navbar-brand" href="index.html">
+        <span class="brand-mark"><i class="bi bi-lightbulb-fill"></i></span>
+        <span>Idea Incubator</span>
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+        <i class="bi bi-list fs-3"></i>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNav">
+        <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+          <li class="nav-item"><a class="nav-link" href="explore.html" data-page="explore">Explore</a></li>
+          <li class="nav-item"><a class="nav-link" href="dashboard.html" data-page="dashboard">Dashboard</a></li>
+          <li class="nav-item"><a class="nav-link" href="about.html" data-page="about">About</a></li>
+        </ul>
+        <div class="d-flex align-items-center gap-3">
+          <div class="navbar-search">
+            <i class="bi bi-search search-icon"></i>
+            <input type="text" placeholder="Search ideas…">
+          </div>
+          <a href="submit-idea.html" class="btn btn-brand">
+            <i class="bi bi-plus-lg"></i> New idea
+          </a>
+          <div class="position-relative">
+            <div class="navbar-avatar avatar-1">JL</div>
+            <div class="avatar-dropdown">
+              <div class="menu-head">
+                <div class="name">Jamie Liu</div>
+                <div class="email">jamie@example.com</div>
+              </div>
+              <a href="profile.html"><i class="bi bi-person"></i> My profile</a>
+              <a href="dashboard.html"><i class="bi bi-speedometer2"></i> Dashboard</a>
+              <a href="submit-idea.html"><i class="bi bi-plus-circle"></i> Submit idea</a>
+              <hr>
+              <a href="#"><i class="bi bi-gear"></i> Settings</a>
+              <a href="login.html"><i class="bi bi-box-arrow-right"></i> Log out</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══════════ DASHBOARD HERO ═══════════ -->
+  <section class="dashboard-hero">
+    <div class="container-iih">
+      <div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
+        <div>
+          <div class="greeting fade-up">Good afternoon, <span class="text-brand">Jamie</span> 👋</div>
+          <h1 class="dashboard-title fade-up stagger-1">Let's make something brilliant today.</h1>
+        </div>
+        <div class="d-flex gap-2 fade-up stagger-2">
+          <a href="submit-idea.html" class="btn btn-brand">
+            <i class="bi bi-plus-lg"></i> New idea
+          </a>
+          <a href="explore.html" class="btn btn-outline-iih">
+            <i class="bi bi-compass"></i> Explore
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ STATS ═══════════ -->
+  <section class="container-iih mt-4">
+    <div class="row g-3">
+      <div class="col-6 col-md-3" data-reveal>
+        <div class="stat-card">
+          <div class="stat-card-icon bg-brand-light text-brand"><i class="bi bi-lightbulb-fill"></i></div>
+          <div class="stat-card-value">7</div>
+          <div class="stat-card-label">Ideas posted</div>
+          <div class="stat-card-trend trend-up"><i class="bi bi-arrow-up"></i> 2 this week</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3" data-reveal>
+        <div class="stat-card">
+          <div class="stat-card-icon bg-violet-light text-violet"><i class="bi bi-caret-up-fill"></i></div>
+          <div class="stat-card-value">1,284</div>
+          <div class="stat-card-label">Upvotes received</div>
+          <div class="stat-card-trend trend-up"><i class="bi bi-arrow-up"></i> 23% vs last week</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3" data-reveal>
+        <div class="stat-card">
+          <div class="stat-card-icon bg-mint-light" style="color:#019373;"><i class="bi bi-chat-heart-fill"></i></div>
+          <div class="stat-card-value">342</div>
+          <div class="stat-card-label">Comments on your ideas</div>
+          <div class="stat-card-trend trend-up"><i class="bi bi-arrow-up"></i> 41 new</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3" data-reveal>
+        <div class="stat-card">
+          <div class="stat-card-icon bg-yellow-light" style="color:#A47200;"><i class="bi bi-people-fill"></i></div>
+          <div class="stat-card-value">18</div>
+          <div class="stat-card-label">Active collaborators</div>
+          <div class="stat-card-trend trend-neutral">across 4 ideas</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ MAIN GRID ═══════════ -->
+  <section class="container-iih mt-5 mb-5">
+    <div class="row g-4">
+
+      <!-- LEFT COLUMN: My Ideas + Activity -->
+      <div class="col-lg-8">
+
+        <!-- My Ideas -->
+        <div class="dash-section">
+          <div class="dash-section-head">
+            <div>
+              <h2 class="mb-1">Your ideas</h2>
+              <p class="text-muted-iih mb-0 small">What you've shipped into the community so far.</p>
+            </div>
+            <div class="dash-tabs" id="ideaTabs">
+              <button class="dash-tab active" data-filter="all">All <span>7</span></button>
+              <button class="dash-tab" data-filter="ideation">Ideation <span>2</span></button>
+              <button class="dash-tab" data-filter="validation">Validation <span>2</span></button>
+              <button class="dash-tab" data-filter="building">Building <span>2</span></button>
+              <button class="dash-tab" data-filter="launched">Launched <span>1</span></button>
+            </div>
+          </div>
+
+          <div class="idea-list mt-3">
+            <!-- Idea row 1 -->
+            <a href="idea-detail.html" class="my-idea-card" data-stage="validation">
+              <div class="d-flex align-items-start gap-3">
+                <div class="my-idea-emoji">💸</div>
+                <div class="flex-grow-1 min-w-0">
+                  <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                    <h3 class="my-idea-title">AI-powered budget coach for Gen Z</h3>
+                    <span class="stage-pill stage-validation"><span class="stage-dot"></span>Validation</span>
+                  </div>
+                  <p class="my-idea-desc">A no-judgment money buddy that roasts your spending in a fun way and helps you save…</p>
+                  <div class="my-idea-meta">
+                    <span><i class="bi bi-caret-up-fill text-brand"></i> <strong>247</strong></span>
+                    <span><i class="bi bi-chat"></i> 34</span>
+                    <span><i class="bi bi-people"></i> 6 collaborators</span>
+                    <span><i class="bi bi-eye"></i> 1.2k views</span>
+                    <span class="ms-auto text-muted-iih">Updated 2 days ago</span>
+                  </div>
+                </div>
+              </div>
+            </a>
+
+            <!-- Idea row 2 -->
+            <a href="idea-detail.html" class="my-idea-card" data-stage="building">
+              <div class="d-flex align-items-start gap-3">
+                <div class="my-idea-emoji">🎸</div>
+                <div class="flex-grow-1 min-w-0">
+                  <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                    <h3 class="my-idea-title">Duolingo for musical instruments</h3>
+                    <span class="stage-pill stage-building"><span class="stage-dot"></span>Building</span>
+                  </div>
+                  <p class="my-idea-desc">Learn guitar, piano, or drums in 5-min daily lessons with streaks, leaderboards, and real song unlocks…</p>
+                  <div class="my-idea-meta">
+                    <span><i class="bi bi-caret-up-fill text-brand"></i> <strong>312</strong></span>
+                    <span><i class="bi bi-chat"></i> 58</span>
+                    <span><i class="bi bi-people"></i> 9 collaborators</span>
+                    <span><i class="bi bi-eye"></i> 2.3k views</span>
+                    <span class="ms-auto text-muted-iih">Updated 5 days ago</span>
+                  </div>
+                </div>
+              </div>
+            </a>
+
+            <!-- Idea row 3 -->
+            <a href="idea-detail.html" class="my-idea-card" data-stage="launched">
+              <div class="d-flex align-items-start gap-3">
+                <div class="my-idea-emoji">🚀</div>
+                <div class="flex-grow-1 min-w-0">
+                  <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                    <h3 class="my-idea-title">CodeReview buddy — pair with an expert in 30 min</h3>
+                    <span class="stage-pill stage-launched"><span class="stage-dot"></span>Launched</span>
+                  </div>
+                  <p class="my-idea-desc">Get 30 minutes of structured code review from verified senior engineers. Pay per session…</p>
+                  <div class="my-idea-meta">
+                    <span><i class="bi bi-caret-up-fill text-brand"></i> <strong>418</strong></span>
+                    <span><i class="bi bi-chat"></i> 71</span>
+                    <span><i class="bi bi-people"></i> 4 collaborators</span>
+                    <span><i class="bi bi-eye"></i> 3.1k views</span>
+                    <span class="ms-auto text-muted-iih">Launched 3 weeks ago</span>
+                  </div>
+                </div>
+              </div>
+            </a>
+
+            <!-- Idea row 4 -->
+            <a href="idea-detail.html" class="my-idea-card" data-stage="ideation">
+              <div class="d-flex align-items-start gap-3">
+                <div class="my-idea-emoji">🌱</div>
+                <div class="flex-grow-1 min-w-0">
+                  <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                    <h3 class="my-idea-title">Plant swap marketplace for apartment dwellers</h3>
+                    <span class="stage-pill stage-ideation"><span class="stage-dot"></span>Ideation</span>
+                  </div>
+                  <p class="my-idea-desc">Trade, rescue, or adopt houseplants with people in your building or suburb. Verified ID + reviews…</p>
+                  <div class="my-idea-meta">
+                    <span><i class="bi bi-caret-up-fill text-brand"></i> <strong>89</strong></span>
+                    <span><i class="bi bi-chat"></i> 12</span>
+                    <span><i class="bi bi-people"></i> 1 collaborator</span>
+                    <span><i class="bi bi-eye"></i> 230 views</span>
+                    <span class="ms-auto text-muted-iih">Updated 1 week ago</span>
+                  </div>
+                </div>
+              </div>
+            </a>
+
+            <!-- Idea row 5 -->
+            <a href="idea-detail.html" class="my-idea-card" data-stage="validation">
+              <div class="d-flex align-items-start gap-3">
+                <div class="my-idea-emoji">🎨</div>
+                <div class="flex-grow-1 min-w-0">
+                  <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                    <h3 class="my-idea-title">Hyper-local art commissions marketplace</h3>
+                    <span class="stage-pill stage-validation"><span class="stage-dot"></span>Validation</span>
+                  </div>
+                  <p class="my-idea-desc">Commission artists from your city. Support local, skip Etsy international shipping nightmares…</p>
+                  <div class="my-idea-meta">
+                    <span><i class="bi bi-caret-up-fill text-brand"></i> <strong>156</strong></span>
+                    <span><i class="bi bi-chat"></i> 28</span>
+                    <span><i class="bi bi-people"></i> 2 collaborators</span>
+                    <span><i class="bi bi-eye"></i> 845 views</span>
+                    <span class="ms-auto text-muted-iih">Updated 4 days ago</span>
+                  </div>
+                </div>
+              </div>
+            </a>
+
+            <!-- Idea row 6 -->
+            <a href="idea-detail.html" class="my-idea-card" data-stage="ideation">
+              <div class="d-flex align-items-start gap-3">
+                <div class="my-idea-emoji">🏃</div>
+                <div class="flex-grow-1 min-w-0">
+                  <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                    <h3 class="my-idea-title">Running buddy matcher by pace + route</h3>
+                    <span class="stage-pill stage-ideation"><span class="stage-dot"></span>Ideation</span>
+                  </div>
+                  <p class="my-idea-desc">Find a running partner in your city matched by pace, distance, and typical route preferences…</p>
+                  <div class="my-idea-meta">
+                    <span><i class="bi bi-caret-up-fill text-brand"></i> <strong>64</strong></span>
+                    <span><i class="bi bi-chat"></i> 9</span>
+                    <span><i class="bi bi-people"></i> 0 collaborators</span>
+                    <span><i class="bi bi-eye"></i> 178 views</span>
+                    <span class="ms-auto text-muted-iih">Updated 2 weeks ago</span>
+                  </div>
+                </div>
+              </div>
+            </a>
+
+            <!-- Idea row 7 -->
+            <a href="idea-detail.html" class="my-idea-card" data-stage="building">
+              <div class="d-flex align-items-start gap-3">
+                <div class="my-idea-emoji">📚</div>
+                <div class="flex-grow-1 min-w-0">
+                  <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+                    <h3 class="my-idea-title">StudyRooms: virtual library for focus sessions</h3>
+                    <span class="stage-pill stage-building"><span class="stage-dot"></span>Building</span>
+                  </div>
+                  <p class="my-idea-desc">Body-doubling rooms where students join a silent video session to hold each other accountable…</p>
+                  <div class="my-idea-meta">
+                    <span><i class="bi bi-caret-up-fill text-brand"></i> <strong>198</strong></span>
+                    <span><i class="bi bi-chat"></i> 42</span>
+                    <span><i class="bi bi-people"></i> 3 collaborators</span>
+                    <span><i class="bi bi-eye"></i> 1.6k views</span>
+                    <span class="ms-auto text-muted-iih">Updated 3 days ago</span>
+                  </div>
+                </div>
+              </div>
+            </a>
+          </div>
+        </div>
+
+        <!-- Activity feed -->
+        <div class="dash-section mt-4">
+          <div class="dash-section-head">
+            <div>
+              <h2 class="mb-1">Recent activity</h2>
+              <p class="text-muted-iih mb-0 small">What's been happening on your ideas.</p>
+            </div>
+          </div>
+
+          <ul class="activity-feed mt-3">
+            <li class="activity-item">
+              <span class="activity-icon act-vote"><i class="bi bi-caret-up-fill"></i></span>
+              <div class="activity-body">
+                <p><strong>Maya Kapoor</strong> upvoted <a href="idea-detail.html">AI-powered budget coach for Gen Z</a></p>
+                <span class="activity-time">5 minutes ago</span>
+              </div>
+            </li>
+            <li class="activity-item">
+              <span class="activity-icon act-comment"><i class="bi bi-chat-dots-fill"></i></span>
+              <div class="activity-body">
+                <p><strong>Sam Reyes</strong> commented: <em>"The validation plan is solid — have you considered freemium vs paid tiers?"</em></p>
+                <span class="activity-time">32 minutes ago</span>
+              </div>
+            </li>
+            <li class="activity-item">
+              <span class="activity-icon act-join"><i class="bi bi-person-plus-fill"></i></span>
+              <div class="activity-body">
+                <p><strong>Alex Garcia</strong> joined <a href="idea-detail.html">Duolingo for musical instruments</a> as a Contributor</p>
+                <span class="activity-time">2 hours ago</span>
+              </div>
+            </li>
+            <li class="activity-item">
+              <span class="activity-icon act-milestone"><i class="bi bi-flag-fill"></i></span>
+              <div class="activity-body">
+                <p>Your idea <a href="idea-detail.html">CodeReview buddy</a> crossed <strong>400 upvotes</strong> 🎉</p>
+                <span class="activity-time">Yesterday</span>
+              </div>
+            </li>
+            <li class="activity-item">
+              <span class="activity-icon act-vote"><i class="bi bi-caret-up-fill"></i></span>
+              <div class="activity-body">
+                <p><strong>Taylor W.</strong> and 12 others upvoted <a href="idea-detail.html">StudyRooms</a></p>
+                <span class="activity-time">Yesterday</span>
+              </div>
+            </li>
+            <li class="activity-item">
+              <span class="activity-icon act-comment"><i class="bi bi-chat-dots-fill"></i></span>
+              <div class="activity-body">
+                <p><strong>Priya Ahmed</strong> left a detailed review on <a href="idea-detail.html">Hyper-local art commissions</a></p>
+                <span class="activity-time">2 days ago</span>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- RIGHT COLUMN: Sidebar -->
+      <div class="col-lg-4">
+
+        <!-- Quick actions -->
+        <div class="sidebar-card">
+          <h4 class="sidebar-title">Quick actions</h4>
+          <a href="submit-idea.html" class="quick-action">
+            <span class="qa-icon bg-brand-light text-brand"><i class="bi bi-plus-lg"></i></span>
+            <div>
+              <strong>Post a new idea</strong>
+              <span>Got a fresh one? Ship it now.</span>
+            </div>
+          </a>
+          <a href="explore.html" class="quick-action">
+            <span class="qa-icon bg-violet-light text-violet"><i class="bi bi-compass"></i></span>
+            <div>
+              <strong>Browse community</strong>
+              <span>See what others are building.</span>
+            </div>
+          </a>
+          <a href="profile.html" class="quick-action">
+            <span class="qa-icon bg-mint-light" style="color:#019373;"><i class="bi bi-person-badge"></i></span>
+            <div>
+              <strong>Edit your profile</strong>
+              <span>Level up your discoverability.</span>
+            </div>
+          </a>
+        </div>
+
+        <!-- Weekly digest -->
+        <div class="sidebar-card digest-card mt-3">
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <span class="digest-icon">🔥</span>
+            <h4 class="sidebar-title mb-0">This week's digest</h4>
+          </div>
+          <p class="small mb-3" style="color: var(--ink-300);">Top 3 trending ideas the community is obsessed with.</p>
+
+          <a href="idea-detail.html" class="digest-item">
+            <span class="digest-rank">1</span>
+            <div>
+              <strong>Duolingo for musical instruments</strong>
+              <span>by Maya K. · 312 votes</span>
+            </div>
+          </a>
+          <a href="idea-detail.html" class="digest-item">
+            <span class="digest-rank">2</span>
+            <div>
+              <strong>AI budget coach for Gen Z</strong>
+              <span>by Jamie L. · 247 votes</span>
+            </div>
+          </a>
+          <a href="idea-detail.html" class="digest-item">
+            <span class="digest-rank">3</span>
+            <div>
+              <strong>Carbon-negative coffee subscription</strong>
+              <span>by Sam R. · 189 votes</span>
+            </div>
+          </a>
+        </div>
+
+        <!-- Suggestions -->
+        <div class="sidebar-card mt-3">
+          <h4 class="sidebar-title">People to follow</h4>
+          <div class="follow-item">
+            <span class="avatar avatar-2">MK</span>
+            <div class="flex-grow-1 min-w-0">
+              <div class="fw-semibold small text-truncate">Maya Kapoor</div>
+              <div class="small text-muted-iih">EdTech · 9 ideas</div>
+            </div>
+            <button class="btn btn-outline-iih btn-sm-iih follow-btn">Follow</button>
+          </div>
+          <div class="follow-item">
+            <span class="avatar avatar-3">SR</span>
+            <div class="flex-grow-1 min-w-0">
+              <div class="fw-semibold small text-truncate">Sam Reyes</div>
+              <div class="small text-muted-iih">Designer · 4 ideas</div>
+            </div>
+            <button class="btn btn-outline-iih btn-sm-iih follow-btn">Follow</button>
+          </div>
+          <div class="follow-item">
+            <span class="avatar avatar-4">TW</span>
+            <div class="flex-grow-1 min-w-0">
+              <div class="fw-semibold small text-truncate">Taylor Wong</div>
+              <div class="small text-muted-iih">FinTech · 6 ideas</div>
+            </div>
+            <button class="btn btn-outline-iih btn-sm-iih follow-btn">Follow</button>
+          </div>
+          <div class="follow-item">
+            <span class="avatar avatar-5">AG</span>
+            <div class="flex-grow-1 min-w-0">
+              <div class="fw-semibold small text-truncate">Alex Garcia</div>
+              <div class="small text-muted-iih">DevTools · 11 ideas</div>
+            </div>
+            <button class="btn btn-outline-iih btn-sm-iih follow-btn">Follow</button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ FOOTER ═══════════ -->
+  <footer class="footer-iih">
+    <div class="container-iih">
+      <div class="row g-4">
+        <div class="col-lg-4">
+          <a href="index.html" class="footer-brand">
+            <span class="brand-mark"><i class="bi bi-lightbulb-fill"></i></span>
+            Idea Incubator
+          </a>
+          <p style="color: var(--ink-400); max-width: 300px;">
+            The home for early-stage ideas, the builders behind them, and the community that helps ship them.
+          </p>
+          <div class="social-links mt-3">
+            <a href="#"><i class="bi bi-twitter-x"></i></a>
+            <a href="#"><i class="bi bi-github"></i></a>
+            <a href="#"><i class="bi bi-linkedin"></i></a>
+            <a href="#"><i class="bi bi-discord"></i></a>
+          </div>
+        </div>
+        <div class="col-6 col-md-3 col-lg-2"><h5>Product</h5><a href="explore.html">Explore</a><a href="dashboard.html">Dashboard</a><a href="submit-idea.html">Submit</a></div>
+        <div class="col-6 col-md-3 col-lg-2"><h5>Community</h5><a href="#">Guidelines</a><a href="#">Discord</a><a href="#">Blog</a></div>
+        <div class="col-6 col-md-3 col-lg-2"><h5>Company</h5><a href="about.html">About</a><a href="#">Contact</a><a href="#">Careers</a></div>
+        <div class="col-6 col-md-3 col-lg-2"><h5>Legal</h5><a href="#">Terms</a><a href="#">Privacy</a><a href="#">Cookies</a></div>
+      </div>
+      <div class="footer-bottom">
+        <div>© 2026 Idea Incubator Hub. Built for CITS3403/5505.</div>
+        <div>Made with <span style="color: var(--brand-primary);">♥</span> in Perth, WA.</div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="assets/js/main.js"></script>
+  <script src="assets/js/dashboard.js"></script>
+</body>
+</html>
