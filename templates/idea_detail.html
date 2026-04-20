@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}{{ idea.title }} — Idea Incubator Hub{% endblock %}
+{% block body_attrs %}data-page="idea-detail"{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="/assets/css/idea-detail.css">
+{% endblock %}
+
+{% block content %}
+<div class="breadcrumb-bar">
+  <div class="container-iih">
+    <a href="/explore"><i class="bi bi-arrow-left"></i> Back to explore</a>
+  </div>
+</div>
+
+<section class="container-iih mb-5">
+  <div class="row g-4">
+    <div class="col-lg-8">
+      <div class="idea-header-card">
+        <div class="d-flex gap-2 mb-3 flex-wrap">
+          <span class="tag {{ idea.tag_class }}">{{ idea.category }}</span>
+          <span class="stage-pill stage-{{ idea.stage_class }}"><span class="stage-dot"></span>{{ idea.stage }}</span>
+        </div>
+        <h1>{{ idea.title }}</h1>
+        <div class="idea-author-row">
+          <span class="avatar {{ idea.author.avatar_class }}">{{ idea.author.initials }}</span>
+          <div>
+            <div class="fw-bold">{{ idea.author.name }}</div>
+            <div class="small text-muted-iih">Posted {{ idea.posted }} · {{ idea.views }}</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="idea-section">
+        <h2 class="section-heading">The idea</h2>
+        <p>{{ idea.sections.idea }}</p>
+      </div>
+
+      <div class="idea-section">
+        <h2 class="section-heading">The problem</h2>
+        <p>{{ idea.sections.problem }}</p>
+      </div>
+
+      <div class="idea-section">
+        <h2 class="section-heading">The solution</h2>
+        <p>{{ idea.sections.solution_intro }}</p>
+        <ul>
+          {% for point in idea.sections.solution_points %}
+          <li>{{ point }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div class="vote-bar">
+        <button class="vote-btn" id="upvoteBtn">
+          <i class="bi bi-caret-up-fill"></i>
+          <span>Upvote</span>
+          <strong id="voteCount">{{ idea.votes }}</strong>
+        </button>
+        <button class="vote-btn-secondary"><i class="bi bi-bookmark"></i> Save</button>
+        <button class="vote-btn-secondary"><i class="bi bi-share"></i> Share</button>
+        <button class="vote-btn-secondary ms-auto"><i class="bi bi-people"></i> Join as collaborator</button>
+      </div>
+
+      <div class="idea-section">
+        <h2 class="section-heading">Discussion <span class="text-muted-iih small">({{ idea.comments_total }})</span></h2>
+        <form class="comment-composer" id="commentForm">
+          <span class="avatar {{ idea.author.avatar_class }}">{{ idea.author.initials }}</span>
+          <div class="flex-grow-1">
+            <textarea id="commentInput" class="form-control-iih" placeholder="Share your take, feedback, or question…" rows="3"></textarea>
+            <div class="d-flex justify-content-end mt-2">
+              <button type="submit" class="btn btn-brand btn-sm-iih">Post comment</button>
+            </div>
+          </div>
+        </form>
+
+        <div class="comment-list" id="commentList">
+          {% for comment in idea.discussion_preview %}
+          <div class="comment">
+            <span class="avatar {{ comment.avatar_class }}">{{ comment.initials }}</span>
+            <div class="flex-grow-1">
+              <div class="comment-meta">
+                <strong>{{ comment.name }}</strong>
+                <span class="text-muted-iih small">· {{ comment.time }}</span>
+              </div>
+              <p>{{ comment.text }}</p>
+              <div class="comment-actions">
+                <button class="comment-action"><i class="bi bi-hand-thumbs-up"></i> {{ comment.likes }}</button>
+                <button class="comment-action"><i class="bi bi-reply"></i> Reply</button>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-4">
+      <div class="sidebar-card">
+        <h4 class="sidebar-title">Validation score</h4>
+        <div class="score-display">
+          <div class="score-ring score-ring-lg" data-score="{{ idea.score }}">
+            <svg viewBox="0 0 36 36">
+              <path class="ring-bg" d="M18 2.5 a15.5 15.5 0 0 1 0 31 a15.5 15.5 0 0 1 0 -31"></path>
+              <path class="ring-fill" d="M18 2.5 a15.5 15.5 0 0 1 0 31 a15.5 15.5 0 0 1 0 -31" style="stroke-dasharray:{{ idea.score }},100;"></path>
+            </svg>
+            <span class="score-num">{{ idea.score }}</span>
+          </div>
+          <div class="score-verdict">
+            <strong>{% if idea.score >= 85 %}Strong potential{% elif idea.score >= 70 %}Promising with iterations{% else %}Needs validation{% endif %}</strong>
+            <span>Community score based on votes, comments, and market fit signals.</span>
+          </div>
+        </div>
+        <hr class="divider">
+        <div class="score-breakdown">
+          <div class="score-row">
+            <span>Market potential</span>
+            <div class="score-bar"><div class="score-bar-fill" style="width:{{ idea.score_breakdown.market }}%;"></div></div>
+            <strong>{{ idea.score_breakdown.market }}</strong>
+          </div>
+          <div class="score-row">
+            <span>Community support</span>
+            <div class="score-bar"><div class="score-bar-fill" style="width:{{ idea.score_breakdown.support }}%;"></div></div>
+            <strong>{{ idea.score_breakdown.support }}</strong>
+          </div>
+          <div class="score-row">
+            <span>Feasibility</span>
+            <div class="score-bar"><div class="score-bar-fill" style="width:{{ idea.score_breakdown.feasibility }}%;"></div></div>
+            <strong>{{ idea.score_breakdown.feasibility }}</strong>
+          </div>
+          <div class="score-row">
+            <span>Differentiation</span>
+            <div class="score-bar"><div class="score-bar-fill" style="width:{{ idea.score_breakdown.differentiation }}%;"></div></div>
+            <strong>{{ idea.score_breakdown.differentiation }}</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-card mt-3">
+        <h4 class="sidebar-title">Collaborators <span class="text-muted-iih small fw-normal">({{ idea.collaborators_total }})</span></h4>
+        <div class="collab-list">
+          {% for member in idea.collaborators %}
+          <div class="collab-item">
+            <span class="avatar avatar-sm {{ member.avatar_class }}">{{ member.initials }}</span>
+            <div><strong>{{ member.name }}</strong><span>{{ member.role }}</span></div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="sidebar-card mt-3">
+        <h4 class="sidebar-title">Tags</h4>
+        <div class="d-flex gap-2 flex-wrap">
+          {% for tag in idea.tags %}
+          <span class="tag">{{ tag }}</span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/assets/js/idea-detail.js"></script>
+{% endblock %}
