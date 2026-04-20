@@ -311,6 +311,11 @@ for idea in IDEAS.values():
     ]
 
 
+@main_bp.app_errorhandler(404)
+def page_not_found(_error):
+    return render_template("404.html"), 404
+
+
 @main_bp.route("/")
 def index():
     return render_template("index.html")
