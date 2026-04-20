@@ -1,0 +1,58 @@
+{#
+  Reusable idea card partial.
+  Expects: `idea` — an Idea model object
+  Used in: index.html, explore.html
+#}
+<div class="col-md-6 col-lg-4 idea-card-wrapper"
+     data-idea-id="{{ idea.id }}"
+     data-category="{{ idea.category }}">
+  <div class="idea-card h-100">
+    <div class="idea-card__header">
+      <span class="idea-emoji">{{ idea.emoji }}</span>
+      <span class="idea-category badge bg-light text-dark">{{ idea.category }}</span>
+    </div>
+
+    <h3 class="idea-card__title">
+      <a href="#" class="stretched-link-child">{{ idea.title }}</a>
+    </h3>
+    <p class="idea-card__summary text-muted">{{ idea.summary }}</p>
+
+    <div class="idea-card__tags mb-2">
+      {% for tag in idea.tags[:3] %}
+        <span class="badge badge-tag">#{{ tag.name }}</span>
+      {% endfor %}
+    </div>
+
+    <div class="idea-card__meta d-flex align-items-center gap-2 mb-3">
+      <span class="stage-pill stage-{{ idea.stage }}">{{ idea.stage | title }}</span>
+      <span class="ms-auto idea-card__author small text-muted">
+        <span class="avatar avatar-xs avatar-{{ idea.author.avatar_color }}">
+          {{ idea.author.initials }}
+        </span>
+        {{ idea.author.display_name }}
+      </span>
+    </div>
+
+    <div class="idea-card__footer d-flex align-items-center gap-3">
+      <!-- Vote button — AJAX powered -->
+      <button class="btn btn-vote {% if current_user.is_authenticated and current_user.has_voted(idea) %}voted{% endif %}"
+              data-idea-id="{{ idea.id }}"
+              {% if not current_user.is_authenticated %}
+                onclick="window.location='{{ url_for('auth.login') }}'"
+                title="Log in to vote"
+              {% endif %}>
+        <i class="bi bi-arrow-up-circle{% if current_user.is_authenticated and current_user.has_voted(idea) %}-fill{% endif %}"></i>
+        <span class="vote-count">{{ idea.vote_count }}</span>
+      </button>
+
+      <span class="text-muted small">
+        <i class="bi bi-chat"></i> {{ idea.comment_count }}
+      </span>
+      <span class="text-muted small">
+        <i class="bi bi-people"></i> {{ idea.collaborator_count }}
+      </span>
+
+      <a href="#" class="btn btn-sm btn-outline-primary ms-auto">View</a>
+    </div>
+  </div>
+</div>

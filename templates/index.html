@@ -1,46 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Idea Incubator Hub — Where Great Ideas Get Built</title>
-  <meta name="description" content="Share startup ideas, get real community feedback, find collaborators, and turn concepts into reality.">
+{% extends "base.html" %}
+{% block title %}Idea Incubator Hub — Where Great Ideas Get Built{% endblock %}
+{% block page_name %}landing{% endblock %}
 
-  <!-- Bootstrap -->
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Bootstrap Icons -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-  <!-- Global styles -->
-  <link rel="stylesheet" href="../assets/css/main.css">
-  <link rel="stylesheet" href="../assets/css/landing.css">
-</head>
-<body data-page="landing">
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
+{% endblock %}
 
-  <!-- ═══════════ NAVBAR ═══════════ -->
-  <nav class="navbar navbar-iih navbar-expand-lg">
-    <div class="container-iih w-100 d-flex align-items-center justify-content-between">
-      <a class="navbar-brand" href="index.html">
-        <span class="brand-mark"><i class="bi bi-lightbulb-fill"></i></span>
-        <span>Idea Incubator</span>
-      </a>
-
-      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-        <i class="bi bi-list fs-3"></i>
-      </button>
-
-      <div class="collapse navbar-collapse" id="mainNav">
-        <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-          <li class="nav-item"><a class="nav-link" href="explore.html" data-page="explore">Explore</a></li>
-          <li class="nav-item"><a class="nav-link" href="dashboard.html" data-page="dashboard">Dashboard</a></li>
-          <li class="nav-item"><a class="nav-link" href="about.html" data-page="about">About</a></li>
-        </ul>
-        <div class="d-flex align-items-center gap-2">
-          <a href="login.html" class="btn btn-ghost">Log in</a>
-          <a href="register.html" class="btn btn-brand">Get started — free</a>
-        </div>
-      </div>
-    </div>
-  </nav>
+{% block content %}
 
   <!-- ═══════════ HERO ═══════════ -->
   <section class="hero">
@@ -53,7 +19,7 @@
         <div class="col-lg-7">
           <div class="hero-eyebrow fade-up">
             <span class="eyebrow-dot"></span>
-            <span>Built for founders, makers & dreamers</span>
+            <span>Built for founders, makers &amp; dreamers</span>
           </div>
           <h1 class="hero-title fade-up stagger-1">
             Where <span class="ink-highlight">great ideas</span><br>
@@ -64,10 +30,16 @@
             Track your concept from napkin sketch to real product — with the community cheering you on.
           </p>
           <div class="hero-cta fade-up stagger-3">
-            <a href="register.html" class="btn btn-brand btn-lg-iih">
-              Share your first idea <i class="bi bi-arrow-right"></i>
-            </a>
-            <a href="explore.html" class="btn btn-outline-iih btn-lg-iih">
+            {% if current_user.is_authenticated %}
+              <a href="#" class="btn btn-brand btn-lg-iih">
+                Share your idea <i class="bi bi-arrow-right"></i>
+              </a>
+            {% else %}
+              <a href="#" class="btn btn-brand btn-lg-iih">
+                Share your first idea <i class="bi bi-arrow-right"></i>
+              </a>
+            {% endif %}
+            <a href="#" class="btn btn-outline-iih btn-lg-iih">
               <i class="bi bi-compass"></i> Explore ideas
             </a>
           </div>
@@ -81,14 +53,14 @@
               <span class="avatar avatar-sm avatar-5">AG</span>
             </div>
             <div class="social-proof-text">
-              <strong>2,847 founders</strong> have shared ideas this month
+              <strong>{{ total_users }}+ founders</strong> have shared ideas this month
             </div>
           </div>
         </div>
 
         <div class="col-lg-5">
           <div class="hero-card-stack">
-            <!-- Floating idea cards -->
+            <!-- Floating idea cards — decorative, keep hardcoded -->
             <div class="float-card float-card-1 fade-up stagger-2">
               <div class="d-flex justify-content-between align-items-start mb-2">
                 <span class="tag tag-brand">FinTech</span>
@@ -144,13 +116,13 @@
     <!-- Marquee strip -->
     <div class="marquee-strip">
       <div class="marquee-track">
-        <span>💡 4,200+ ideas submitted</span>
+        <span>💡 {{ total_ideas }}+ ideas submitted</span>
         <span>🚀 180 ideas turned into startups</span>
         <span>🤝 1,600+ collaborations formed</span>
         <span>🌍 Founders from 47 countries</span>
         <span>⭐ 12,000+ community votes</span>
         <!-- duplicate for seamless loop -->
-        <span>💡 4,200+ ideas submitted</span>
+        <span>💡 {{ total_ideas }}+ ideas submitted</span>
         <span>🚀 180 ideas turned into startups</span>
         <span>🤝 1,600+ collaborations formed</span>
         <span>🌍 Founders from 47 countries</span>
@@ -228,7 +200,7 @@
             <p>Move your idea from "validation" → "building" → "launched." Drag-and-drop tasks, assign teammates, set deadlines.</p>
             <ul class="feature-list">
               <li><i class="bi bi-check-circle-fill"></i> Drag-and-drop tasks</li>
-              <li><i class="bi bi-check-circle-fill"></i> Priority & due dates</li>
+              <li><i class="bi bi-check-circle-fill"></i> Priority &amp; due dates</li>
               <li><i class="bi bi-check-circle-fill"></i> Real-time team updates</li>
             </ul>
           </div>
@@ -286,7 +258,7 @@
     </div>
   </section>
 
-  <!-- ═══════════ TRENDING IDEAS ═══════════ -->
+  <!-- ═══════════ TRENDING IDEAS — real DB data ═══════════ -->
   <section class="section-pad">
     <div class="container-iih">
       <div class="d-flex justify-content-between align-items-end flex-wrap gap-3 mb-4" data-scroll-reveal>
@@ -294,140 +266,69 @@
           <span class="tag tag-yellow mb-3">🔥 Trending right now</span>
           <h2 class="mb-0">This week's most-voted ideas</h2>
         </div>
-        <a href="explore.html" class="btn btn-outline-iih">
+        <a href="#" class="btn btn-outline-iih">
           See all ideas <i class="bi bi-arrow-right"></i>
         </a>
       </div>
 
       <div class="row g-4 mt-2">
-        <!-- Idea Card 1 -->
-        <div class="col-md-6 col-lg-4" data-scroll-reveal>
-          <a href="idea-detail.html" class="text-decoration-none">
-            <div class="idea-card card-iih">
-              <div class="card-body-iih">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                  <span class="tag tag-brand">FinTech</span>
-                  <span class="stage-pill stage-validation">
-                    <span class="stage-dot"></span> Validation
-                  </span>
-                </div>
-                <h3 class="idea-card-title">AI-powered budget coach for Gen Z</h3>
-                <p class="idea-card-desc">A no-judgment money buddy that roasts your spending in a fun way and helps you save without feeling restricted.</p>
-                <div class="idea-card-meta">
-                  <div class="meta-item">
-                    <i class="bi bi-caret-up-fill text-brand"></i> <strong>247</strong>
-                  </div>
-                  <div class="meta-item">
-                    <i class="bi bi-chat"></i> 34
-                  </div>
-                  <div class="meta-item">
-                    <i class="bi bi-people"></i> 6
-                  </div>
-                </div>
-                <hr class="divider">
-                <div class="d-flex align-items-center gap-2">
-                  <span class="avatar avatar-sm avatar-1">JL</span>
-                  <div>
-                    <div class="small fw-semibold">Jamie Liu</div>
-                    <div class="small text-muted-iih">2 days ago</div>
-                  </div>
-                  <div class="ms-auto">
-                    <span class="score-ring" data-score="87">
-                      <svg viewBox="0 0 36 36"><path class="ring-bg" d="M18 2.5 a15.5 15.5 0 0 1 0 31 a15.5 15.5 0 0 1 0 -31"></path><path class="ring-fill" d="M18 2.5 a15.5 15.5 0 0 1 0 31 a15.5 15.5 0 0 1 0 -31" style="stroke-dasharray:87,100;"></path></svg>
-                      <span class="score-num">87</span>
+        {% if trending_ideas %}
+          {% for idea in trending_ideas %}
+          <div class="col-md-6 col-lg-4" data-scroll-reveal>
+            <a href="#" class="text-decoration-none">
+              <div class="idea-card card-iih">
+                <div class="card-body-iih">
+                  <div class="d-flex justify-content-between align-items-start mb-3">
+                    <span class="tag tag-brand">{{ idea.category }}</span>
+                    <span class="stage-pill stage-{{ idea.stage }}">
+                      <span class="stage-dot"></span> {{ idea.stage | title }}
                     </span>
+                  </div>
+                  <h3 class="idea-card-title">{{ idea.title }}</h3>
+                  <p class="idea-card-desc">{{ idea.summary }}</p>
+                  <div class="idea-card-meta">
+                    <div class="meta-item">
+                      <i class="bi bi-caret-up-fill text-brand"></i> <strong>{{ idea.vote_count }}</strong>
+                    </div>
+                    <div class="meta-item">
+                      <i class="bi bi-chat"></i> {{ idea.comment_count }}
+                    </div>
+                    <div class="meta-item">
+                      <i class="bi bi-people"></i> {{ idea.collaborator_count }}
+                    </div>
+                  </div>
+                  <hr class="divider">
+                  <div class="d-flex align-items-center gap-2">
+                    <span class="avatar avatar-sm avatar-{{ idea.author.avatar_color }}">
+                      {{ idea.author.initials }}
+                    </span>
+                    <div>
+                      <div class="small fw-semibold">{{ idea.author.display_name }}</div>
+                      <div class="small text-muted-iih">{{ idea.created_at.strftime('%b %d, %Y') }}</div>
+                    </div>
+                    <div class="ms-auto">
+                      <span class="score-ring" data-score="{{ idea.overall_score }}">
+                        <svg viewBox="0 0 36 36">
+                          <path class="ring-bg" d="M18 2.5 a15.5 15.5 0 0 1 0 31 a15.5 15.5 0 0 1 0 -31"></path>
+                          <path class="ring-fill" d="M18 2.5 a15.5 15.5 0 0 1 0 31 a15.5 15.5 0 0 1 0 -31"
+                                style="stroke-dasharray:{{ idea.overall_score }},100;"></path>
+                        </svg>
+                        <span class="score-num">{{ idea.overall_score }}</span>
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </a>
-        </div>
-
-        <!-- Idea Card 2 -->
-        <div class="col-md-6 col-lg-4" data-scroll-reveal>
-          <a href="idea-detail.html" class="text-decoration-none">
-            <div class="idea-card card-iih">
-              <div class="card-body-iih">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                  <span class="tag tag-violet">EdTech</span>
-                  <span class="stage-pill stage-building">
-                    <span class="stage-dot"></span> Building
-                  </span>
-                </div>
-                <h3 class="idea-card-title">Duolingo for musical instruments</h3>
-                <p class="idea-card-desc">Learn guitar, piano, or drums in 5-min daily lessons with streaks, leaderboards, and real song unlocks.</p>
-                <div class="idea-card-meta">
-                  <div class="meta-item">
-                    <i class="bi bi-caret-up-fill text-brand"></i> <strong>312</strong>
-                  </div>
-                  <div class="meta-item">
-                    <i class="bi bi-chat"></i> 58
-                  </div>
-                  <div class="meta-item">
-                    <i class="bi bi-people"></i> 9
-                  </div>
-                </div>
-                <hr class="divider">
-                <div class="d-flex align-items-center gap-2">
-                  <span class="avatar avatar-sm avatar-5">MK</span>
-                  <div>
-                    <div class="small fw-semibold">Maya Kapoor</div>
-                    <div class="small text-muted-iih">5 days ago</div>
-                  </div>
-                  <div class="ms-auto">
-                    <span class="score-ring" data-score="92">
-                      <svg viewBox="0 0 36 36"><path class="ring-bg" d="M18 2.5 a15.5 15.5 0 0 1 0 31 a15.5 15.5 0 0 1 0 -31"></path><path class="ring-fill" d="M18 2.5 a15.5 15.5 0 0 1 0 31 a15.5 15.5 0 0 1 0 -31" style="stroke-dasharray:92,100;"></path></svg>
-                      <span class="score-num">92</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </a>
-        </div>
-
-        <!-- Idea Card 3 -->
-        <div class="col-md-6 col-lg-4" data-scroll-reveal>
-          <a href="idea-detail.html" class="text-decoration-none">
-            <div class="idea-card card-iih">
-              <div class="card-body-iih">
-                <div class="d-flex justify-content-between align-items-start mb-3">
-                  <span class="tag tag-mint">GreenTech</span>
-                  <span class="stage-pill stage-ideation">
-                    <span class="stage-dot"></span> Ideation
-                  </span>
-                </div>
-                <h3 class="idea-card-title">Carbon-negative coffee subscription</h3>
-                <p class="idea-card-desc">Every bag offsets 2x its footprint via verified reforestation partners. Ethical bean sourcing baked in.</p>
-                <div class="idea-card-meta">
-                  <div class="meta-item">
-                    <i class="bi bi-caret-up-fill text-brand"></i> <strong>189</strong>
-                  </div>
-                  <div class="meta-item">
-                    <i class="bi bi-chat"></i> 21
-                  </div>
-                  <div class="meta-item">
-                    <i class="bi bi-people"></i> 3
-                  </div>
-                </div>
-                <hr class="divider">
-                <div class="d-flex align-items-center gap-2">
-                  <span class="avatar avatar-sm avatar-3">SR</span>
-                  <div>
-                    <div class="small fw-semibold">Sam Reyes</div>
-                    <div class="small text-muted-iih">1 week ago</div>
-                  </div>
-                  <div class="ms-auto">
-                    <span class="score-ring" data-score="74">
-                      <svg viewBox="0 0 36 36"><path class="ring-bg" d="M18 2.5 a15.5 15.5 0 0 1 0 31 a15.5 15.5 0 0 1 0 -31"></path><path class="ring-fill" d="M18 2.5 a15.5 15.5 0 0 1 0 31 a15.5 15.5 0 0 1 0 -31" style="stroke-dasharray:74,100;"></path></svg>
-                      <span class="score-num">74</span>
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </a>
-        </div>
+            </a>
+          </div>
+          {% endfor %}
+        {% else %}
+          <!-- Fallback hardcoded cards if DB is empty -->
+          <div class="col-12 text-center py-5">
+            <p class="text-muted-iih">No ideas yet — be the first to share one!</p>
+            <a href="#" class="btn btn-brand">Share an idea</a>
+          </div>
+        {% endif %}
       </div>
     </div>
   </section>
@@ -477,7 +378,7 @@
               <span class="avatar avatar-lg avatar-3">SR</span>
               <div>
                 <div class="fw-bold">Sam Reyes</div>
-                <div class="small text-muted-iih">Designer & collaborator</div>
+                <div class="small text-muted-iih">Designer &amp; collaborator</div>
               </div>
             </div>
           </div>
@@ -493,10 +394,10 @@
         <div class="row align-items-center g-4">
           <div class="col-lg-8">
             <h2 class="mb-3">Your idea isn't going to build itself.</h2>
-            <p class="mb-0 fs-5" style="color: var(--ink-300);">Join 8,000+ builders turning late-night ideas into real products. Free forever.</p>
+            <p class="mb-0 fs-5" style="color: var(--ink-300);">Join {{ total_users }}+ builders turning late-night ideas into real products. Free forever.</p>
           </div>
           <div class="col-lg-4 text-lg-end">
-            <a href="register.html" class="btn btn-brand btn-lg-iih">
+            <a href="#" class="btn btn-brand btn-lg-iih">
               Start shipping <i class="bi bi-rocket-takeoff"></i>
             </a>
           </div>
@@ -505,63 +406,8 @@
     </div>
   </section>
 
-  <!-- ═══════════ FOOTER ═══════════ -->
-  <footer class="footer-iih">
-    <div class="container-iih">
-      <div class="row g-4">
-        <div class="col-lg-4">
-          <a href="index.html" class="footer-brand">
-            <span class="brand-mark"><i class="bi bi-lightbulb-fill"></i></span>
-            Idea Incubator
-          </a>
-          <p class="text-muted-iih" style="color: var(--ink-400); max-width: 300px;">
-            The home for early-stage ideas, the builders behind them, and the community that helps ship them.
-          </p>
-          <div class="social-links mt-3">
-            <a href="#" title="Twitter"><i class="bi bi-twitter-x"></i></a>
-            <a href="#" title="GitHub"><i class="bi bi-github"></i></a>
-            <a href="#" title="LinkedIn"><i class="bi bi-linkedin"></i></a>
-            <a href="#" title="Discord"><i class="bi bi-discord"></i></a>
-          </div>
-        </div>
-        <div class="col-6 col-md-3 col-lg-2">
-          <h5>Product</h5>
-          <a href="explore.html">Explore ideas</a>
-          <a href="dashboard.html">Dashboard</a>
-          <a href="submit-idea.html">Submit an idea</a>
-          <a href="#">Weekly digest</a>
-        </div>
-        <div class="col-6 col-md-3 col-lg-2">
-          <h5>Community</h5>
-          <a href="#">Guidelines</a>
-          <a href="#">Discord</a>
-          <a href="#">Blog</a>
-          <a href="#">Changelog</a>
-        </div>
-        <div class="col-6 col-md-3 col-lg-2">
-          <h5>Company</h5>
-          <a href="about.html">About</a>
-          <a href="#">Contact</a>
-          <a href="#">Careers</a>
-          <a href="#">Press kit</a>
-        </div>
-        <div class="col-6 col-md-3 col-lg-2">
-          <h5>Legal</h5>
-          <a href="#">Terms</a>
-          <a href="#">Privacy</a>
-          <a href="#">Cookies</a>
-          <a href="#">Security</a>
-        </div>
-      </div>
-      <div class="footer-bottom">
-        <div>© 2026 Idea Incubator Hub. Built for CITS3403/5505.</div>
-        <div>Made with <span style="color: var(--brand-primary);">♥</span> in Perth, Western Australia.</div>
-      </div>
-    </div>
-  </footer>
+{% endblock %}
 
-  <!-- Bootstrap JS -->
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  <script src="assets/js/main.js"></script>
-</body>
-</html>
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}
