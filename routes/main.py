@@ -397,3 +397,10 @@ def idea_detail(idea_id: int):
     if idea is None:
         abort(404)
     return render_template("idea_detail.html", idea=idea)
+
+@main_bp.route("/ideas/<int:idea_id>/collaborate")
+def collaborate_idea(idea_id: int):
+    idea = IDEAS.get(idea_id)
+    if idea is None:
+        abort(404)
+    return redirect(url_for("main.idea_detail", idea_id=idea_id))
