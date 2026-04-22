@@ -1,128 +1,136 @@
-<!DOCTYPE html>
-<html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Sign up — Idea Incubator Hub</title>
+{% extends "base.html" %}
 
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-        <link rel="stylesheet" href="../assets/css/main.css">
-        <link rel="stylesheet" href="../assets/css/auth.css">
-    </head>
-    <body data-page="register" class="auth-body">
+{% block title %}Sign up — Idea Incubator Hub{% endblock %}
+{% block page_name %}register{% endblock %}
 
-    <div class="auth-split">
-        <!-- LEFT: FORM -->
-        <div class="auth-form-side">
-            <div class="auth-form-inner">
-                <a href="index.html" class="auth-brand">
-                <span class="brand-mark"><i class="bi bi-lightbulb-fill"></i></span>
-                <span>Idea Incubator</span>
-                </a>
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/auth.css') }}">
+{% endblock %}
 
-                <div class="auth-header">
-                <h1>Let's build something.</h1>
-                <p>Create your account in 30 seconds. No credit card, no catch.</p>
-                </div>
+{% block content %}
 
-                <div id="registerAlert" class="alert-iih alert-danger-iih" style="display:none;"></div>
+<div class="auth-split">
+  <div class="auth-form-side">
+    <div class="auth-form-inner">
 
-                <form id="registerForm" class="auth-form" novalidate>
-                <div class="row g-3">
-                    <div class="col-md-6">
-                    <label class="form-label-iih" for="firstName">First name</label>
-                    <div class="input-with-icon">
-                        <i class="bi bi-person"></i>
-                        <input type="text" id="firstName" class="form-control-iih" placeholder="Jamie" required minlength="2">
-                    </div>
-                    <div class="form-error" data-error-for="firstName">Required — at least 2 characters.</div>
-                    </div>
-                    <div class="col-md-6">
-                    <label class="form-label-iih" for="lastName">Last name</label>
-                    <div class="input-with-icon">
-                        <i class="bi bi-person"></i>
-                        <input type="text" id="lastName" class="form-control-iih" placeholder="Liu" required minlength="2">
-                    </div>
-                    <div class="form-error" data-error-for="lastName">Required — at least 2 characters.</div>
-                    </div>
-                </div>
+      <!-- Logo -->
+      <a href="{{ url_for('main.index') }}" class="auth-brand">
+        <span class="brand-mark"><i class="bi bi-lightbulb-fill"></i></span>
+        <span>Idea Incubator</span>
+      </a>
 
-                <div class="mb-0 mt-3">
-                    <label class="form-label-iih" for="username">Username</label>
-                    <div class="input-with-icon">
-                    <i class="bi bi-at"></i>
-                    <input type="text" id="username" class="form-control-iih" placeholder="jamieliu" required pattern="^[a-zA-Z0-9_]{3,20}$">
-                    </div>
-                    <div class="form-helper">Letters, numbers, and underscores. 3–20 chars.</div>
-                    <div class="form-error" data-error-for="username">Username must be 3–20 chars, letters/numbers/underscores only.</div>
-                </div>
+      <!-- Header -->
+      <div class="auth-header">
+        <h1>Let's build something.</h1>
+        <p>Create your account in 30 seconds. No credit card, no catch.</p>
+      </div>
 
-                <div class="mb-0 mt-3">
-                    <label class="form-label-iih" for="email">Email address</label>
-                    <div class="input-with-icon">
-                    <i class="bi bi-envelope"></i>
-                    <input type="email" id="email" class="form-control-iih" placeholder="you@example.com" required>
-                    </div>
-                    <div class="form-error" data-error-for="email">Enter a valid email address.</div>
-                </div>
+      <!-- Flash message -->
+      {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <div class="alert-iih alert-danger-iih">
+            {{ messages[0] }}
+          </div>
+        {% endif %}
+      {% endwith %}
 
-                <div class="mb-0 mt-3">
-                    <label class="form-label-iih" for="password">Password</label>
-                    <div class="input-with-icon">
-                    <i class="bi bi-lock"></i>
-                    <input type="password" id="password" class="form-control-iih" placeholder="At least 8 characters" required minlength="8">
-                    <button type="button" class="input-toggle" data-toggle-password="password">
-                        <i class="bi bi-eye"></i>
-                    </button>
-                    </div>
-                    <div class="password-strength">
-                    <div class="strength-bar"><div class="strength-fill" id="strengthFill"></div></div>
-                    <span class="strength-label" id="strengthLabel">Enter a password</span>
-                    </div>
-                    <div class="form-error" data-error-for="password">Password must be at least 8 characters.</div>
-                </div>
+      <!-- Form -->
+      <form method="POST" class="auth-form" novalidate>
 
-                <div class="mb-0 mt-3">
-                    <label class="form-label-iih" for="confirmPassword">Confirm password</label>
-                    <div class="input-with-icon">
-                    <i class="bi bi-lock-fill"></i>
-                    <input type="password" id="confirmPassword" class="form-control-iih" placeholder="Type it again" required>
-                    </div>
-                    <div class="form-error" data-error-for="confirmPassword">Passwords don't match.</div>
-                </div>
-
-                <div class="form-check mt-4 mb-3">
-                    <input type="checkbox" class="form-check-input" id="terms" required>
-                    <label class="form-check-label" for="terms">
-                    I agree to the <a href="#" class="fw-semibold">Terms of Service</a> and <a href="#" class="fw-semibold">Privacy Policy</a>
-                    </label>
-                    <div class="form-error" data-error-for="terms">You must accept the terms to continue.</div>
-                </div>
-
-                <button type="submit" class="btn btn-brand btn-lg-iih w-100">
-                    Create my account <i class="bi bi-rocket-takeoff"></i>
-                </button>
-
-                <div class="auth-divider">
-                    <span>or sign up with</span>
-                </div>
-
-                <div class="row g-2">
-                    <button type="button" class="btn btn-outline-iih w-100 social-btn">
-                        <i class="bi bi-google"></i>
-                    </button>
-                </div>
-
-                <div class="auth-footer-text">
-                    Already a builder? <a href="login.html" class="fw-semibold">Log in</a>
-                </div>
-                </form>
+        <!-- Name -->
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label-iih">First name</label>
+            <div class="input-with-icon">
+              <i class="bi bi-person"></i>
+              <input type="text" name="first_name" class="form-control-iih" placeholder="Jamie" required>
             </div>
-        </div>
-    </div>
+          </div>
 
-    <script src="../assets/js/main.js"></script>
-    <script src="../assets/js/auth.js"></script>
-    </body>
-</html>
+          <div class="col-md-6">
+            <label class="form-label-iih">Last name</label>
+            <div class="input-with-icon">
+              <i class="bi bi-person"></i>
+              <input type="text" name="last_name" class="form-control-iih" placeholder="Liu" required>
+            </div>
+          </div>
+        </div>
+
+        <!-- Username -->
+        <div class="mt-3">
+          <label class="form-label-iih">Username</label>
+          <div class="input-with-icon">
+            <i class="bi bi-at"></i>
+            <input type="text" name="username" class="form-control-iih" placeholder="jamieliu" required>
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="mt-3">
+          <label class="form-label-iih">Email address</label>
+          <div class="input-with-icon">
+            <i class="bi bi-envelope"></i>
+            <input type="email" name="email" class="form-control-iih" placeholder="you@example.com" required>
+          </div>
+        </div>
+
+        <!-- Password -->
+        <div class="mt-3">
+          <label class="form-label-iih">Password</label>
+          <div class="input-with-icon">
+            <i class="bi bi-lock"></i>
+            <input type="password" name="password" class="form-control-iih" placeholder="At least 8 characters" required>
+          </div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="mt-3">
+          <label class="form-label-iih">Confirm password</label>
+          <div class="input-with-icon">
+            <i class="bi bi-lock-fill"></i>
+            <input type="password" name="confirm_password" class="form-control-iih" placeholder="Type it again" required>
+          </div>
+        </div>
+
+        <!-- Terms -->
+        <div class="form-check mt-4 mb-3">
+          <input type="checkbox" class="form-check-input" name="terms" required>
+          <label class="form-check-label">
+            I agree to the Terms of Service and Privacy Policy
+          </label>
+        </div>
+
+        <!-- Submit -->
+        <button type="submit" class="btn btn-brand btn-lg-iih w-100">
+          Create my account <i class="bi bi-rocket-takeoff"></i>
+        </button>
+
+        <!-- Divider -->
+        <div class="auth-divider">
+          <span>or sign up with</span>
+        </div>
+
+        <!-- Social -->
+        <div class="row g-2">
+          <button type="button" class="btn btn-outline-iih w-100 social-btn">
+            <i class="bi bi-google"></i>
+          </button>
+        </div>
+
+        <!-- Footer -->
+        <div class="auth-footer-text">
+          Already a builder?
+          <a href="{{ url_for('main.login') }}" class="fw-semibold">Log in</a>
+        </div>
+
+      </form>
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}

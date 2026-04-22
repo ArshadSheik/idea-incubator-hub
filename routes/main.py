@@ -31,28 +31,72 @@ def index():
       - categories      : list of category strings for the filter buttons
     """
     # Top 3 ideas by vote count — used for the "Trending" cards
-    trending_ideas = (
-        db.session.query(Idea)
-        .filter(Idea.privacy == 'public')
-        .outerjoin(Vote)
-        .group_by(Idea.id)
-        .order_by(desc(func.count(Vote.id)))
-        .limit(3)
-        .all()
-    )
+    # trending_ideas = (
+    #     db.session.query(Idea)
+    #     .filter(Idea.privacy == 'public')
+    #     .outerjoin(Vote)
+    #     .group_by(Idea.id)
+    #     .order_by(desc(func.count(Vote.id)))
+    #     .limit(3)
+    #     .all()
+    # )
 
-    # 6 most recent public ideas — used for the main feed
-    recent_ideas = (
-        Idea.query
-        .filter(Idea.privacy == 'public')
-        .order_by(desc(Idea.created_at))
-        .limit(6)
-        .all()
-    )
+    # # 6 most recent public ideas — used for the main feed
+    # recent_ideas = (
+    #     Idea.query
+    #     .filter(Idea.privacy == 'public')
+    #     .order_by(desc(Idea.created_at))
+    #     .limit(6)
+    #     .all()
+    # )
 
-    # Site-wide stats for the stats bar
-    total_ideas = Idea.query.filter_by(privacy='public').count()
-    total_users = User.query.count()
+    # # Site-wide stats for the stats bar
+
+    # total_ideas = Idea.query.filter_by(privacy='public').count()
+
+    # total_users = User.query.count()
+
+    
+
+    # return render_template(
+    #     'index.html',
+    #     trending_ideas=trending_ideas,
+    #     recent_ideas=recent_ideas,
+    #     total_ideas=total_ideas,
+    #     total_users=total_users,
+    #     categories=Idea.CATEGORIES,
+    # )
+
+    try:
+        trending_ideas = (
+            db.session.query(Idea)
+            .filter(Idea.privacy == 'public')
+            .outerjoin(Vote)
+            .group_by(Idea.id)
+            .order_by(desc(func.count(Vote.id)))
+            .limit(3)
+            .all()
+        )
+
+        recent_ideas = (
+            Idea.query
+            .filter(Idea.privacy == 'public')
+            .order_by(desc(Idea.created_at))
+            .limit(6)
+            .all()
+        )
+
+        total_ideas = Idea.query.filter_by(privacy='public').count()
+        total_users = User.query.count()
+
+    except Exception as e:
+        print("DB error:", e)
+
+        # 👇 最小 fallback（关键就这几行）
+        trending_ideas = []
+        recent_ideas = []
+        total_ideas = 0
+        total_users = 0
 
     return render_template(
         'index.html',
@@ -141,3 +185,11 @@ def filter_ideas():
         'has_next': ideas.has_next,
         'page':     ideas.page,
     })
+
+@main_bp.route('/login')
+def login():
+    return render_template('login.html')
+
+@main_bp.route('/register')
+def register():
+    return render_template('register.html')
