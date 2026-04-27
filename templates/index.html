@@ -273,13 +273,14 @@
 
       <div class="row g-4 mt-2">
         {% if trending_ideas %}
+          {% set tag_class_map = {'FinTech':'tag-brand','EdTech':'tag-violet','GreenTech':'tag-mint','DevTools':'tag-dark','Health':'tag-pink','Productivity':'tag-blue','Social':'tag-mint','Creator Economy':'tag-yellow'} %}
           {% for idea in trending_ideas %}
           <div class="col-md-6 col-lg-4" data-scroll-reveal>
             <a href="#" class="text-decoration-none">
               <div class="idea-card card-iih">
                 <div class="card-body-iih">
                   <div class="d-flex justify-content-between align-items-start mb-3">
-                    <span class="tag tag-brand">{{ idea.category }}</span>
+                    <span class="tag {{ tag_class_map.get(idea.category, 'tag-brand') }}">{{ idea.category }}</span>
                     <span class="stage-pill stage-{{ idea.stage }}">
                       <span class="stage-dot"></span> {{ idea.stage | title }}
                     </span>
@@ -299,7 +300,7 @@
                   </div>
                   <hr class="divider">
                   <div class="d-flex align-items-center gap-2">
-                    <span class="avatar avatar-sm avatar-{{ idea.author.avatar_color }}">
+                    <span class="avatar avatar-sm avatar-{{ idea.author.avatar_color or 1 }}">
                       {{ idea.author.initials }}
                     </span>
                     <div>
