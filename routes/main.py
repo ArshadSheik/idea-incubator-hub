@@ -1,8 +1,9 @@
 from datetime import datetime
 
 from flask import Blueprint, redirect, render_template, request, url_for
+from sqlalchemy import func
 
-from models.models import Collaboration, Comment, Idea, User
+from models.models import Collaboration, Comment, Idea, User, Vote
 
 main_bp = Blueprint("main", __name__)
 
@@ -183,6 +184,7 @@ def explore():
     q = (request.args.get("q") or "").strip()
     category = (request.args.get("category") or "all").strip()
     stage = (request.args.get("stage") or "all").strip().lower()
+    sort = (request.args.get("sort") or "trending").strip().lower()
 
     if q:
         like_expr = f"%{q}%"
@@ -198,7 +200,20 @@ def explore():
     if stage and stage != "all":
         query = query.filter(Idea.stage == stage)
 
-    ideas = query.order_by(Idea.created_at.desc()).all()
+    if sort == "newest":
+        query = query.order_by(Idea.created_at.desc())
+    elif sort == "votes":
+        query = (
+            query
+            .outerjoin(Vote, Vote.idea_id == Idea.id)
+            .group_by(Idea.id)
+            .order_by(func.count(Vote.id).desc(), Idea.created_at.desc())
+        )
+    else:
+        # Keep trending stable for now: latest public ideas first.
+        query = query.order_by(Idea.created_at.desc())
+
+    ideas = query.all()
     return render_template(
         "explore.html",
         ideas=[_serialize_explore_idea(idea) for idea in ideas],
