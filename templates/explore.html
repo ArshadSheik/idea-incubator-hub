@@ -13,7 +13,7 @@
     <p class="fade-up stagger-1">Browse ideas from the community. Vote on the ones you love, comment with your take.</p>
     <div class="explore-search-bar fade-up stagger-2">
       <i class="bi bi-search"></i>
-      <input type="text" id="searchInput" placeholder="Search by title, category, or keyword...">
+      <input type="text" id="searchInput" placeholder="Search by title, category, or keyword..." value="{{ active_filters.q|default('') }}">
     </div>
   </div>
 </section>
@@ -24,33 +24,34 @@
       <div class="filter-group">
         <label class="filter-label" for="filterCategory">Category</label>
         <select class="filter-select" id="filterCategory">
-          <option value="all">All categories</option>
-          <option value="FinTech">FinTech</option>
-          <option value="EdTech">EdTech</option>
-          <option value="GreenTech">GreenTech</option>
-          <option value="DevTools">DevTools</option>
-          <option value="Health">Health</option>
-          <option value="Productivity">Productivity</option>
-          <option value="Social">Social</option>
-          <option value="Creator">Creator</option>
+          <option value="all" {% if active_filters.category|default('all') == 'all' %}selected{% endif %}>All categories</option>
+          <option value="FinTech" {% if active_filters.category == 'FinTech' %}selected{% endif %}>FinTech</option>
+          <option value="EdTech" {% if active_filters.category == 'EdTech' %}selected{% endif %}>EdTech</option>
+          <option value="GreenTech" {% if active_filters.category == 'GreenTech' %}selected{% endif %}>GreenTech</option>
+          <option value="DevTools" {% if active_filters.category == 'DevTools' %}selected{% endif %}>DevTools</option>
+          <option value="Health" {% if active_filters.category == 'Health' %}selected{% endif %}>Health</option>
+          <option value="Productivity" {% if active_filters.category == 'Productivity' %}selected{% endif %}>Productivity</option>
+          <option value="Social" {% if active_filters.category == 'Social' %}selected{% endif %}>Social</option>
+          <option value="Creator" {% if active_filters.category == 'Creator' %}selected{% endif %}>Creator</option>
+          <option value="Creator Economy" {% if active_filters.category == 'Creator Economy' %}selected{% endif %}>Creator Economy</option>
         </select>
       </div>
       <div class="filter-group">
         <label class="filter-label" for="filterStage">Stage</label>
         <select class="filter-select" id="filterStage">
-          <option value="all">Any stage</option>
-          <option value="ideation">Ideation</option>
-          <option value="validation">Validation</option>
-          <option value="building">Building</option>
-          <option value="launched">Launched</option>
+          <option value="all" {% if active_filters.stage|default('all') == 'all' %}selected{% endif %}>Any stage</option>
+          <option value="ideation" {% if active_filters.stage == 'ideation' %}selected{% endif %}>Ideation</option>
+          <option value="validation" {% if active_filters.stage == 'validation' %}selected{% endif %}>Validation</option>
+          <option value="building" {% if active_filters.stage == 'building' %}selected{% endif %}>Building</option>
+          <option value="launched" {% if active_filters.stage == 'launched' %}selected{% endif %}>Launched</option>
         </select>
       </div>
       <div class="filter-group">
         <label class="filter-label" for="filterSort">Sort by</label>
         <select class="filter-select" id="filterSort">
-          <option value="trending">Trending</option>
-          <option value="newest">Newest first</option>
-          <option value="votes">Most votes</option>
+          <option value="trending" {% if active_filters.sort|default('trending') == 'trending' %}selected{% endif %}>Trending</option>
+          <option value="newest" {% if active_filters.sort == 'newest' %}selected{% endif %}>Newest first</option>
+          <option value="votes" {% if active_filters.sort == 'votes' %}selected{% endif %}>Most votes</option>
         </select>
       </div>
       <button class="btn btn-outline-iih reset-btn" id="resetFilters">
@@ -63,7 +64,7 @@
     Showing <strong id="resultsCount">{{ ideas|length }}</strong> ideas
   </div>
 
-  <div class="row g-4" id="ideaGrid">
+  <div class="row g-4" id="ideaGrid" {% if ideas|length == 0 %}style="display:none;"{% endif %}>
     {% for idea in ideas %}
     <div
       class="col-md-6 col-lg-4 idea-item"
@@ -102,7 +103,11 @@
     {% endfor %}
   </div>
 
+  {% if ideas|length == 0 %}
+  <div id="emptyState" class="empty-state" style="display:block;">
+  {% else %}
   <div id="emptyState" class="empty-state" style="display:none;">
+  {% endif %}
     <div class="empty-icon"><i class="bi bi-search"></i></div>
     <h3>No ideas match your filters</h3>
     <p>Try different keywords or clear your filters.</p>

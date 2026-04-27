@@ -14,11 +14,39 @@ document.addEventListener('DOMContentLoaded', () => {
   const emptyState = document.getElementById('emptyState');
   const allItems = Array.from(document.querySelectorAll('.idea-item'));
 
-  /* ─── Read URL ?q= on load ─── */
+  /* ─── Read URL params on load ─── */
   const urlParams = new URLSearchParams(window.location.search);
-  const qParam = urlParams.get('q');
-  if (qParam) {
-    searchInput.value = qParam;
+  const qParam = urlParams.get('q') || '';
+  const categoryParam = urlParams.get('category') || 'all';
+  const stageParam = urlParams.get('stage') || 'all';
+  const sortParam = urlParams.get('sort') || 'trending';
+
+  searchInput.value = qParam;
+  if ([...categorySelect.options].some(opt => opt.value === categoryParam)) {
+    categorySelect.value = categoryParam;
+  }
+  if ([...stageSelect.options].some(opt => opt.value === stageParam)) {
+    stageSelect.value = stageParam;
+  }
+  if ([...sortSelect.options].some(opt => opt.value === sortParam)) {
+    sortSelect.value = sortParam;
+  }
+
+  function syncUrlParams() {
+    const params = new URLSearchParams(window.location.search);
+    const q = (searchInput.value || '').trim();
+    const category = categorySelect.value;
+    const stage = stageSelect.value;
+    const sort = sortSelect.value;
+
+    if (q) params.set('q', q); else params.delete('q');
+    if (category && category !== 'all') params.set('category', category); else params.delete('category');
+    if (stage && stage !== 'all') params.set('stage', stage); else params.delete('stage');
+    if (sort && sort !== 'trending') params.set('sort', sort); else params.delete('sort');
+
+    const nextQuery = params.toString();
+    const nextUrl = nextQuery ? `${window.location.pathname}?${nextQuery}` : window.location.pathname;
+    window.history.replaceState({}, '', nextUrl);
   }
 
   /* ─── Apply filters ─── */
@@ -47,6 +75,7 @@ document.addEventListener('DOMContentLoaded', () => {
     countEl.textContent = visibleCount;
     emptyState.style.display = visibleCount === 0 ? 'block' : 'none';
     grid.style.display = visibleCount === 0 ? 'none' : '';
+    syncUrlParams();
   }
 
   /* ─── Apply sort (just re-orders DOM nodes in grid) ─── */
@@ -90,8 +119,10 @@ document.addEventListener('DOMContentLoaded', () => {
     stageSelect.value = 'all';
     sortSelect.value = 'trending';
     applyFilters();
+    applySort();
   });
 
-  /* ─── Run once on load if ?q= was provided ─── */
-  if (qParam) applyFilters();
+  /* ─── Run once on load ─── */
+  applyFilters();
+  applySort();
 });

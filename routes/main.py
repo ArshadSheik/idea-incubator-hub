@@ -217,6 +217,12 @@ def explore():
     return render_template(
         "explore.html",
         ideas=[_serialize_explore_idea(idea) for idea in ideas],
+        active_filters={
+            "q": q,
+            "category": category or "all",
+            "stage": stage or "all",
+            "sort": sort or "trending",
+        },
     )
 
 
