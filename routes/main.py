@@ -44,6 +44,12 @@ def _relative_time(dt) -> str:
     return "just now"
 
 
+def _format_comment_time(dt) -> str:
+    if not dt:
+        return "Unknown time"
+    return dt.strftime("%Y-%m-%d %H:%M")
+
+
 def _serialize_explore_idea(idea: Idea) -> dict:
     author = idea.author
     stage_class = idea.stage or "validation"
@@ -90,7 +96,7 @@ def _serialize_detail_idea(idea: Idea) -> dict:
             "name": item.author.display_name if item.author else "Unknown user",
             "initials": item.author.initials if item.author else "NA",
             "avatar_class": _avatar_class_for_user(item.author) if item.author else "avatar-1",
-            "time": _relative_time(item.created_at),
+            "time": _format_comment_time(item.created_at),
             "text": item.body,
             "likes": item.like_count or 0,
             "replies": [
@@ -181,7 +187,7 @@ def _serialize_comment(comment: Comment) -> dict:
         "name": author.display_name if author else "Unknown user",
         "initials": author.initials if author else "NA",
         "avatar_class": _avatar_class_for_user(author) if author else "avatar-1",
-        "time": _relative_time(comment.created_at),
+        "time": _format_comment_time(comment.created_at),
         "text": comment.body,
         "likes": comment.like_count or 0,
         "parent_id": comment.parent_id,
