@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import Blueprint, redirect, render_template, url_for
+from flask import Blueprint, redirect, render_template, request, url_for
 
 from models.models import Collaboration, Comment, Idea, User
 
@@ -178,13 +178,31 @@ def index():
 # ─────────────────────────────────────────
 @main_bp.route("/explore")
 def explore():
-    ideas = (
-        Idea.query
-        .filter_by(privacy="public")
-        .order_by(Idea.created_at.desc())
-        .all()
+    query = Idea.query.filter_by(privacy="public")
+
+    q = (request.args.get("q") or "").strip()
+    category = (request.args.get("category") or "all").strip()
+    stage = (request.args.get("stage") or "all").strip().lower()
+
+    if q:
+        like_expr = f"%{q}%"
+        query = query.filter(
+            (Idea.title.ilike(like_expr)) |
+            (Idea.summary.ilike(like_expr)) |
+            (Idea.category.ilike(like_expr))
+        )
+
+    if category and category.lower() != "all":
+        query = query.filter(Idea.category == category)
+
+    if stage and stage != "all":
+        query = query.filter(Idea.stage == stage)
+
+    ideas = query.order_by(Idea.created_at.desc()).all()
+    return render_template(
+        "explore.html",
+        ideas=[_serialize_explore_idea(idea) for idea in ideas],
     )
-    return render_template("explore.html", ideas=[_serialize_explore_idea(idea) for idea in ideas])
 
 
 @main_bp.route("/dashboard")
