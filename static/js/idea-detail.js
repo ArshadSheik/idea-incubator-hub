@@ -39,6 +39,9 @@ document.addEventListener("DOMContentLoaded", () => {
             <span class="text-muted-iih small">· ${reply.time}</span>
           </div>
           <p></p>
+          <div class="comment-actions">
+            <button class="comment-action comment-like-btn" data-comment-id="${reply.id}"><i class="bi bi-hand-thumbs-up"></i> ${reply.likes}</button>
+          </div>
         </div>
       </div>
     `.trim();
