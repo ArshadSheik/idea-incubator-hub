@@ -28,6 +28,36 @@ document.addEventListener("DOMContentLoaded", () => {
     btn.innerHTML = `<i class="${iconClass}"></i> ${count}`;
   };
 
+  const buildReplyNode = (reply) => {
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = `
+      <div class="comment ms-4 mt-2" data-comment-id="${reply.id}">
+        <span class="avatar ${reply.avatar_class}">${reply.initials}</span>
+        <div class="flex-grow-1">
+          <div class="comment-meta">
+            <strong>${reply.name}</strong>
+            <span class="text-muted-iih small">· ${reply.time}</span>
+          </div>
+          <p></p>
+        </div>
+      </div>
+    `.trim();
+    const node = wrapper.firstChild;
+    node.querySelector("p").textContent = reply.text;
+    return node;
+  };
+
+  const ensureReplyList = (commentContainer, commentId) => {
+    let replyList = commentContainer.querySelector(`[data-reply-list-for="${commentId}"]`);
+    if (!replyList) {
+      replyList = document.createElement("div");
+      replyList.className = "reply-list mt-2";
+      replyList.dataset.replyListFor = String(commentId);
+      commentContainer.querySelector(".flex-grow-1")?.appendChild(replyList);
+    }
+    return replyList;
+  };
+
   const upvoteBtn = document.getElementById("upvoteBtn");
   const voteCountEl = document.getElementById("voteCount");
   if (upvoteBtn && voteCountEl) {
@@ -110,7 +140,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         const comment = payload.comment;
         const commentHTML = `
-          <div class="comment">
+          <div class="comment" data-comment-id="${comment.id}">
             <span class="avatar ${comment.avatar_class}">${comment.initials}</span>
             <div class="flex-grow-1">
               <div class="comment-meta">
@@ -120,8 +150,9 @@ document.addEventListener("DOMContentLoaded", () => {
               <p></p>
               <div class="comment-actions">
                 <button class="comment-action comment-like-btn" data-comment-id="${comment.id}"><i class="bi bi-hand-thumbs-up"></i> ${comment.likes}</button>
-                <button class="comment-action"><i class="bi bi-reply"></i> Reply</button>
+                <button class="comment-action comment-reply-btn" data-comment-id="${comment.id}"><i class="bi bi-reply"></i> Reply</button>
               </div>
+              <div class="reply-list mt-2" data-reply-list-for="${comment.id}"></div>
             </div>
           </div>`;
 
@@ -138,6 +169,76 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  document.addEventListener("click", (e) => {
+    const replyBtn = e.target.closest(".comment-reply-btn");
+    if (!replyBtn) return;
+    e.preventDefault();
+    const ideaId = getIdeaId();
+    const commentId = replyBtn.dataset.commentId;
+    const commentContainer = replyBtn.closest(".comment[data-comment-id]");
+    if (!ideaId || !commentId || !commentContainer) return;
+
+    const existingComposer = commentContainer.querySelector(".reply-composer");
+    if (existingComposer) {
+      existingComposer.remove();
+      return;
+    }
+
+    const composer = document.createElement("div");
+    composer.className = "reply-composer mt-2";
+    composer.innerHTML = `
+      <textarea class="form-control-iih" rows="2" placeholder="Write a reply..."></textarea>
+      <div class="d-flex justify-content-end gap-2 mt-2">
+        <button type="button" class="btn btn-outline-iih btn-sm-iih reply-cancel-btn">Cancel</button>
+        <button type="button" class="btn btn-brand btn-sm-iih reply-submit-btn">Reply</button>
+      </div>
+    `;
+
+    const contentWrap = commentContainer.querySelector(".flex-grow-1");
+    const replyList = ensureReplyList(commentContainer, commentId);
+    contentWrap?.insertBefore(composer, replyList);
+
+    const textarea = composer.querySelector("textarea");
+    const submitBtn = composer.querySelector(".reply-submit-btn");
+    const cancelBtn = composer.querySelector(".reply-cancel-btn");
+    textarea?.focus();
+
+    cancelBtn?.addEventListener("click", () => composer.remove());
+    submitBtn?.addEventListener("click", async () => {
+      const text = (textarea?.value || "").trim();
+      if (!text) {
+        textarea?.classList.add("is-invalid");
+        return;
+      }
+      textarea?.classList.remove("is-invalid");
+      if (submitBtn) submitBtn.disabled = true;
+
+      try {
+        const response = await fetch(`/ideas/${ideaId}/comments/${commentId}/replies`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text }),
+        });
+
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload.error || `Reply request failed: ${response.status}`);
+        }
+
+        const replyNode = buildReplyNode(payload.reply);
+        const targetReplyList = ensureReplyList(commentContainer, commentId);
+        targetReplyList.insertBefore(replyNode, targetReplyList.firstChild);
+        composer.remove();
+      } catch (error) {
+        console.error(error);
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
+    });
+  });
 
   document.addEventListener("click", (e) => {
     const btn = e.target.closest(".comment-like-btn");

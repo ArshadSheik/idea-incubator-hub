@@ -79,6 +79,7 @@ def _serialize_detail_idea(idea: Idea) -> dict:
 
     comments = (
         Comment.query.filter_by(idea_id=idea.id)
+        .filter(Comment.parent_id.is_(None))
         .order_by(Comment.created_at.desc())
         .limit(10)
         .all()
@@ -92,6 +93,12 @@ def _serialize_detail_idea(idea: Idea) -> dict:
             "time": _relative_time(item.created_at),
             "text": item.body,
             "likes": item.like_count or 0,
+            "replies": [
+                _serialize_comment(reply)
+                for reply in Comment.query.filter_by(parent_id=item.id)
+                .order_by(Comment.created_at.asc())
+                .all()
+            ],
         }
         for item in comments
     ]
@@ -177,6 +184,7 @@ def _serialize_comment(comment: Comment) -> dict:
         "time": _relative_time(comment.created_at),
         "text": comment.body,
         "likes": comment.like_count or 0,
+        "parent_id": comment.parent_id,
     }
 
 
@@ -386,6 +394,34 @@ def toggle_comment_like(idea_id: int, comment_id: int):
             "like_count": comment.like_count or 0,
         }
     )
+
+
+@main_bp.route("/ideas/<int:idea_id>/comments/<int:comment_id>/replies", methods=["POST"])
+@csrf.exempt
+def create_comment_reply(idea_id: int, comment_id: int):
+    idea = Idea.query.get_or_404(idea_id)
+    parent_comment = Comment.query.filter_by(id=comment_id, idea_id=idea.id).first_or_404()
+    actor = _get_actor_user()
+    if actor is None:
+        return jsonify({"ok": False, "error": "No available user to post reply"}), 400
+
+    payload = request.get_json(silent=True) or {}
+    text = (payload.get("text") or request.form.get("text") or "").strip()
+    if not text:
+        return jsonify({"ok": False, "error": "Reply text is required"}), 400
+    if len(text) > 1000:
+        return jsonify({"ok": False, "error": "Reply must be 1000 characters or less"}), 400
+
+    reply = Comment(
+        user_id=actor.id,
+        idea_id=idea.id,
+        parent_id=parent_comment.id,
+        body=text,
+    )
+    db.session.add(reply)
+    db.session.commit()
+
+    return jsonify({"ok": True, "reply": _serialize_comment(reply)}), 201
 
 
 @main_bp.route("/login")

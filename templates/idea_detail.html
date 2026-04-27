@@ -76,7 +76,7 @@
 
         <div class="comment-list" id="commentList">
           {% for comment in idea.discussion_preview %}
-          <div class="comment">
+          <div class="comment" data-comment-id="{{ comment.id }}">
             <span class="avatar {{ comment.avatar_class }}">{{ comment.initials }}</span>
             <div class="flex-grow-1">
               <div class="comment-meta">
@@ -86,7 +86,21 @@
               <p>{{ comment.text }}</p>
               <div class="comment-actions">
                 <button class="comment-action comment-like-btn" data-comment-id="{{ comment.id }}"><i class="bi bi-hand-thumbs-up"></i> {{ comment.likes }}</button>
-                <button class="comment-action"><i class="bi bi-reply"></i> Reply</button>
+                <button class="comment-action comment-reply-btn" data-comment-id="{{ comment.id }}"><i class="bi bi-reply"></i> Reply</button>
+              </div>
+              <div class="reply-list mt-2" data-reply-list-for="{{ comment.id }}">
+                {% for reply in comment.replies %}
+                <div class="comment ms-4 mt-2" data-comment-id="{{ reply.id }}">
+                  <span class="avatar {{ reply.avatar_class }}">{{ reply.initials }}</span>
+                  <div class="flex-grow-1">
+                    <div class="comment-meta">
+                      <strong>{{ reply.name }}</strong>
+                      <span class="text-muted-iih small">· {{ reply.time }}</span>
+                    </div>
+                    <p>{{ reply.text }}</p>
+                  </div>
+                </div>
+                {% endfor %}
               </div>
             </div>
           </div>
