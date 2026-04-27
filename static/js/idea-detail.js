@@ -1,4 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
+  const csrfToken = document
+    .querySelector('meta[name="csrf-token"]')
+    ?.getAttribute("content");
+
   const getIdeaId = () => {
     const match = window.location.pathname.match(/\/ideas\/(\d+)/);
     return match ? match[1] : null;
@@ -73,6 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
           },
         });
 
@@ -132,6 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
           },
           body: JSON.stringify({ text }),
         });
@@ -222,6 +228,7 @@ document.addEventListener("DOMContentLoaded", () => {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
+            ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
           },
           body: JSON.stringify({ text }),
         });
@@ -262,6 +269,7 @@ document.addEventListener("DOMContentLoaded", () => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
       },
       body: JSON.stringify({
         action,

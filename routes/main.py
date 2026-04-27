@@ -5,7 +5,6 @@ from flask import Blueprint, jsonify, redirect, render_template, request, url_fo
 from flask_login import current_user
 from sqlalchemy import func
 
-from app import csrf
 from models.models import Collaboration, Comment, Idea, User, Vote, db
 
 main_bp = Blueprint("main", __name__)
@@ -301,7 +300,6 @@ def idea_detail(idea_id: int):
 
 
 @main_bp.route("/ideas/<int:idea_id>/vote", methods=["POST"])
-@csrf.exempt
 def toggle_idea_vote(idea_id: int):
     idea = Idea.query.get_or_404(idea_id)
     actor = _get_actor_user()
@@ -329,7 +327,6 @@ def toggle_idea_vote(idea_id: int):
 
 
 @main_bp.route("/ideas/<int:idea_id>/comments", methods=["POST"])
-@csrf.exempt
 def create_idea_comment(idea_id: int):
     idea = Idea.query.get_or_404(idea_id)
     actor = _get_actor_user()
@@ -364,7 +361,6 @@ def create_idea_comment(idea_id: int):
 
 
 @main_bp.route("/ideas/<int:idea_id>/comments/<int:comment_id>/like", methods=["POST"])
-@csrf.exempt
 def toggle_comment_like(idea_id: int, comment_id: int):
     idea = Idea.query.get_or_404(idea_id)
     comment = Comment.query.filter_by(id=comment_id, idea_id=idea.id).first_or_404()
@@ -403,7 +399,6 @@ def toggle_comment_like(idea_id: int, comment_id: int):
 
 
 @main_bp.route("/ideas/<int:idea_id>/comments/<int:comment_id>/replies", methods=["POST"])
-@csrf.exempt
 def create_comment_reply(idea_id: int, comment_id: int):
     idea = Idea.query.get_or_404(idea_id)
     parent_comment = Comment.query.filter_by(id=comment_id, idea_id=idea.id).first_or_404()
