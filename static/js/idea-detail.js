@@ -1,12 +1,15 @@
 document.addEventListener("DOMContentLoaded", () => {
+  const getIdeaId = () => {
+    const match = window.location.pathname.match(/\/ideas\/(\d+)/);
+    return match ? match[1] : null;
+  };
+
   const upvoteBtn = document.getElementById("upvoteBtn");
   const voteCountEl = document.getElementById("voteCount");
   if (upvoteBtn && voteCountEl) {
     upvoteBtn.addEventListener("click", async () => {
-      const match = window.location.pathname.match(/\/ideas\/(\d+)/);
-      if (!match) return;
-
-      const ideaId = match[1];
+      const ideaId = getIdeaId();
+      if (!ideaId) return;
       upvoteBtn.disabled = true;
       try {
         const response = await fetch(`/ideas/${ideaId}/vote`, {
@@ -41,37 +44,61 @@ document.addEventListener("DOMContentLoaded", () => {
   const commentInput = document.getElementById("commentInput");
   const commentList = document.getElementById("commentList");
   if (commentForm && commentInput && commentList) {
-    commentForm.addEventListener("submit", (e) => {
+    commentForm.addEventListener("submit", async (e) => {
       e.preventDefault();
+      const ideaId = getIdeaId();
+      if (!ideaId) return;
+
       const text = commentInput.value.trim();
       if (!text) {
         commentInput.classList.add("is-invalid");
         return;
       }
       commentInput.classList.remove("is-invalid");
+      const submitBtn = commentForm.querySelector("button[type='submit']");
+      if (submitBtn) submitBtn.disabled = true;
+      try {
+        const response = await fetch(`/ideas/${ideaId}/comments`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ text }),
+        });
 
-      const commentHTML = `
-        <div class="comment">
-          <span class="avatar avatar-1">JL</span>
-          <div class="flex-grow-1">
-            <div class="comment-meta">
-              <strong>Jamie Liu</strong>
-              <span class="text-muted-iih small">· just now</span>
-            </div>
-            <p></p>
-            <div class="comment-actions">
-              <button class="comment-action"><i class="bi bi-hand-thumbs-up"></i> 0</button>
-              <button class="comment-action"><i class="bi bi-reply"></i> Reply</button>
-            </div>
-          </div>
-        </div>`;
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload.error || `Comment request failed: ${response.status}`);
+        }
 
-      const wrapper = document.createElement("div");
-      wrapper.innerHTML = commentHTML.trim();
-      const newComment = wrapper.firstChild;
-      newComment.querySelector("p").textContent = text;
-      commentList.insertBefore(newComment, commentList.firstChild);
-      commentInput.value = "";
+        const comment = payload.comment;
+        const commentHTML = `
+          <div class="comment">
+            <span class="avatar ${comment.avatar_class}">${comment.initials}</span>
+            <div class="flex-grow-1">
+              <div class="comment-meta">
+                <strong>${comment.name}</strong>
+                <span class="text-muted-iih small">· ${comment.time}</span>
+              </div>
+              <p></p>
+              <div class="comment-actions">
+                <button class="comment-action"><i class="bi bi-hand-thumbs-up"></i> ${comment.likes}</button>
+                <button class="comment-action"><i class="bi bi-reply"></i> Reply</button>
+              </div>
+            </div>
+          </div>`;
+
+        const wrapper = document.createElement("div");
+        wrapper.innerHTML = commentHTML.trim();
+        const newComment = wrapper.firstChild;
+        newComment.querySelector("p").textContent = comment.text;
+        commentList.insertBefore(newComment, commentList.firstChild);
+        commentInput.value = "";
+      } catch (error) {
+        console.error(error);
+      } finally {
+        if (submitBtn) submitBtn.disabled = false;
+      }
     });
   }
 

@@ -151,6 +151,20 @@ def _serialize_detail_idea(idea: Idea) -> dict:
     }
 
 
+def _serialize_comment(comment: Comment) -> dict:
+    author = comment.author
+    return {
+        "id": comment.id,
+        "idea_id": comment.idea_id,
+        "name": author.display_name if author else "Unknown user",
+        "initials": author.initials if author else "NA",
+        "avatar_class": _avatar_class_for_user(author) if author else "avatar-1",
+        "time": _relative_time(comment.created_at),
+        "text": comment.body,
+        "likes": comment.like_count or 0,
+    }
+
+
 def _get_actor_user():
     """
     Temporary actor resolution for write endpoints:
@@ -282,6 +296,41 @@ def toggle_idea_vote(idea_id: int):
             "voted": voted,
             "vote_count": idea.vote_count,
         }
+    )
+
+
+@main_bp.route("/ideas/<int:idea_id>/comments", methods=["POST"])
+@csrf.exempt
+def create_idea_comment(idea_id: int):
+    idea = Idea.query.get_or_404(idea_id)
+    actor = _get_actor_user()
+    if actor is None:
+        return jsonify({"ok": False, "error": "No available user to post comment"}), 400
+
+    payload = request.get_json(silent=True) or {}
+    text = (payload.get("text") or request.form.get("text") or "").strip()
+    if not text:
+        return jsonify({"ok": False, "error": "Comment text is required"}), 400
+    if len(text) > 1000:
+        return jsonify({"ok": False, "error": "Comment must be 1000 characters or less"}), 400
+
+    comment = Comment(
+        user_id=actor.id,
+        idea_id=idea.id,
+        body=text,
+    )
+    db.session.add(comment)
+    db.session.commit()
+
+    return (
+        jsonify(
+            {
+                "ok": True,
+                "comment": _serialize_comment(comment),
+                "comments_total": idea.comment_count,
+            }
+        ),
+        201,
     )
 
 
