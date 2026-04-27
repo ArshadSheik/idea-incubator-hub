@@ -57,9 +57,12 @@
           <span>{% if idea.user_voted %}Upvoted{% else %}Upvote{% endif %}</span>
           <strong id="voteCount">{{ idea.votes }}</strong>
         </button>
-        <button class="vote-btn-secondary"><i class="bi bi-bookmark"></i> Save</button>
-        <button class="vote-btn-secondary"><i class="bi bi-share"></i> Share</button>
-        <button class="vote-btn-secondary ms-auto"><i class="bi bi-people"></i> Join as collaborator</button>
+        <button class="vote-btn-secondary" id="saveBtn"><i class="bi bi-bookmark"></i> <span>Save</span></button>
+        <button class="vote-btn-secondary" id="shareBtn"><i class="bi bi-share"></i> <span>Share</span></button>
+        <button class="vote-btn-secondary ms-auto {% if idea.user_collaborating %}voted{% endif %}" id="collaborateBtn">
+          <i class="bi bi-people"></i>
+          <span>{% if idea.user_collaborating %}Joined as collaborator{% else %}Join as collaborator{% endif %}</span>
+        </button>
       </div>
 
       <div class="idea-section">

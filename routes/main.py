@@ -77,9 +77,18 @@ def _serialize_detail_idea(idea: Idea) -> dict:
     stage_class = idea.stage or "validation"
     actor = _get_actor_user()
     user_voted = False
+    user_collaborating = False
     if actor is not None:
         user_voted = (
             Vote.query.filter_by(user_id=actor.id, idea_id=idea.id).first() is not None
+        )
+        user_collaborating = (
+            Collaboration.query.filter_by(
+                user_id=actor.id,
+                idea_id=idea.id,
+                status="accepted",
+            ).first()
+            is not None
         )
 
     comments = (
@@ -162,6 +171,7 @@ def _serialize_detail_idea(idea: Idea) -> dict:
         "views": f"{idea.views:,} views",
         "votes": idea.vote_count,
         "user_voted": user_voted,
+        "user_collaborating": user_collaborating,
         "comments_total": idea.comment_count,
         "collaborators_total": idea.collaborator_count,
         "sections": sections,
@@ -322,6 +332,44 @@ def toggle_idea_vote(idea_id: int):
             "user_id": actor.id,
             "voted": voted,
             "vote_count": idea.vote_count,
+        }
+    )
+
+
+@main_bp.route("/ideas/<int:idea_id>/collaborate", methods=["POST"])
+def toggle_idea_collaboration(idea_id: int):
+    idea = Idea.query.get_or_404(idea_id)
+    actor = _get_actor_user()
+    if actor is None:
+        return jsonify({"ok": False, "error": "No available user to collaborate"}), 400
+
+    existing = Collaboration.query.filter_by(
+        user_id=actor.id,
+        idea_id=idea.id,
+        status="accepted",
+    ).first()
+    if existing:
+        db.session.delete(existing)
+        collaborating = False
+    else:
+        db.session.add(
+            Collaboration(
+                user_id=actor.id,
+                idea_id=idea.id,
+                role="contributor",
+                status="accepted",
+            )
+        )
+        collaborating = True
+
+    db.session.commit()
+    return jsonify(
+        {
+            "ok": True,
+            "idea_id": idea.id,
+            "user_id": actor.id,
+            "collaborating": collaborating,
+            "collaborators_total": idea.collaborator_count,
         }
     )
 

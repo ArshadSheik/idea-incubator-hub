@@ -8,6 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
     return match ? match[1] : null;
   };
   const ideaIdForStorage = getIdeaId();
+  const savedIdeasStorageKey = "saved_ideas";
   const likeStorageKey = ideaIdForStorage ? `idea:${ideaIdForStorage}:liked_comments` : null;
 
   const readLikedComments = () => {
@@ -24,6 +25,20 @@ document.addEventListener("DOMContentLoaded", () => {
   const writeLikedComments = (likedSet) => {
     if (!likeStorageKey) return;
     localStorage.setItem(likeStorageKey, JSON.stringify(Array.from(likedSet)));
+  };
+
+  const readSavedIdeas = () => {
+    try {
+      const raw = localStorage.getItem(savedIdeasStorageKey);
+      const parsed = raw ? JSON.parse(raw) : [];
+      return new Set(Array.isArray(parsed) ? parsed.map(String) : []);
+    } catch (_) {
+      return new Set();
+    }
+  };
+
+  const writeSavedIdeas = (savedSet) => {
+    localStorage.setItem(savedIdeasStorageKey, JSON.stringify(Array.from(savedSet)));
   };
 
   const setLikeButtonState = (btn, liked, count) => {
@@ -67,6 +82,95 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const upvoteBtn = document.getElementById("upvoteBtn");
   const voteCountEl = document.getElementById("voteCount");
+  const saveBtn = document.getElementById("saveBtn");
+  const shareBtn = document.getElementById("shareBtn");
+  const collaborateBtn = document.getElementById("collaborateBtn");
+  const savedIdeas = readSavedIdeas();
+
+  if (saveBtn && ideaIdForStorage) {
+    const setSaveState = (saved) => {
+      saveBtn.classList.toggle("voted", saved);
+      const label = saveBtn.querySelector("span");
+      if (label) label.textContent = saved ? "Saved" : "Save";
+      const icon = saveBtn.querySelector("i");
+      if (icon) {
+        icon.className = saved ? "bi bi-bookmark-fill" : "bi bi-bookmark";
+      }
+    };
+
+    setSaveState(savedIdeas.has(String(ideaIdForStorage)));
+    saveBtn.addEventListener("click", () => {
+      const key = String(ideaIdForStorage);
+      if (savedIdeas.has(key)) {
+        savedIdeas.delete(key);
+      } else {
+        savedIdeas.add(key);
+      }
+      writeSavedIdeas(savedIdeas);
+      setSaveState(savedIdeas.has(key));
+    });
+  }
+
+  if (shareBtn) {
+    shareBtn.addEventListener("click", async () => {
+      const shareData = {
+        title: document.title,
+        text: "Check out this idea on Idea Incubator Hub",
+        url: window.location.href,
+      };
+
+      try {
+        if (navigator.share) {
+          await navigator.share(shareData);
+        } else {
+          await navigator.clipboard.writeText(window.location.href);
+          const label = shareBtn.querySelector("span");
+          if (label) {
+            const prev = label.textContent;
+            label.textContent = "Copied link";
+            setTimeout(() => {
+              label.textContent = prev || "Share";
+            }, 1500);
+          }
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    });
+  }
+
+  if (collaborateBtn) {
+    collaborateBtn.addEventListener("click", async () => {
+      const ideaId = getIdeaId();
+      if (!ideaId) return;
+      collaborateBtn.disabled = true;
+      try {
+        const response = await fetch(`/ideas/${ideaId}/collaborate`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+          },
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload.error || `Collaborate request failed: ${response.status}`);
+        }
+        collaborateBtn.classList.toggle("voted", payload.collaborating);
+        const label = collaborateBtn.querySelector("span");
+        if (label) {
+          label.textContent = payload.collaborating
+            ? "Joined as collaborator"
+            : "Join as collaborator";
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        collaborateBtn.disabled = false;
+      }
+    });
+  }
+
   if (upvoteBtn && voteCountEl) {
     upvoteBtn.addEventListener("click", async () => {
       const ideaId = getIdeaId();
