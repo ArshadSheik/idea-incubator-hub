@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 from flask import Blueprint, jsonify, redirect, render_template, request, url_for
@@ -112,12 +113,25 @@ def _serialize_detail_idea(idea: Idea) -> dict:
 
     tags = [f"#{tag.name}" for tag in idea.tags]
 
+    description_text = idea.description or ""
+    parsed_meta = {}
+    if description_text.strip().startswith("{"):
+        try:
+            parsed_meta = json.loads(description_text)
+        except (TypeError, ValueError):
+            parsed_meta = {}
+
+    sections_source = parsed_meta.get("sections", {}) if isinstance(parsed_meta, dict) else {}
+
     # Keep template contract stable: map DB fields to existing sections.
     sections = {
-        "idea": idea.summary,
-        "problem": idea.description,
-        "solution_intro": "Initial version based on current idea description and metrics.",
-        "solution_points": [],
+        "idea": sections_source.get("idea", idea.summary),
+        "problem": sections_source.get("problem", description_text),
+        "solution_intro": sections_source.get(
+            "solution_intro",
+            "Initial version based on current idea description and metrics.",
+        ),
+        "solution_points": sections_source.get("solution_points", []),
     }
 
     return {
