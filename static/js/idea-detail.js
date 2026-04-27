@@ -10,6 +10,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const ideaIdForStorage = getIdeaId();
   const savedIdeasStorageKey = "saved_ideas";
   const likeStorageKey = ideaIdForStorage ? `idea:${ideaIdForStorage}:liked_comments` : null;
+  const actionFeedbackEl = document.getElementById("actionFeedback");
+  let feedbackTimer = null;
 
   const readLikedComments = () => {
     if (!likeStorageKey) return new Set();
@@ -45,6 +47,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const iconClass = liked ? "bi bi-hand-thumbs-up-fill" : "bi bi-hand-thumbs-up";
     btn.classList.toggle("liked", liked);
     btn.innerHTML = `<i class="${iconClass}"></i> ${count}`;
+  };
+
+  const showActionFeedback = (message, variant = "danger") => {
+    if (!actionFeedbackEl) return;
+    actionFeedbackEl.textContent = message;
+    actionFeedbackEl.classList.remove("d-none", "alert-danger", "alert-success", "alert-info");
+    actionFeedbackEl.classList.add(`alert-${variant}`);
+    if (feedbackTimer) {
+      clearTimeout(feedbackTimer);
+    }
+    feedbackTimer = setTimeout(() => {
+      actionFeedbackEl.classList.add("d-none");
+    }, 3500);
   };
 
   const buildReplyNode = (reply) => {
@@ -135,6 +150,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       } catch (error) {
         console.error(error);
+        showActionFeedback("Unable to share this idea right now.", "info");
       }
     });
   }
@@ -165,6 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       } catch (error) {
         console.error(error);
+        showActionFeedback("Unable to update collaboration right now. Please try again.");
       } finally {
         collaborateBtn.disabled = false;
       }
@@ -200,6 +217,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       } catch (error) {
         console.error(error);
+        showActionFeedback("Unable to update vote right now. Please try again.");
       } finally {
         upvoteBtn.disabled = false;
       }
@@ -231,6 +249,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const text = commentInput.value.trim();
       if (!text) {
         commentInput.classList.add("is-invalid");
+        showActionFeedback("Comment cannot be empty. Please enter some text.", "info");
         return;
       }
       commentInput.classList.remove("is-invalid");
@@ -277,6 +296,7 @@ document.addEventListener("DOMContentLoaded", () => {
         commentInput.value = "";
       } catch (error) {
         console.error(error);
+        showActionFeedback("Unable to post comment. Please try again.");
       } finally {
         if (submitBtn) submitBtn.disabled = false;
       }
@@ -322,6 +342,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const text = (textarea?.value || "").trim();
       if (!text) {
         textarea?.classList.add("is-invalid");
+        showActionFeedback("Reply cannot be empty. Please enter some text.", "info");
         return;
       }
       textarea?.classList.remove("is-invalid");
@@ -348,6 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
         composer.remove();
       } catch (error) {
         console.error(error);
+        showActionFeedback("Unable to post reply. Please try again.");
       } finally {
         if (submitBtn) submitBtn.disabled = false;
       }
@@ -397,6 +419,7 @@ document.addEventListener("DOMContentLoaded", () => {
         console.error(error);
         // Keep UI unchanged on error.
         setLikeButtonState(btn, currentlyLiked, count);
+        showActionFeedback("Unable to update comment like right now. Please try again.");
       })
       .finally(() => {
         btn.disabled = false;
