@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 
 from app import create_app
-from models.models import db, User, Idea, Vote, Comment, Tag
+from models.models import db, User, Idea, Vote, Comment, Tag, idea_tags
 
 
 # Resolve seed_data/ relative to this file so the script works regardless
@@ -29,6 +29,9 @@ def load_json(filename):
 def wipe_existing_data():
     """Delete in reverse FK order so SQLite doesn't complain."""
     print('Wiping existing data...')
+    # Clear the idea_tags join table first — it isn't auto-cleared
+    # when the parent Idea or Tag rows are deleted.
+    db.session.execute(idea_tags.delete())
     Comment.query.delete()
     Vote.query.delete()
     Idea.query.delete()
