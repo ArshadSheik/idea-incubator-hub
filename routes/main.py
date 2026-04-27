@@ -84,6 +84,7 @@ def _serialize_detail_idea(idea: Idea) -> dict:
     )
     comment_preview = [
         {
+            "id": item.id,
             "name": item.author.display_name if item.author else "Unknown user",
             "initials": item.author.initials if item.author else "NA",
             "avatar_class": _avatar_class_for_user(item.author) if item.author else "avatar-1",
@@ -331,6 +332,45 @@ def create_idea_comment(idea_id: int):
             }
         ),
         201,
+    )
+
+
+@main_bp.route("/ideas/<int:idea_id>/comments/<int:comment_id>/like", methods=["POST"])
+@csrf.exempt
+def toggle_comment_like(idea_id: int, comment_id: int):
+    idea = Idea.query.get_or_404(idea_id)
+    comment = Comment.query.filter_by(id=comment_id, idea_id=idea.id).first_or_404()
+
+    payload = request.get_json(silent=True) or {}
+    action = (payload.get("action") or "toggle").strip().lower()
+    if action not in {"like", "unlike", "toggle"}:
+        return jsonify({"ok": False, "error": "Invalid action"}), 400
+
+    # For now we persist aggregate likes; per-user state is restored on frontend.
+    if action == "like":
+        comment.like_count = (comment.like_count or 0) + 1
+        liked = True
+    elif action == "unlike":
+        comment.like_count = max((comment.like_count or 0) - 1, 0)
+        liked = False
+    else:
+        currently_liked = bool(payload.get("currently_liked", False))
+        if currently_liked:
+            comment.like_count = max((comment.like_count or 0) - 1, 0)
+            liked = False
+        else:
+            comment.like_count = (comment.like_count or 0) + 1
+            liked = True
+
+    db.session.commit()
+    return jsonify(
+        {
+            "ok": True,
+            "idea_id": idea.id,
+            "comment_id": comment.id,
+            "liked": liked,
+            "like_count": comment.like_count or 0,
+        }
     )
 
 

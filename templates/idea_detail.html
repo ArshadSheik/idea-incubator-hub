@@ -85,7 +85,7 @@
               </div>
               <p>{{ comment.text }}</p>
               <div class="comment-actions">
-                <button class="comment-action"><i class="bi bi-hand-thumbs-up"></i> {{ comment.likes }}</button>
+                <button class="comment-action comment-like-btn" data-comment-id="{{ comment.id }}"><i class="bi bi-hand-thumbs-up"></i> {{ comment.likes }}</button>
                 <button class="comment-action"><i class="bi bi-reply"></i> Reply</button>
               </div>
             </div>
