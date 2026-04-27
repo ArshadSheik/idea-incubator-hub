@@ -1,0 +1,50 @@
+[
+  {
+    "username": "jamie",
+    "email": "jamie@example.com",
+    "first_name": "Jamie",
+    "last_name": "Liu",
+    "avatar_color": 1,
+    "bio": "Founder, FinTech enthusiast."
+  },
+  {
+    "username": "maya",
+    "email": "maya@example.com",
+    "first_name": "Maya",
+    "last_name": "Kapoor",
+    "avatar_color": 2,
+    "bio": "Backend dev."
+  },
+  {
+    "username": "sam",
+    "email": "sam@example.com",
+    "first_name": "Sam",
+    "last_name": "Reyes",
+    "avatar_color": 3,
+    "bio": "Designer who codes."
+  },
+  {
+    "username": "priya",
+    "email": "priya@example.com",
+    "first_name": "Priya",
+    "last_name": "Ahmed",
+    "avatar_color": 4,
+    "bio": "Marketing & growth."
+  },
+  {
+    "username": "taylor",
+    "email": "taylor@example.com",
+    "first_name": "Taylor",
+    "last_name": "Wong",
+    "avatar_color": 5,
+    "bio": "Product manager."
+  },
+  {
+    "username": "alex",
+    "email": "alex@example.com",
+    "first_name": "Alex",
+    "last_name": "Garcia",
+    "avatar_color": 6,
+    "bio": "iOS dev."
+  }
+]
