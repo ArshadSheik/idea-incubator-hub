@@ -52,9 +52,9 @@
       </div>
 
       <div class="vote-bar">
-        <button class="vote-btn" id="upvoteBtn">
+        <button class="vote-btn {% if idea.user_voted %}voted{% endif %}" id="upvoteBtn">
           <i class="bi bi-caret-up-fill"></i>
-          <span>Upvote</span>
+          <span>{% if idea.user_voted %}Upvoted{% else %}Upvote{% endif %}</span>
           <strong id="voteCount">{{ idea.votes }}</strong>
         </button>
         <button class="vote-btn-secondary"><i class="bi bi-bookmark"></i> Save</button>

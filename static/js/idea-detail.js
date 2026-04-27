@@ -2,16 +2,37 @@ document.addEventListener("DOMContentLoaded", () => {
   const upvoteBtn = document.getElementById("upvoteBtn");
   const voteCountEl = document.getElementById("voteCount");
   if (upvoteBtn && voteCountEl) {
-    upvoteBtn.addEventListener("click", () => {
-      const current = parseInt(voteCountEl.textContent, 10);
-      if (upvoteBtn.classList.contains("voted")) {
-        upvoteBtn.classList.remove("voted");
-        voteCountEl.textContent = current - 1;
-        upvoteBtn.querySelector("span").textContent = "Upvote";
-      } else {
-        upvoteBtn.classList.add("voted");
-        voteCountEl.textContent = current + 1;
-        upvoteBtn.querySelector("span").textContent = "Upvoted";
+    upvoteBtn.addEventListener("click", async () => {
+      const match = window.location.pathname.match(/\/ideas\/(\d+)/);
+      if (!match) return;
+
+      const ideaId = match[1];
+      upvoteBtn.disabled = true;
+      try {
+        const response = await fetch(`/ideas/${ideaId}/vote`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error(`Vote request failed: ${response.status}`);
+        }
+
+        const payload = await response.json();
+        voteCountEl.textContent = payload.vote_count;
+        if (payload.voted) {
+          upvoteBtn.classList.add("voted");
+          upvoteBtn.querySelector("span").textContent = "Upvoted";
+        } else {
+          upvoteBtn.classList.remove("voted");
+          upvoteBtn.querySelector("span").textContent = "Upvote";
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        upvoteBtn.disabled = false;
       }
     });
   }

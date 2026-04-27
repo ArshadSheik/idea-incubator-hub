@@ -1,9 +1,11 @@
 from datetime import datetime
 
-from flask import Blueprint, redirect, render_template, request, url_for
+from flask import Blueprint, jsonify, redirect, render_template, request, url_for
+from flask_login import current_user
 from sqlalchemy import func
 
-from models.models import Collaboration, Comment, Idea, User, Vote
+from app import csrf
+from models.models import Collaboration, Comment, Idea, User, Vote, db
 
 main_bp = Blueprint("main", __name__)
 
@@ -67,6 +69,12 @@ def _serialize_explore_idea(idea: Idea) -> dict:
 def _serialize_detail_idea(idea: Idea) -> dict:
     author = idea.author
     stage_class = idea.stage or "validation"
+    actor = _get_actor_user()
+    user_voted = False
+    if actor is not None:
+        user_voted = (
+            Vote.query.filter_by(user_id=actor.id, idea_id=idea.id).first() is not None
+        )
 
     comments = (
         Comment.query.filter_by(idea_id=idea.id)
@@ -126,6 +134,7 @@ def _serialize_detail_idea(idea: Idea) -> dict:
         "posted": _relative_time(idea.created_at),
         "views": f"{idea.views:,} views",
         "votes": idea.vote_count,
+        "user_voted": user_voted,
         "comments_total": idea.comment_count,
         "collaborators_total": idea.collaborator_count,
         "sections": sections,
@@ -140,6 +149,17 @@ def _serialize_detail_idea(idea: Idea) -> dict:
         "collaborators": collaborator_data,
         "discussion_preview": comment_preview,
     }
+
+
+def _get_actor_user():
+    """
+    Temporary actor resolution for write endpoints:
+    - use logged-in user when available
+    - otherwise fallback to first seeded user for local development
+    """
+    if current_user and current_user.is_authenticated:
+        return current_user
+    return User.query.order_by(User.id.asc()).first()
 
 
 @main_bp.app_errorhandler(404)
@@ -235,6 +255,34 @@ def dashboard():
 def idea_detail(idea_id: int):
     idea = Idea.query.get_or_404(idea_id)
     return render_template("idea_detail.html", idea=_serialize_detail_idea(idea))
+
+
+@main_bp.route("/ideas/<int:idea_id>/vote", methods=["POST"])
+@csrf.exempt
+def toggle_idea_vote(idea_id: int):
+    idea = Idea.query.get_or_404(idea_id)
+    actor = _get_actor_user()
+    if actor is None:
+        return jsonify({"ok": False, "error": "No available user to cast vote"}), 400
+
+    existing_vote = Vote.query.filter_by(user_id=actor.id, idea_id=idea.id).first()
+    if existing_vote:
+        db.session.delete(existing_vote)
+        voted = False
+    else:
+        db.session.add(Vote(user_id=actor.id, idea_id=idea.id))
+        voted = True
+
+    db.session.commit()
+    return jsonify(
+        {
+            "ok": True,
+            "idea_id": idea.id,
+            "user_id": actor.id,
+            "voted": voted,
+            "vote_count": idea.vote_count,
+        }
+    )
 
 
 @main_bp.route("/login")
