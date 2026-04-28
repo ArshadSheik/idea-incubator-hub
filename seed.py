@@ -11,7 +11,7 @@ import json
 from pathlib import Path
 
 from app import create_app
-from models.models import db, User, Idea, Vote, Comment, Tag, idea_tags
+from models.models import db, User, Idea, Vote, Comment, Tag, idea_tags, Bookmark, Notification
 
 
 # Resolve seed_data/ relative to this file so the script works regardless

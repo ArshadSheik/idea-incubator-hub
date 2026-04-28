@@ -10,6 +10,10 @@ Tables:
   - Tag / IdeaTag (many-to-many tagging)
   - Collaboration (users joining idea teams)
   - Task          (kanban tasks on collaboration board)
+  - Notification
+  - Bookmark
+  - AI Analysis
+  - Market Trend (cached external API data)
 """
 
 from datetime import datetime
@@ -306,3 +310,122 @@ class Task(db.Model):
 
     def __repr__(self):
         return f'<Task {self.id}: {self.title} [{self.status}]>'
+
+# ─────────────────────────────────────────
+# NOTIFICATION
+# ─────────────────────────────────────────
+class Notification(db.Model):
+    """
+    In-app notification for a user.
+    type examples: 'vote', 'comment', 'reply', 'collab_request', 'collab_accepted', 'milestone'
+    """
+    __tablename__ = 'notifications'
+
+    id         = db.Column(db.Integer, primary_key=True)
+    user_id    = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    type       = db.Column(db.String(30), nullable=False)
+    message    = db.Column(db.String(300), nullable=False)
+    link       = db.Column(db.String(200), nullable=True)   # URL to navigate to on click
+    is_read    = db.Column(db.Boolean, default=False, nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('notifications', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<Notification {self.type} → user={self.user_id}>'
+
+
+# ─────────────────────────────────────────
+# BOOKMARK
+# ─────────────────────────────────────────
+class Bookmark(db.Model):
+    """
+    A user saving an idea to their bookmarks for later reference.
+    Unique constraint prevents duplicate bookmarks.
+    """
+    __tablename__ = 'bookmarks'
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'idea_id', name='unique_bookmark'),
+    )
+
+    id         = db.Column(db.Integer, primary_key=True)
+    user_id    = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    idea_id    = db.Column(db.Integer, db.ForeignKey('ideas.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('bookmarks', lazy='dynamic'))
+    idea = db.relationship('Idea', backref=db.backref('bookmarks', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<Bookmark user={self.user_id} idea={self.idea_id}>'
+
+
+# ─────────────────────────────────────────
+# AI ANALYSIS
+# ─────────────────────────────────────────
+class AIAnalysis(db.Model):
+    """
+    Cached result of an AI analysis run on an idea.
+    One row per idea — re-running overwrites the existing row.
+    Storing results avoids repeated API calls for the same idea.
+    """
+    __tablename__ = 'ai_analyses'
+
+    id                   = db.Column(db.Integer, primary_key=True)
+    idea_id              = db.Column(db.Integer, db.ForeignKey('ideas.id'),
+                                     nullable=False, unique=True)
+    market_summary       = db.Column(db.Text, nullable=True)
+    feasibility_summary  = db.Column(db.Text, nullable=True)
+    competitor_summary   = db.Column(db.Text, nullable=True)
+    strengths_json       = db.Column(db.Text, nullable=True)   # JSON list of strings
+    risks_json           = db.Column(db.Text, nullable=True)   # JSON list of strings
+    sentiment_score      = db.Column(db.Integer, nullable=True)  # 0–100
+    created_at           = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at           = db.Column(db.DateTime, default=datetime.utcnow,
+                                     onupdate=datetime.utcnow)
+
+    idea = db.relationship('Idea', backref=db.backref('ai_analysis', uselist=False))
+
+    def strengths(self):
+        """Return strengths as a Python list."""
+        import json
+        return json.loads(self.strengths_json) if self.strengths_json else []
+
+    def risks(self):
+        """Return risks as a Python list."""
+        import json
+        return json.loads(self.risks_json) if self.risks_json else []
+
+    def __repr__(self):
+        return f'<AIAnalysis idea={self.idea_id} score={self.sentiment_score}>'
+
+
+# ─────────────────────────────────────────
+# MARKET TREND  (cached external API data)
+# ─────────────────────────────────────────
+class MarketTrend(db.Model):
+    """
+    Cached market/trend data fetched from external APIs (NewsAPI, Alpha Vantage, etc.)
+    Keyed by category + source so we can cache per-category per-API.
+    Stale after 24 hours — routes check fetched_at before deciding to refresh.
+    """
+    __tablename__ = 'market_trends'
+
+    id          = db.Column(db.Integer, primary_key=True)
+    category    = db.Column(db.String(30), nullable=False)   # e.g. 'FinTech'
+    source      = db.Column(db.String(30), nullable=False)   # e.g. 'newsapi', 'alphavantage'
+    data_json   = db.Column(db.Text, nullable=False)          # raw JSON string from API
+    fetched_at  = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def data(self):
+        """Return the cached data as a Python dict/list."""
+        import json
+        return json.loads(self.data_json)
+
+    def is_stale(self, max_age_hours=24):
+        """Returns True if this cache entry is older than max_age_hours."""
+        from datetime import timedelta
+        return datetime.utcnow() - self.fetched_at > timedelta(hours=max_age_hours)
+
+    def __repr__(self):
+        return f'<MarketTrend {self.category}/{self.source} fetched={self.fetched_at}>'
