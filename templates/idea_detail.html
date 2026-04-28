@@ -52,15 +52,19 @@
       </div>
 
       <div class="vote-bar">
-        <button class="vote-btn" id="upvoteBtn">
+        <button class="vote-btn {% if idea.user_voted %}voted{% endif %}" id="upvoteBtn">
           <i class="bi bi-caret-up-fill"></i>
-          <span>Upvote</span>
+          <span>{% if idea.user_voted %}Upvoted{% else %}Upvote{% endif %}</span>
           <strong id="voteCount">{{ idea.votes }}</strong>
         </button>
-        <button class="vote-btn-secondary"><i class="bi bi-bookmark"></i> Save</button>
-        <button class="vote-btn-secondary"><i class="bi bi-share"></i> Share</button>
-        <button class="vote-btn-secondary ms-auto"><i class="bi bi-people"></i> Join as collaborator</button>
+        <button class="vote-btn-secondary" id="saveBtn"><i class="bi bi-bookmark"></i> <span>Save</span></button>
+        <button class="vote-btn-secondary" id="shareBtn"><i class="bi bi-share"></i> <span>Share</span></button>
+        <button class="vote-btn-secondary ms-auto {% if idea.user_collaborating %}voted{% endif %}" id="collaborateBtn">
+          <i class="bi bi-people"></i>
+          <span>{% if idea.user_collaborating %}Joined as collaborator{% else %}Join as collaborator{% endif %}</span>
+        </button>
       </div>
+      <div id="actionFeedback" class="alert d-none mt-3 mb-0" role="alert"></div>
 
       <div class="idea-section">
         <h2 class="section-heading">Discussion <span class="text-muted-iih small">({{ idea.comments_total }})</span></h2>
@@ -76,7 +80,7 @@
 
         <div class="comment-list" id="commentList">
           {% for comment in idea.discussion_preview %}
-          <div class="comment">
+          <div class="comment" data-comment-id="{{ comment.id }}">
             <span class="avatar {{ comment.avatar_class }}">{{ comment.initials }}</span>
             <div class="flex-grow-1">
               <div class="comment-meta">
@@ -85,8 +89,25 @@
               </div>
               <p>{{ comment.text }}</p>
               <div class="comment-actions">
-                <button class="comment-action"><i class="bi bi-hand-thumbs-up"></i> {{ comment.likes }}</button>
-                <button class="comment-action"><i class="bi bi-reply"></i> Reply</button>
+                <button class="comment-action comment-like-btn" data-comment-id="{{ comment.id }}"><i class="bi bi-hand-thumbs-up"></i> {{ comment.likes }}</button>
+                <button class="comment-action comment-reply-btn" data-comment-id="{{ comment.id }}"><i class="bi bi-reply"></i> Reply</button>
+              </div>
+              <div class="reply-list mt-2" data-reply-list-for="{{ comment.id }}">
+                {% for reply in comment.replies %}
+                <div class="comment ms-4 mt-2" data-comment-id="{{ reply.id }}">
+                  <span class="avatar {{ reply.avatar_class }}">{{ reply.initials }}</span>
+                  <div class="flex-grow-1">
+                    <div class="comment-meta">
+                      <strong>{{ reply.name }}</strong>
+                      <span class="text-muted-iih small">· {{ reply.time }}</span>
+                    </div>
+                    <p>{{ reply.text }}</p>
+                    <div class="comment-actions">
+                      <button class="comment-action comment-like-btn" data-comment-id="{{ reply.id }}"><i class="bi bi-hand-thumbs-up"></i> {{ reply.likes }}</button>
+                    </div>
+                  </div>
+                </div>
+                {% endfor %}
               </div>
             </div>
           </div>
