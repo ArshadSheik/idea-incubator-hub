@@ -1,4 +1,7 @@
 import json
+import os
+from urllib import error as urlerror
+from urllib import request as urlrequest
 from datetime import datetime
 
 from flask import Blueprint, jsonify, redirect, render_template, request, url_for
@@ -200,6 +203,155 @@ def _serialize_comment(comment: Comment) -> dict:
         "text": comment.body,
         "likes": comment.like_count or 0,
         "parent_id": comment.parent_id,
+    }
+
+
+def _build_ai_insights(idea: Idea) -> dict:
+    """
+    Lightweight rule-based "AI" insights so we can demo integration
+    without requiring third-party model credentials.
+    """
+    summary = (
+        f"{idea.title} is a {idea.stage} stage idea in {idea.category} focused on "
+        f"{(idea.summary or '').strip().rstrip('.')}. This concept currently has "
+        f"{idea.vote_count} votes and {idea.comment_count} discussion comments."
+    )
+
+    strengths = []
+    if idea.market_score >= 80:
+        strengths.append("Strong market potential score suggests clear user demand.")
+    if idea.community_score >= 80:
+        strengths.append("High community support indicates positive early validation.")
+    if idea.vote_count >= 5:
+        strengths.append("User voting activity suggests meaningful audience interest.")
+    if not strengths:
+        strengths.append("Early traction exists and can improve with more validation interviews.")
+
+    suggestions = []
+    if idea.feasibility_score < 70:
+        suggestions.append("Define a scoped MVP with explicit technical milestones.")
+    if idea.differentiation_score < 70:
+        suggestions.append("Clarify your unique advantage compared to direct alternatives.")
+    if idea.comment_count < 3:
+        suggestions.append("Collect more structured feedback from target users this week.")
+    if not suggestions:
+        suggestions.append("Prioritize one KPI for the next sprint (retention, conversion, or activation).")
+
+    return {
+        "summary": summary,
+        "strengths": strengths[:3],
+        "suggestions": suggestions[:3],
+    }
+
+
+def _generate_ai_insights_with_openai(idea: Idea) -> dict:
+    provider = os.getenv("AI_PROVIDER", "deepseek").strip().lower()
+    if provider == "openai":
+        api_key = os.getenv("OPENAI_API_KEY", "").strip()
+        if not api_key:
+            raise RuntimeError("OPENAI_API_KEY is not configured.")
+        model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        endpoint = os.getenv("OPENAI_API_URL", "https://api.openai.com/v1/chat/completions")
+        provider_name = "openai"
+    else:
+        api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
+        if not api_key:
+            # Fallback to OpenAI if DeepSeek key is missing.
+            api_key = os.getenv("OPENAI_API_KEY", "").strip()
+            if not api_key:
+                raise RuntimeError("Configure DEEPSEEK_API_KEY or OPENAI_API_KEY.")
+            model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+            endpoint = os.getenv("OPENAI_API_URL", "https://api.openai.com/v1/chat/completions")
+            provider_name = "openai"
+        else:
+            model = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+            endpoint = os.getenv("DEEPSEEK_API_URL", "https://api.deepseek.com/v1/chat/completions")
+            provider_name = "deepseek"
+    prompt = (
+        "You are a startup idea coach. Return strict JSON with this schema: "
+        '{"summary": "string", "strengths": ["string"], "suggestions": ["string"]}. '
+        "Keep strengths and suggestions to 2-3 concise bullets each.\n\n"
+        f"Idea title: {idea.title}\n"
+        f"Category: {idea.category}\n"
+        f"Stage: {idea.stage}\n"
+        f"Summary: {idea.summary}\n"
+        f"Description: {idea.description}\n"
+        f"Votes: {idea.vote_count}\n"
+        f"Comments: {idea.comment_count}\n"
+        f"Scores => market:{idea.market_score}, support:{idea.community_score}, "
+        f"feasibility:{idea.feasibility_score}, differentiation:{idea.differentiation_score}\n"
+    )
+
+    payload = {
+        "model": model,
+        "messages": [
+            {
+                "role": "system",
+                "content": "You are concise, practical, and return valid JSON only.",
+            },
+            {
+                "role": "user",
+                "content": prompt,
+            },
+        ],
+        "temperature": 0.4,
+    }
+    data = json.dumps(payload).encode("utf-8")
+    req = urlrequest.Request(
+        endpoint,
+        data=data,
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {api_key}",
+        },
+        method="POST",
+    )
+    try:
+        with urlrequest.urlopen(req, timeout=20) as resp:
+            response_json = json.loads(resp.read().decode("utf-8"))
+    except urlerror.HTTPError as exc:
+        detail = exc.read().decode("utf-8", errors="ignore")
+        raise RuntimeError(f"{provider_name} request failed: {exc.code} {detail}") from exc
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(f"{provider_name} request failed: {exc}") from exc
+
+    content = (
+        response_json.get("choices", [{}])[0]
+        .get("message", {})
+        .get("content", "")
+        .strip()
+    )
+    if not content:
+        raise RuntimeError(f"{provider_name} returned empty content.")
+
+    # Some models may wrap JSON in markdown fences.
+    if content.startswith("```"):
+        content = content.strip("`")
+        if content.lower().startswith("json"):
+            content = content[4:].strip()
+
+    try:
+        parsed = json.loads(content)
+    except Exception as exc:  # noqa: BLE001
+        raise RuntimeError(f"{provider_name} returned non-JSON content.") from exc
+
+    summary = str(parsed.get("summary", "")).strip()
+    strengths = parsed.get("strengths", [])
+    suggestions = parsed.get("suggestions", [])
+    if not isinstance(strengths, list):
+        strengths = []
+    if not isinstance(suggestions, list):
+        suggestions = []
+
+    if not summary:
+        raise RuntimeError(f"{provider_name} response missing summary.")
+
+    return {
+        "summary": summary,
+        "strengths": [str(item).strip() for item in strengths if str(item).strip()][:3],
+        "suggestions": [str(item).strip() for item in suggestions if str(item).strip()][:3],
+        "provider": provider_name,
+        "model": model,
     }
 
 
@@ -471,6 +623,24 @@ def create_comment_reply(idea_id: int, comment_id: int):
     db.session.commit()
 
     return jsonify({"ok": True, "reply": _serialize_comment(reply)}), 201
+
+
+@main_bp.route("/ideas/<int:idea_id>/ai-insights", methods=["POST"])
+def generate_idea_insights(idea_id: int):
+    idea = Idea.query.get_or_404(idea_id)
+    try:
+        insights = _generate_ai_insights_with_openai(idea)
+        return jsonify(
+            {
+                "ok": True,
+                "idea_id": idea.id,
+                "insights": insights,
+                "provider": insights.get("provider", "unknown"),
+                "model": insights.get("model"),
+            }
+        )
+    except RuntimeError as exc:
+        return jsonify({"ok": False, "error": str(exc)}), 502
 
 
 @main_bp.route("/login")
