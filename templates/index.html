@@ -31,15 +31,15 @@
           </p>
           <div class="hero-cta fade-up stagger-3">
             {% if current_user.is_authenticated %}
-              <a href="#" class="btn btn-brand btn-lg-iih">
+              <a href="{{ url_for('main.submit_idea') }}" class="btn btn-brand btn-lg-iih">
                 Share your idea <i class="bi bi-arrow-right"></i>
               </a>
             {% else %}
-              <a href="#" class="btn btn-brand btn-lg-iih">
+              <a href="{{ url_for('main.submit_idea') }}" class="btn btn-brand btn-lg-iih">
                 Share your first idea <i class="bi bi-arrow-right"></i>
               </a>
             {% endif %}
-            <a href="#" class="btn btn-outline-iih btn-lg-iih">
+            <a href="{{ url_for('main.explore') }}" class="btn btn-outline-iih btn-lg-iih">
               <i class="bi bi-compass"></i> Explore ideas
             </a>
           </div>
