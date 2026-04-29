@@ -100,7 +100,68 @@ document.addEventListener("DOMContentLoaded", () => {
   const saveBtn = document.getElementById("saveBtn");
   const shareBtn = document.getElementById("shareBtn");
   const collaborateBtn = document.getElementById("collaborateBtn");
+  const aiInsightsBtn = document.getElementById("aiInsightsBtn");
+  const aiInsightsLoading = document.getElementById("aiInsightsLoading");
+  const aiInsightsError = document.getElementById("aiInsightsError");
+  const aiInsightsCard = document.getElementById("aiInsightsCard");
+  const aiSummaryText = document.getElementById("aiSummaryText");
+  const aiStrengthsList = document.getElementById("aiStrengthsList");
+  const aiSuggestionsList = document.getElementById("aiSuggestionsList");
   const savedIdeas = readSavedIdeas();
+
+  if (aiInsightsBtn) {
+    aiInsightsBtn.addEventListener("click", async () => {
+      const ideaId = getIdeaId();
+      if (!ideaId) return;
+
+      aiInsightsBtn.disabled = true;
+      aiInsightsLoading?.classList.remove("d-none");
+      aiInsightsError?.classList.add("d-none");
+      aiInsightsCard?.classList.add("d-none");
+      try {
+        const response = await fetch(`/ideas/${ideaId}/ai-insights`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+          },
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload.error || `AI insight request failed: ${response.status}`);
+        }
+
+        const insights = payload.insights || {};
+        if (aiSummaryText) aiSummaryText.textContent = insights.summary || "No summary available.";
+        if (aiStrengthsList) {
+          aiStrengthsList.innerHTML = "";
+          (insights.strengths || []).forEach((item) => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            aiStrengthsList.appendChild(li);
+          });
+        }
+        if (aiSuggestionsList) {
+          aiSuggestionsList.innerHTML = "";
+          (insights.suggestions || []).forEach((item) => {
+            const li = document.createElement("li");
+            li.textContent = item;
+            aiSuggestionsList.appendChild(li);
+          });
+        }
+        aiInsightsCard?.classList.remove("d-none");
+      } catch (error) {
+        console.error(error);
+        if (aiInsightsError) {
+          aiInsightsError.textContent = "Unable to generate AI insights right now. Please try again.";
+          aiInsightsError.classList.remove("d-none");
+        }
+      } finally {
+        aiInsightsLoading?.classList.add("d-none");
+        aiInsightsBtn.disabled = false;
+      }
+    });
+  }
 
   if (saveBtn && ideaIdForStorage) {
     const setSaveState = (saved) => {
