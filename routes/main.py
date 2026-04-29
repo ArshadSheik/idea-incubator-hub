@@ -861,3 +861,37 @@ def submit_idea():
     from forms import IdeaForm
     form = IdeaForm()
     return render_template("submit_idea.html", form=form)
+
+
+@main_bp.route("/profile/<username>")
+def profile(username):
+    profile_user = User.query.filter_by(username=username).first_or_404()
+
+    ideas = (
+        Idea.query
+        .filter_by(user_id=profile_user.id, privacy='public')
+        .order_by(Idea.created_at.desc())
+        .all()
+    )
+    collaborations = (
+        Collaboration.query
+        .filter_by(user_id=profile_user.id, status='accepted')
+        .all()
+    )
+    collab_count         = len(collaborations)
+    total_votes_received = sum(i.vote_count for i in ideas)
+
+    # Check if the logged-in user is viewing their own profile
+    is_own_profile = (
+        current_user.is_authenticated and current_user.id == profile_user.id
+    )
+
+    return render_template(
+        "profile.html",
+        profile_user=profile_user,
+        ideas=[_serialize_explore_idea(i) for i in ideas],
+        collaborations=collaborations,
+        collab_count=collab_count,
+        total_votes_received=total_votes_received,
+        is_own_profile=is_own_profile,
+    )
