@@ -854,3 +854,10 @@ def login_html():
 @main_bp.route("/register.html")
 def register_html():
     return redirect(url_for("auth.register"))
+
+# ─────────────────────────────────────────
+@main_bp.route("/ideas/new")
+def submit_idea():
+    from forms import IdeaForm
+    form = IdeaForm()
+    return render_template("submit_idea.html", form=form)
