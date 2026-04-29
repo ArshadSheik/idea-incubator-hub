@@ -1,6 +1,8 @@
 # routes/auth.py
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for,current_app
 from flask_login import current_user, login_required, login_user, logout_user
+from flask_mail import Mail, Message
+from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from werkzeug.security import generate_password_hash
 
 from models.models import User, db
@@ -98,3 +100,93 @@ def login():
 def logout():
     logout_user()
     return redirect(url_for("main.index"))
+
+def _get_serializer():
+    return URLSafeTimedSerializer(current_app.config['SECRET_KEY'])
+
+def generate_reset_token(email: str) -> str:
+    return _get_serializer().dumps(email, salt='password-reset')
+
+def verify_reset_token(token: str, max_age: int = 3600):
+    try:
+        email = _get_serializer().loads(token, salt='password-reset', max_age=max_age)
+    except (SignatureExpired, BadSignature):
+        return None
+    return email
+
+# ─────────────────────────────────────────
+# Step 1：input email , send reset mail
+# ─────────────────────────────────────────
+@auth_bp.route("/forgot-password", methods=["GET", "POST"])
+def forgot_password():
+    if current_user.is_authenticated:
+        return redirect(url_for("main.index"))
+
+    if request.method == "POST":
+        email = request.form.get("email", "").strip().lower()
+        user = User.query.filter_by(email=email).first()
+
+        if user:
+            token = generate_reset_token(user.email)
+            reset_url = url_for("auth.reset_password", token=token, _external=True)
+
+            from app import mail
+            msg = Message(
+                subject="Reset your Idea Incubator password",
+                recipients=[user.email],
+            )
+            msg.body = f"""Hi {user.first_name},
+
+You requested a password reset. Click the link below to set a new password:
+
+{reset_url}
+
+This link expires in 1 hour. If you didn't request this, you can safely ignore this email.
+
+— Idea Incubator Hub
+"""
+            mail.send(msg)
+
+        flash("If that email is registered, you'll receive a reset link shortly.")
+        return redirect(url_for("auth.forgot_password"))
+
+    return render_template("forgot_password.html")
+
+
+# ─────────────────────────────────────────
+# Step input new password
+# ─────────────────────────────────────────
+@auth_bp.route("/reset-password/<token>", methods=["GET", "POST"])
+def reset_password(token):
+    if current_user.is_authenticated:
+        return redirect(url_for("main.index"))
+
+    email = verify_reset_token(token)
+    if email is None:
+        flash("This reset link is invalid or has expired. Please request a new one.")
+        return redirect(url_for("auth.forgot_password"))
+
+    if request.method == "POST":
+        password         = request.form.get("password", "")
+        confirm_password = request.form.get("confirm_password", "")
+
+        if len(password) < 8:
+            flash("Password must be at least 8 characters.")
+            return render_template("reset_password.html", token=token)
+
+        if password != confirm_password:
+            flash("Passwords do not match.")
+            return render_template("reset_password.html", token=token)
+
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            flash("User not found.")
+            return redirect(url_for("auth.forgot_password"))
+
+        user.set_password(password)
+        db.session.commit()
+
+        flash("Password updated! You can now log in.")
+        return redirect(url_for("auth.login"))
+
+    return render_template("reset_password.html", token=token)

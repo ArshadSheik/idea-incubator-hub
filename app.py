@@ -10,6 +10,7 @@ from flask import Flask
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
+from flask_mail import Mail  
 from config import config
 from models.models import db, User
 
@@ -17,7 +18,7 @@ from models.models import db, User
 migrate = Migrate()
 login_manager = LoginManager()
 csrf = CSRFProtect()
-
+mail = Mail() 
 
 def create_app(config_name='default'):
     """
@@ -34,6 +35,7 @@ def create_app(config_name='default'):
     migrate.init_app(app, db)       # enables `flask db init/migrate/upgrade`
     login_manager.init_app(app)
     csrf.init_app(app)
+    mail.init_app(app)
 
     # Where Flask-Login redirects unauthenticated users
     login_manager.login_view = 'auth.login'
