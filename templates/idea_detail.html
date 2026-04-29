@@ -51,6 +51,24 @@
         </ul>
       </div>
 
+      <div class="idea-section">
+        <h2 class="section-heading">AI insights</h2>
+        <p class="text-muted-iih">Generate a quick AI-style summary and next-step suggestions for this idea.</p>
+        <button class="btn btn-outline-iih btn-sm-iih" id="aiInsightsBtn">
+          <i class="bi bi-stars"></i> Generate insights
+        </button>
+        <div id="aiInsightsLoading" class="small text-muted-iih mt-2 d-none">Generating insights...</div>
+        <div id="aiInsightsError" class="alert alert-danger mt-3 d-none" role="alert"></div>
+        <div id="aiInsightsCard" class="sidebar-card mt-3 d-none">
+          <h4 class="sidebar-title mb-2">AI summary</h4>
+          <p id="aiSummaryText" class="mb-3"></p>
+          <h5 class="mb-2">Strengths</h5>
+          <ul id="aiStrengthsList" class="mb-3"></ul>
+          <h5 class="mb-2">Suggestions</h5>
+          <ul id="aiSuggestionsList" class="mb-0"></ul>
+        </div>
+      </div>
+
       <div class="vote-bar">
         <button class="vote-btn {% if idea.user_voted %}voted{% endif %}" id="upvoteBtn">
           <i class="bi bi-caret-up-fill"></i>
