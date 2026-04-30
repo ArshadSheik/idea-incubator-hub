@@ -74,6 +74,110 @@ def _serialize_explore_idea(idea: Idea) -> dict:
         "collaborators_total": idea.collaborator_count,
     }
 
+def _serialize_dashboard_idea(idea: Idea) -> dict:
+    stage_class = idea.stage or "ideation"
+    return {
+        "id": idea.id,
+        "title": idea.title,
+        "summary": idea.summary,
+        "emoji": idea.emoji or "💡",
+        "stage_class": stage_class,
+        "stage": stage_class.capitalize(),
+        "votes": idea.vote_count,
+        "comments": idea.comment_count,
+        "collaborators": idea.collaborator_count,
+        "views": f"{idea.views:,}",
+        "updated": f"Updated {_relative_time(idea.updated_at or idea.created_at)}",
+    }
+
+
+def _build_dashboard_activity(user_id: int, limit: int = 6) -> list[dict]:
+    items = []
+
+    vote_rows = (
+        db.session.query(Vote, Idea, User)
+        .join(Idea, Vote.idea_id == Idea.id)
+        .join(User, Vote.user_id == User.id)
+        .filter(Idea.user_id == user_id, User.id != user_id)
+        .order_by(Vote.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    for vote, idea, actor in vote_rows:
+        items.append(
+            {
+                "kind": "vote",
+                "icon_class": "act-vote",
+                "icon": "bi bi-caret-up-fill",
+                "actor": actor.display_name,
+                "idea_title": idea.title,
+                "idea_url": url_for("main.idea_detail", idea_id=idea.id),
+                "text": "upvoted",
+                "extra": None,
+                "time": _relative_time(vote.created_at),
+                "_sort_time": vote.created_at,
+            }
+        )
+
+    comment_rows = (
+        db.session.query(Comment, Idea, User)
+        .join(Idea, Comment.idea_id == Idea.id)
+        .join(User, Comment.user_id == User.id)
+        .filter(Idea.user_id == user_id, User.id != user_id)
+        .order_by(Comment.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+    for comment, idea, actor in comment_rows:
+        excerpt = comment.body.strip()
+        if len(excerpt) > 90:
+            excerpt = excerpt[:87] + "..."
+        items.append(
+            {
+                "kind": "comment",
+                "icon_class": "act-comment",
+                "icon": "bi bi-chat-dots-fill",
+                "actor": actor.display_name,
+                "idea_title": idea.title,
+                "idea_url": url_for("main.idea_detail", idea_id=idea.id),
+                "text": "commented on",
+                "extra": f'"{excerpt}"',
+                "time": _relative_time(comment.created_at),
+                "_sort_time": comment.created_at,
+            }
+        )
+
+    collab_rows = (
+        db.session.query(Collaboration, Idea, User)
+        .join(Idea, Collaboration.idea_id == Idea.id)
+        .join(User, Collaboration.user_id == User.id)
+        .filter(
+            Idea.user_id == user_id,
+            Collaboration.status == "accepted",
+            User.id != user_id,
+        )
+        .order_by(Collaboration.joined_at.desc())
+        .limit(limit)
+        .all()
+    )
+    for collab, idea, actor in collab_rows:
+        items.append(
+            {
+                "kind": "collaboration",
+                "icon_class": "act-join",
+                "icon": "bi bi-person-plus-fill",
+                "actor": actor.display_name,
+                "idea_title": idea.title,
+                "idea_url": url_for("main.idea_detail", idea_id=idea.id),
+                "text": "joined",
+                "extra": f"as a {collab.role.capitalize()}",
+                "time": _relative_time(collab.joined_at),
+                "_sort_time": collab.joined_at,
+            }
+        )
+
+    items.sort(key=lambda x: x["_sort_time"] or datetime.min, reverse=True)
+    return items[:limit]
 
 def _serialize_detail_idea(idea: Idea) -> dict:
     author = idea.author
@@ -449,10 +553,73 @@ def explore():
         },
     )
 
-
 @main_bp.route("/dashboard")
+@login_required
 def dashboard():
-    return render_template("dashboard.html")
+    ideas = (
+        Idea.query
+        .filter_by(user_id=current_user.id)
+        .order_by(Idea.updated_at.desc(), Idea.created_at.desc())
+        .all()
+    )
+
+    stats = {
+        "ideas_posted": len(ideas),
+        "upvotes_received": (
+            db.session.query(func.count(Vote.id))
+            .join(Idea, Vote.idea_id == Idea.id)
+            .filter(Idea.user_id == current_user.id)
+            .scalar()
+            or 0
+        ),
+        "comments_received": (
+            db.session.query(func.count(Comment.id))
+            .join(Idea, Comment.idea_id == Idea.id)
+            .filter(Idea.user_id == current_user.id)
+            .scalar()
+            or 0
+        ),
+        "active_collaborators": (
+            db.session.query(func.count(Collaboration.id))
+            .join(Idea, Collaboration.idea_id == Idea.id)
+            .filter(
+                Idea.user_id == current_user.id,
+                Collaboration.status == "accepted",
+                Collaboration.user_id != current_user.id,
+            )
+            .scalar()
+            or 0
+        ),
+    }
+
+    stage_counts = {
+        "all": len(ideas),
+        "ideation": sum(1 for idea in ideas if idea.stage == "ideation"),
+        "validation": sum(1 for idea in ideas if idea.stage == "validation"),
+        "building": sum(1 for idea in ideas if idea.stage == "building"),
+        "launched": sum(1 for idea in ideas if idea.stage == "launched"),
+    }
+
+    recent_activity = _build_dashboard_activity(current_user.id, limit=6)
+
+    weekly_digest = (
+        Idea.query
+        .filter_by(privacy="public")
+        .outerjoin(Vote, Vote.idea_id == Idea.id)
+        .group_by(Idea.id)
+        .order_by(func.count(Vote.id).desc(), Idea.created_at.desc())
+        .limit(3)
+        .all()
+    )
+
+    return render_template(
+        "dashboard.html",
+        stats=stats,
+        stage_counts=stage_counts,
+        my_ideas=[_serialize_dashboard_idea(idea) for idea in ideas],
+        recent_activity=recent_activity,
+        weekly_digest=weekly_digest,
+    )
 
 
 @main_bp.route("/ideas/<int:idea_id>")
