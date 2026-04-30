@@ -42,7 +42,7 @@
       <div class="col-6 col-md-3" data-reveal>
         <div class="stat-card">
           <div class="stat-card-icon bg-brand-light text-brand"><i class="bi bi-lightbulb-fill"></i></div>
-          <div class="stat-card-value">7</div>
+          <div class="stat-card-value">{{ stats.ideas_posted }}</div>
           <div class="stat-card-label">Ideas posted</div>
           <div class="stat-card-trend trend-up"><i class="bi bi-arrow-up"></i> 2 this week</div>
         </div>
@@ -50,7 +50,7 @@
       <div class="col-6 col-md-3" data-reveal>
         <div class="stat-card">
           <div class="stat-card-icon bg-violet-light text-violet"><i class="bi bi-caret-up-fill"></i></div>
-          <div class="stat-card-value">1,284</div>
+          <div class="stat-card-value">{{ stats.upvotes_received }}</div>
           <div class="stat-card-label">Upvotes received</div>
           <div class="stat-card-trend trend-up"><i class="bi bi-arrow-up"></i> 23% vs last week</div>
         </div>
@@ -58,7 +58,7 @@
       <div class="col-6 col-md-3" data-reveal>
         <div class="stat-card">
           <div class="stat-card-icon bg-mint-light" style="color:#019373;"><i class="bi bi-chat-heart-fill"></i></div>
-          <div class="stat-card-value">342</div>
+          <div class="stat-card-value">{{ stats.comments_received }}</div>
           <div class="stat-card-label">Comments on your ideas</div>
           <div class="stat-card-trend trend-up"><i class="bi bi-arrow-up"></i> 41 new</div>
         </div>
@@ -66,9 +66,9 @@
       <div class="col-6 col-md-3" data-reveal>
         <div class="stat-card">
           <div class="stat-card-icon bg-yellow-light" style="color:#A47200;"><i class="bi bi-people-fill"></i></div>
-          <div class="stat-card-value">18</div>
+          <div class="stat-card-value">{{ stats.active_collaborators }}</div>
           <div class="stat-card-label">Active collaborators</div>
-          <div class="stat-card-trend trend-neutral">across 4 ideas</div>
+          <div class="stat-card-trend trend-neutral">Live from your current data</div>
         </div>
       </div>
     </div>
@@ -89,163 +89,43 @@
               <p class="text-muted-iih mb-0 small">What you've shipped into the community so far.</p>
             </div>
             <div class="dash-tabs" id="ideaTabs">
-              <button class="dash-tab active" data-filter="all">All <span>7</span></button>
-              <button class="dash-tab" data-filter="ideation">Ideation <span>2</span></button>
-              <button class="dash-tab" data-filter="validation">Validation <span>2</span></button>
-              <button class="dash-tab" data-filter="building">Building <span>2</span></button>
-              <button class="dash-tab" data-filter="launched">Launched <span>1</span></button>
+              <button class="dash-tab active" data-filter="all">All <span>{{ stage_counts.all }}</span></button>
+              <button class="dash-tab" data-filter="ideation">Ideation <span>{{ stage_counts.ideation }}</span></button>
+              <button class="dash-tab" data-filter="validation">Validation <span>{{ stage_counts.validation }}</span></button>
+              <button class="dash-tab" data-filter="building">Building <span>{{ stage_counts.building }}</span></button>
+              <button class="dash-tab" data-filter="launched">Launched <span>{{ stage_counts.launched }}</span></button>
             </div>
           </div>
 
           <div class="idea-list mt-3">
-            <!-- Idea row 1 -->
-            <a href="/ideas/1" class="my-idea-card" data-stage="validation">
-              <div class="d-flex align-items-start gap-3">
-                <div class="my-idea-emoji">💸</div>
-                <div class="flex-grow-1 min-w-0">
-                  <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-                    <h3 class="my-idea-title">AI-powered budget coach for Gen Z</h3>
-                    <span class="stage-pill stage-validation"><span class="stage-dot"></span>Validation</span>
-                  </div>
-                  <p class="my-idea-desc">A no-judgment money buddy that roasts your spending in a fun way and helps you save…</p>
-                  <div class="my-idea-meta">
-                    <span><i class="bi bi-caret-up-fill text-brand"></i> <strong>247</strong></span>
-                    <span><i class="bi bi-chat"></i> 34</span>
-                    <span><i class="bi bi-people"></i> 6 collaborators</span>
-                    <span><i class="bi bi-eye"></i> 1.2k views</span>
-                    <span class="ms-auto text-muted-iih">Updated 2 days ago</span>
-                  </div>
-                </div>
-              </div>
-            </a>
-
-            <!-- Idea row 2 -->
-            <a href="/ideas/1" class="my-idea-card" data-stage="building">
-              <div class="d-flex align-items-start gap-3">
-                <div class="my-idea-emoji">🎸</div>
-                <div class="flex-grow-1 min-w-0">
-                  <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-                    <h3 class="my-idea-title">Duolingo for musical instruments</h3>
-                    <span class="stage-pill stage-building"><span class="stage-dot"></span>Building</span>
-                  </div>
-                  <p class="my-idea-desc">Learn guitar, piano, or drums in 5-min daily lessons with streaks, leaderboards, and real song unlocks…</p>
-                  <div class="my-idea-meta">
-                    <span><i class="bi bi-caret-up-fill text-brand"></i> <strong>312</strong></span>
-                    <span><i class="bi bi-chat"></i> 58</span>
-                    <span><i class="bi bi-people"></i> 9 collaborators</span>
-                    <span><i class="bi bi-eye"></i> 2.3k views</span>
-                    <span class="ms-auto text-muted-iih">Updated 5 days ago</span>
-                  </div>
-                </div>
-              </div>
-            </a>
-
-            <!-- Idea row 3 -->
-            <a href="/ideas/1" class="my-idea-card" data-stage="launched">
-              <div class="d-flex align-items-start gap-3">
-                <div class="my-idea-emoji">🚀</div>
-                <div class="flex-grow-1 min-w-0">
-                  <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-                    <h3 class="my-idea-title">CodeReview buddy — pair with an expert in 30 min</h3>
-                    <span class="stage-pill stage-launched"><span class="stage-dot"></span>Launched</span>
-                  </div>
-                  <p class="my-idea-desc">Get 30 minutes of structured code review from verified senior engineers. Pay per session…</p>
-                  <div class="my-idea-meta">
-                    <span><i class="bi bi-caret-up-fill text-brand"></i> <strong>418</strong></span>
-                    <span><i class="bi bi-chat"></i> 71</span>
-                    <span><i class="bi bi-people"></i> 4 collaborators</span>
-                    <span><i class="bi bi-eye"></i> 3.1k views</span>
-                    <span class="ms-auto text-muted-iih">Launched 3 weeks ago</span>
-                  </div>
-                </div>
-              </div>
-            </a>
-
-            <!-- Idea row 4 -->
-            <a href="/ideas/1" class="my-idea-card" data-stage="ideation">
-              <div class="d-flex align-items-start gap-3">
-                <div class="my-idea-emoji">🌱</div>
-                <div class="flex-grow-1 min-w-0">
-                  <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-                    <h3 class="my-idea-title">Plant swap marketplace for apartment dwellers</h3>
-                    <span class="stage-pill stage-ideation"><span class="stage-dot"></span>Ideation</span>
-                  </div>
-                  <p class="my-idea-desc">Trade, rescue, or adopt houseplants with people in your building or suburb. Verified ID + reviews…</p>
-                  <div class="my-idea-meta">
-                    <span><i class="bi bi-caret-up-fill text-brand"></i> <strong>89</strong></span>
-                    <span><i class="bi bi-chat"></i> 12</span>
-                    <span><i class="bi bi-people"></i> 1 collaborator</span>
-                    <span><i class="bi bi-eye"></i> 230 views</span>
-                    <span class="ms-auto text-muted-iih">Updated 1 week ago</span>
-                  </div>
-                </div>
-              </div>
-            </a>
-
-            <!-- Idea row 5 -->
-            <a href="/ideas/1" class="my-idea-card" data-stage="validation">
-              <div class="d-flex align-items-start gap-3">
-                <div class="my-idea-emoji">🎨</div>
-                <div class="flex-grow-1 min-w-0">
-                  <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-                    <h3 class="my-idea-title">Hyper-local art commissions marketplace</h3>
-                    <span class="stage-pill stage-validation"><span class="stage-dot"></span>Validation</span>
-                  </div>
-                  <p class="my-idea-desc">Commission artists from your city. Support local, skip Etsy international shipping nightmares…</p>
-                  <div class="my-idea-meta">
-                    <span><i class="bi bi-caret-up-fill text-brand"></i> <strong>156</strong></span>
-                    <span><i class="bi bi-chat"></i> 28</span>
-                    <span><i class="bi bi-people"></i> 2 collaborators</span>
-                    <span><i class="bi bi-eye"></i> 845 views</span>
-                    <span class="ms-auto text-muted-iih">Updated 4 days ago</span>
-                  </div>
-                </div>
-              </div>
-            </a>
-
-            <!-- Idea row 6 -->
-            <a href="/ideas/1" class="my-idea-card" data-stage="ideation">
-              <div class="d-flex align-items-start gap-3">
-                <div class="my-idea-emoji">🏃</div>
-                <div class="flex-grow-1 min-w-0">
-                  <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-                    <h3 class="my-idea-title">Running buddy matcher by pace + route</h3>
-                    <span class="stage-pill stage-ideation"><span class="stage-dot"></span>Ideation</span>
-                  </div>
-                  <p class="my-idea-desc">Find a running partner in your city matched by pace, distance, and typical route preferences…</p>
-                  <div class="my-idea-meta">
-                    <span><i class="bi bi-caret-up-fill text-brand"></i> <strong>64</strong></span>
-                    <span><i class="bi bi-chat"></i> 9</span>
-                    <span><i class="bi bi-people"></i> 0 collaborators</span>
-                    <span><i class="bi bi-eye"></i> 178 views</span>
-                    <span class="ms-auto text-muted-iih">Updated 2 weeks ago</span>
-                  </div>
-                </div>
-              </div>
-            </a>
-
-            <!-- Idea row 7 -->
-            <a href="/ideas/1" class="my-idea-card" data-stage="building">
-              <div class="d-flex align-items-start gap-3">
-                <div class="my-idea-emoji">📚</div>
-                <div class="flex-grow-1 min-w-0">
-                  <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
-                    <h3 class="my-idea-title">StudyRooms: virtual library for focus sessions</h3>
-                    <span class="stage-pill stage-building"><span class="stage-dot"></span>Building</span>
-                  </div>
-                  <p class="my-idea-desc">Body-doubling rooms where students join a silent video session to hold each other accountable…</p>
-                  <div class="my-idea-meta">
-                    <span><i class="bi bi-caret-up-fill text-brand"></i> <strong>198</strong></span>
-                    <span><i class="bi bi-chat"></i> 42</span>
-                    <span><i class="bi bi-people"></i> 3 collaborators</span>
-                    <span><i class="bi bi-eye"></i> 1.6k views</span>
-                    <span class="ms-auto text-muted-iih">Updated 3 days ago</span>
-                  </div>
-                </div>
-              </div>
-            </a>
+  {% for idea in my_ideas %}
+    <a href="{{ url_for('main.idea_detail', idea_id=idea.id) }}" class="my-idea-card" data-stage="{{ idea.stage_class }}">
+      <div class="d-flex align-items-start gap-3">
+        <div class="my-idea-emoji">{{ idea.emoji }}</div>
+        <div class="flex-grow-1 min-w-0">
+          <div class="d-flex align-items-center gap-2 flex-wrap mb-1">
+            <h3 class="my-idea-title">{{ idea.title }}</h3>
+            <span class="stage-pill stage-{{ idea.stage_class }}">
+              <span class="stage-dot"></span>{{ idea.stage }}
+            </span>
+          </div>
+          <p class="my-idea-desc">{{ idea.summary }}</p>
+          <div class="my-idea-meta">
+            <span><i class="bi bi-caret-up-fill text-brand"></i> <strong>{{ idea.votes }}</strong></span>
+            <span><i class="bi bi-chat"></i> {{ idea.comments }}</span>
+            <span><i class="bi bi-people"></i> {{ idea.collaborators }} collaborators</span>
+            <span><i class="bi bi-eye"></i> {{ idea.views }} views</span>
+            <span class="ms-auto text-muted-iih">{{ idea.updated }}</span>
           </div>
         </div>
+      </div>
+    </a>
+  {% else %}
+    <div class="empty-state-card">
+      <p class="mb-0 text-muted-iih">You have not posted any ideas yet.</p>
+    </div>
+  {% endfor %}
+</div>
 
         <!-- Activity feed -->
         <div class="dash-section mt-4">
@@ -257,49 +137,29 @@
           </div>
 
           <ul class="activity-feed mt-3">
-            <li class="activity-item">
-              <span class="activity-icon act-vote"><i class="bi bi-caret-up-fill"></i></span>
-              <div class="activity-body">
-                <p><strong>Maya Kapoor</strong> upvoted <a href="/ideas/1">AI-powered budget coach for Gen Z</a></p>
-                <span class="activity-time">5 minutes ago</span>
-              </div>
-            </li>
-            <li class="activity-item">
-              <span class="activity-icon act-comment"><i class="bi bi-chat-dots-fill"></i></span>
-              <div class="activity-body">
-                <p><strong>Sam Reyes</strong> commented: <em>"The validation plan is solid — have you considered freemium vs paid tiers?"</em></p>
-                <span class="activity-time">32 minutes ago</span>
-              </div>
-            </li>
-            <li class="activity-item">
-              <span class="activity-icon act-join"><i class="bi bi-person-plus-fill"></i></span>
-              <div class="activity-body">
-                <p><strong>Alex Garcia</strong> joined <a href="/ideas/1">Duolingo for musical instruments</a> as a Contributor</p>
-                <span class="activity-time">2 hours ago</span>
-              </div>
-            </li>
-            <li class="activity-item">
-              <span class="activity-icon act-milestone"><i class="bi bi-flag-fill"></i></span>
-              <div class="activity-body">
-                <p>Your idea <a href="/ideas/1">CodeReview buddy</a> crossed <strong>400 upvotes</strong> 🎉</p>
-                <span class="activity-time">Yesterday</span>
-              </div>
-            </li>
-            <li class="activity-item">
-              <span class="activity-icon act-vote"><i class="bi bi-caret-up-fill"></i></span>
-              <div class="activity-body">
-                <p><strong>Taylor W.</strong> and 12 others upvoted <a href="/ideas/1">StudyRooms</a></p>
-                <span class="activity-time">Yesterday</span>
-              </div>
-            </li>
-            <li class="activity-item">
-              <span class="activity-icon act-comment"><i class="bi bi-chat-dots-fill"></i></span>
-              <div class="activity-body">
-                <p><strong>Priya Ahmed</strong> left a detailed review on <a href="/ideas/1">Hyper-local art commissions</a></p>
-                <span class="activity-time">2 days ago</span>
-              </div>
-            </li>
-          </ul>
+  {% for item in recent_activity %}
+    <li class="activity-item">
+      <span class="activity-icon {{ item.icon_class }}"><i class="{{ item.icon }}"></i></span>
+      <div class="activity-body">
+        <p>
+          <strong>{{ item.actor }}</strong>
+          {{ item.text }}
+          <a href="{{ item.idea_url }}">{{ item.idea_title }}</a>
+          {% if item.extra %}
+            <em>{{ item.extra }}</em>
+          {% endif %}
+        </p>
+        <span class="activity-time">{{ item.time }}</span>
+      </div>
+    </li>
+  {% else %}
+    <li class="activity-item">
+      <div class="activity-body">
+        <p>No recent activity yet.</p>
+      </div>
+    </li>
+  {% endfor %}
+</ul>
         </div>
 
       </div>
