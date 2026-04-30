@@ -18,7 +18,7 @@
           <div class="greeting fade-up">
             Good afternoon,
             <span class="text-brand">
-              {{ current_user.first_name if current_user.is_authenticated and current_user.first_name else "Jamie" }}
+              {{ current_user.first_name if current_user.is_authenticated and current_user.first_name else "User" }}
             </span>
             👋
           </div>
@@ -44,7 +44,7 @@
           <div class="stat-card-icon bg-brand-light text-brand"><i class="bi bi-lightbulb-fill"></i></div>
           <div class="stat-card-value">{{ stats.ideas_posted }}</div>
           <div class="stat-card-label">Ideas posted</div>
-          <div class="stat-card-trend trend-up"><i class="bi bi-arrow-up"></i> 2 this week</div>
+          <div class="stat-card-trend trend-neutral">Live from your current data</div>
         </div>
       </div>
       <div class="col-6 col-md-3" data-reveal>
@@ -52,7 +52,7 @@
           <div class="stat-card-icon bg-violet-light text-violet"><i class="bi bi-caret-up-fill"></i></div>
           <div class="stat-card-value">{{ stats.upvotes_received }}</div>
           <div class="stat-card-label">Upvotes received</div>
-          <div class="stat-card-trend trend-up"><i class="bi bi-arrow-up"></i> 23% vs last week</div>
+          <div class="stat-card-trend trend-neutral">Live from your current data</div>
         </div>
       </div>
       <div class="col-6 col-md-3" data-reveal>
@@ -60,7 +60,7 @@
           <div class="stat-card-icon bg-mint-light" style="color:#019373;"><i class="bi bi-chat-heart-fill"></i></div>
           <div class="stat-card-value">{{ stats.comments_received }}</div>
           <div class="stat-card-label">Comments on your ideas</div>
-          <div class="stat-card-trend trend-up"><i class="bi bi-arrow-up"></i> 41 new</div>
+          <div class="stat-card-trend trend-neutral">Live from your current data</div>
         </div>
       </div>
       <div class="col-6 col-md-3" data-reveal>
@@ -125,6 +125,7 @@
       <p class="mb-0 text-muted-iih">You have not posted any ideas yet.</p>
     </div>
   {% endfor %}
+</div>
 </div>
 
         <!-- Activity feed -->
@@ -208,6 +209,8 @@
               <span>by {{ idea.author.display_name if idea.author else "Unknown" }} · {{ idea.vote_count }} votes</span>
             </div>
           </a>
+          {% else %}
+          <div class="text-muted-iih small">No trending ideas yet.</div>
           {% endfor %}
         </div>
 
