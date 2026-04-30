@@ -6,7 +6,6 @@
         <meta name="csrf-token" content="{{ csrf_token() }}">
         <title>{% block title %}Idea Incubator Hub{% endblock %}</title>
 
-<<<<<<< HEAD
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
@@ -15,111 +14,40 @@
         {% block extra_css %}{% endblock %}
     </head>
     <body data-page="{% block page_name %}{% endblock %}" {% block body_attrs %}{% endblock %}>
+
         <nav class="navbar navbar-iih navbar-expand-lg">
             <div class="container-iih w-100 d-flex align-items-center justify-content-between">
-            <a class="navbar-brand" href="/">
-                <span class="brand-mark"><i class="bi bi-lightbulb-fill"></i></span>
-                <span>Idea Incubator</span>
-=======
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css') }}">
-  {% block styles %}{% endblock %}
-  {% block extra_css %}{% endblock %}
-</head>
-<body data-page="{% block page_name %}{% endblock %}" {% block body_attrs %}{% endblock %}>
-  <nav class="navbar navbar-iih navbar-expand-lg">
-    <div class="container-iih w-100 d-flex align-items-center justify-content-between">
-      <a class="navbar-brand" href="/">
-        <span class="brand-mark"><i class="bi bi-lightbulb-fill"></i></span>
-        <span>Idea Incubator</span>
-      </a>
-      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-        <i class="bi bi-list fs-3"></i>
-      </button>
-      <div class="collapse navbar-collapse" id="mainNav">
-        <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-          <li class="nav-item"><a class="nav-link" href="/explore" data-page="explore">Explore</a></li>
-          <li class="nav-item"><a class="nav-link" href="/dashboard" data-page="dashboard">Dashboard</a></li>
-          <li class="nav-item"><a class="nav-link" href="/about.html" data-page="about">About</a></li>
-        </ul>
-        <div class="d-flex align-items-center gap-3">
-          {% if current_user.is_authenticated %}
-            <a href="{{ url_for('main.submit_idea') }}" class="btn btn-brand"><i class="bi bi-plus-lg"></i> New idea💡</a>
-            <div class="position-relative">
-              <a href="{{ url_for('main.profile', username=current_user.username) }}" class="text-decoration-none">
-                <div class="navbar-avatar avatar-{{ current_user.avatar_color }}">
-                  {{ current_user.initials }}
-                </div>
-              </a>  
-            </div>
-          {% else %}
-            <a href="/login" class="btn btn-ghost">Log in</a>
-            <a href="/register" class="btn btn-brand">Get started</a>
-          {% endif %}
-        </div>
-      </div>
-    </div>
-  </nav>
-
-  {% block content %}{% endblock %}
-
-  <footer class="footer-iih">
-    <div class="container-iih">
-      <div class="footer-main">
-        <div class="footer-identity">
-          <a href="/" class="footer-brand">
-            <span class="brand-mark"><i class="bi bi-lightbulb-fill"></i></span>
-            Idea Incubator Hub
-          </a>
-          <p class="footer-tagline">
-            A student web-application for sharing, discussing, and collaborating on early-stage ideas.
-          </p>
-        </div>
- 
-        <div class="footer-meta">
-          <div class="footer-meta-item">
-            <span class="footer-meta-label">Course</span>
-            <span class="footer-meta-value">CITS3403 / CITS5505 &middot; Agile Web Development</span>
-          </div>
-          <div class="footer-meta-item">
-            <span class="footer-meta-label">Institution</span>
-            <span class="footer-meta-value">The University of Western Australia</span>
-          </div>
-          <div class="footer-meta-item">
-            <span class="footer-meta-label">Source</span>
-            <a href="#" class="footer-meta-link">
-              <i class="bi bi-github"></i> View on GitHub
->>>>>>> bcf09ac (updt: updated the base.html template to correctly refer the submit new idea page)
-            </a>
-            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-                <i class="bi bi-list fs-3"></i>
-            </button>
-            <div class="collapse navbar-collapse" id="mainNav">
-                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link" href="/explore" data-page="explore">Explore</a></li>
-                <li class="nav-item"><a class="nav-link" href="/dashboard" data-page="dashboard">Dashboard</a></li>
-                <li class="nav-item"><a class="nav-link" href="/about.html" data-page="about">About</a></li>
-                </ul>
-                <div class="d-flex align-items-center gap-3">
-                <!-- {% if current_user.is_authenticated %}
-                    <a href="/explore" class="btn btn-brand"><i class="bi bi-plus-lg"></i> New idea</a>
-                    <div class="position-relative">
-                    <div class="navbar-avatar avatar-1">{{ (current_user.first_name[:1] if current_user.first_name else "U") ~ (current_user.last_name[:1] if current_user.last_name else "") }}</div>
+                <a class="navbar-brand" href="/">
+                    <span class="brand-mark"><i class="bi bi-lightbulb-fill"></i></span>
+                    <span>Idea Incubator</span>
+                </a>
+                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+                    <i class="bi bi-list fs-3"></i>
+                </button>
+                <div class="collapse navbar-collapse" id="mainNav">
+                    <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                        <li class="nav-item"><a class="nav-link" href="/explore" data-page="explore">Explore</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/dashboard" data-page="dashboard">Dashboard</a></li>
+                        <li class="nav-item"><a class="nav-link" href="/explore" data-page="about">About</a></li>
+                    </ul>
+                    <div class="d-flex align-items-center gap-3">
+                        {% if current_user.is_authenticated %}
+                            <a href="{{ url_for('main.submit_idea') }}" class="btn btn-brand">
+                                <i class="bi bi-plus-lg"></i> New idea💡
+                            </a>
+                            <div class="position-relative">
+                                <a href="{{ url_for('main.profile', username=current_user.username) }}" class="text-decoration-none">
+                                    <div class="navbar-avatar avatar-{{ current_user.avatar_color }}">
+                                        {{ current_user.initials }}
+                                    </div>
+                                </a>
+                            </div>
+                        {% else %}
+                            <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">Log in</a>
+                            <a href="{{ url_for('auth.register') }}" class="btn btn-brand">Get started</a>
+                        {% endif %}
                     </div>
-                {% else %}
-                    <a href="/login" class="btn btn-ghost">Log in</a>
-                    <a href="/register" class="btn btn-brand">Get started</a>
-                {% endif %} -->
-                    {% if current_user.is_authenticated %}
-                        <a href="{{ url_for('auth.logout') }}" class="...">Log out</a>
-                    {% else %}
-                        <a href="{{ url_for('auth.login') }}" class="...">Log in</a>
-                        <a href="{{ url_for('auth.register') }}" class="...">Sign up</a>
-                    {% endif %}
                 </div>
-            </div>
             </div>
         </nav>
 
@@ -127,39 +55,39 @@
 
         <footer class="footer-iih">
             <div class="container-iih">
-            <div class="footer-main">
-                <div class="footer-identity">
-                <a href="/" class="footer-brand">
-                    <span class="brand-mark"><i class="bi bi-lightbulb-fill"></i></span>
-                    Idea Incubator Hub
-                </a>
-                <p class="footer-tagline">
-                    A student web-application for sharing, discussing, and collaborating on early-stage ideas.
-                </p>
+                <div class="footer-main">
+                    <div class="footer-identity">
+                        <a href="/" class="footer-brand">
+                            <span class="brand-mark"><i class="bi bi-lightbulb-fill"></i></span>
+                            Idea Incubator Hub
+                        </a>
+                        <p class="footer-tagline">
+                            A student web-application for sharing, discussing, and collaborating on early-stage ideas.
+                        </p>
+                    </div>
+
+                    <div class="footer-meta">
+                        <div class="footer-meta-item">
+                            <span class="footer-meta-label">Course</span>
+                            <span class="footer-meta-value">CITS3403 / CITS5505 &middot; Agile Web Development</span>
+                        </div>
+                        <div class="footer-meta-item">
+                            <span class="footer-meta-label">Institution</span>
+                            <span class="footer-meta-value">The University of Western Australia</span>
+                        </div>
+                        <div class="footer-meta-item">
+                            <span class="footer-meta-label">Source</span>
+                            <a href="#" class="footer-meta-link">
+                                <i class="bi bi-github"></i> View on GitHub
+                            </a>
+                        </div>
+                    </div>
                 </div>
-        
-                <div class="footer-meta">
-                <div class="footer-meta-item">
-                    <span class="footer-meta-label">Course</span>
-                    <span class="footer-meta-value">CITS3403 / CITS5505 &middot; Agile Web Development</span>
+
+                <div class="footer-bottom">
+                    <div>&copy; 2026 Idea Incubator Hub &middot; Group project, Semester 1</div>
+                    <div>Built in Perth, WA</div>
                 </div>
-                <div class="footer-meta-item">
-                    <span class="footer-meta-label">Institution</span>
-                    <span class="footer-meta-value">The University of Western Australia</span>
-                </div>
-                <div class="footer-meta-item">
-                    <span class="footer-meta-label">Source</span>
-                    <a href="#" class="footer-meta-link">
-                    <i class="bi bi-github"></i> View on GitHub
-                    </a>
-                </div>
-                </div>
-            </div>
-        
-            <div class="footer-bottom">
-                <div>&copy; 2026 Idea Incubator Hub &middot; Group project, Semester 1</div>
-                <div>Built in Perth, WA</div>
-            </div>
             </div>
         </footer>
 
