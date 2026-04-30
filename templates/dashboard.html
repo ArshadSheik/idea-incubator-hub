@@ -200,28 +200,15 @@
             <h4 class="sidebar-title mb-0">This week's digest</h4>
           </div>
           <p class="small mb-3" style="color: var(--ink-300);">Top 3 trending ideas the community is obsessed with.</p>
-
-          <a href="/ideas/1" class="digest-item">
-            <span class="digest-rank">1</span>
+          {% for idea in weekly_digest %}
+          <a href="{{ url_for('main.idea_detail', idea_id=idea.id) }}" class="digest-item">
+            <span class="digest-rank">{{ loop.index }}</span>
             <div>
-              <strong>Duolingo for musical instruments</strong>
-              <span>by Maya K. · 312 votes</span>
+              <strong>{{ idea.title }}</strong>
+              <span>by {{ idea.author.display_name if idea.author else "Unknown" }} · {{ idea.vote_count }} votes</span>
             </div>
           </a>
-          <a href="/ideas/1" class="digest-item">
-            <span class="digest-rank">2</span>
-            <div>
-              <strong>AI budget coach for Gen Z</strong>
-              <span>by Jamie L. · 247 votes</span>
-            </div>
-          </a>
-          <a href="/ideas/1" class="digest-item">
-            <span class="digest-rank">3</span>
-            <div>
-              <strong>Carbon-negative coffee subscription</strong>
-              <span>by Sam R. · 189 votes</span>
-            </div>
-          </a>
+          {% endfor %}
         </div>
 
         <!-- Suggestions -->
