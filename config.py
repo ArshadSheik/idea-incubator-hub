@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
 
-load_dotenv()  # reads .env file
+load_dotenv(override=True)  # reads .env and overrides stale env values
 
 
 class Config:
