@@ -645,12 +645,11 @@ def generate_idea_insights(idea_id: int):
 
 @main_bp.route("/login")
 def login():
-    return render_template("login.html")
-
+    return redirect(url_for("auth.login"))
 
 @main_bp.route("/register")
 def register():
-    return render_template("register.html")
+    return redirect(url_for("auth.register"))
 
 
 # ─────────────────────────────────────────
@@ -673,9 +672,9 @@ def dashboard_html():
 
 @main_bp.route("/login.html")
 def login_html():
-    return redirect(url_for("main.login"))
+    return redirect(url_for("auth.login"))
 
 
 @main_bp.route("/register.html")
 def register_html():
-    return redirect(url_for("main.register"))
+    return redirect(url_for("auth.register"))
