@@ -5,7 +5,7 @@ from urllib import request as urlrequest
 from datetime import datetime
 
 from flask import Blueprint, jsonify, redirect, render_template, request, url_for
-from flask_login import current_user
+from flask_login import current_user, login_required
 from sqlalchemy import func
 
 from models.models import Collaboration, Comment, Idea, User, Vote, db
@@ -34,16 +34,25 @@ def _avatar_class_for_user(user) -> str:
 def _relative_time(dt) -> str:
     if not dt:
         return "just now"
+
     delta = datetime.utcnow() - dt
+    seconds = int(delta.total_seconds())
+
+    if seconds < 60:
+        return "just now"
+    if seconds < 3600:
+        minutes = max(1, seconds // 60)
+        return f"{minutes} minute{'s' if minutes != 1 else ''} ago"
+    if seconds < 86400:
+        hours = max(1, seconds // 3600)
+        return f"{hours} hour{'s' if hours != 1 else ''} ago"
     if delta.days >= 30:
         months = max(1, delta.days // 30)
         return f"{months} month{'s' if months != 1 else ''} ago"
     if delta.days >= 7:
         weeks = max(1, delta.days // 7)
         return f"{weeks} week{'s' if weeks != 1 else ''} ago"
-    if delta.days >= 1:
-        return f"{delta.days} day{'s' if delta.days != 1 else ''} ago"
-    return "just now"
+    return f"{delta.days} day{'s' if delta.days != 1 else ''} ago"
 
 
 def _format_comment_time(dt) -> str:
@@ -86,7 +95,7 @@ def _serialize_dashboard_idea(idea: Idea) -> dict:
         "votes": idea.vote_count,
         "comments": idea.comment_count,
         "collaborators": idea.collaborator_count,
-        "views": f"{idea.views:,}",
+        "views": f"{(idea.views or 0):,}",
         "updated": f"Updated {_relative_time(idea.updated_at or idea.created_at)}",
     }
 
