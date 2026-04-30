@@ -1,4 +1,6 @@
 # routes/auth.py
+import random
+from flask_dance.contrib.google import google
 from flask import Blueprint, flash, redirect, render_template, request, url_for,current_app
 from flask_login import current_user, login_required, login_user, logout_user
 from flask_mail import Mail, Message
@@ -190,3 +192,40 @@ def reset_password(token):
         return redirect(url_for("auth.login"))
 
     return render_template("reset_password.html", token=token)
+
+@auth_bp.route("/google/callback")
+def google_callback():
+    if not google.authorized:
+        flash("Google login was cancelled.")
+        return redirect(url_for("auth.login"))
+
+    resp = google.get("/oauth2/v2/userinfo")
+    if not resp.ok:
+        flash("Failed to fetch user info from Google. Please try again.")
+        return redirect(url_for("auth.login"))
+
+    info       = resp.json()
+    google_email = info["email"].lower()
+    first_name   = info.get("given_name", "")
+    last_name    = info.get("family_name", "")
+    user = User.query.filter_by(email=google_email).first()
+
+    if user is None:
+        base_username = google_email.split("@")[0][:20]
+        username = base_username
+        if User.query.filter_by(username=username).first():
+            username = f"{base_username[:15]}{random.randint(100, 999)}"
+
+        user = User(
+            email        = google_email,
+            username     = username,
+            first_name   = first_name or base_username,
+            last_name    = last_name  or "",
+            avatar_color = random.randint(1, 6),
+        )
+        user.set_password(f"google-oauth-{random.randbytes(16).hex()}")
+        db.session.add(user)
+        db.session.commit()
+
+    login_user(user)
+    return redirect(url_for("main.dashboard"))
