@@ -14,7 +14,7 @@ from flask_mail import Mail
 from flask_dance.contrib.google import make_google_blueprint
 from config import config
 from models.models import db, User
-
+import os
 
 migrate = Migrate()
 login_manager = LoginManager()
@@ -26,6 +26,8 @@ def create_app(config_name='default'):
     Factory function — creates and configures a Flask application instance.
     Call with 'testing' for unit tests, 'production' for deployment.
     """
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+    os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
     app = Flask(__name__)
 
     # ── Load config ────────────────────────────────────────────────
@@ -53,7 +55,7 @@ def create_app(config_name='default'):
         scope=["openid", "email", "profile"],
         redirect_to="auth.google_callback",    
     )
-    app.register_blueprint(google_bp, url_prefix="/auth/google")
+    app.register_blueprint(google_bp, url_prefix="/auth")
     csrf.exempt(google_bp)
 
     # ── Register blueprints ────────────────────────────────────────
