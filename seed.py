@@ -32,6 +32,8 @@ def wipe_existing_data():
     # Clear the idea_tags join table first — it isn't auto-cleared
     # when the parent Idea or Tag rows are deleted.
     db.session.execute(idea_tags.delete())
+    Notification.query.delete()
+    Bookmark.query.delete()
     Comment.query.delete()
     Vote.query.delete()
     Idea.query.delete()
@@ -143,6 +145,7 @@ def seed():
         tags_by_name      = create_tags(sample_ideas)
         ideas_created     = create_ideas(sample_ideas, users_by_username, tags_by_name)
         create_votes_and_comments(users_by_username, ideas_created)
+        seed_bookmarks_and_notifications(list(users_by_username.values()), ideas_created)
 
         print('\nSeed complete.')
         print('Test login -> username: jamie  password: password123')
