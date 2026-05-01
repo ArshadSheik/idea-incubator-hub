@@ -15,58 +15,79 @@
     </head>
     <body data-page="{% block page_name %}{% endblock %}" {% block body_attrs %}{% endblock %}>
 
+        {% set page = self.page_name() %}
+
+        {% if page == 'landing' and not current_user.is_authenticated %}
+        <!-- Minimal navbar for landing page guests -->
         <nav class="navbar navbar-iih navbar-expand-lg">
             <div class="container-iih w-100 d-flex align-items-center justify-content-between">
-                <a class="navbar-brand" href="/">
-                    <span class="brand-mark"><i class="bi bi-lightbulb-fill"></i></span>
-                    <span>Idea Incubator</span>
-                </a>
-                <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
-                    <i class="bi bi-list fs-3"></i>
-                </button>
-                <div class="collapse navbar-collapse" id="mainNav">
-                    <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                        <li class="nav-item"><a class="nav-link" href="/explore" data-page="explore">Explore</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/dashboard" data-page="dashboard">Dashboard</a></li>
-                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.about') }}" data-page="about">About</a></li>
-                    </ul>
-                    <div class="d-flex align-items-center gap-3">
-                        {% if current_user.is_authenticated %}
-                            <a href="{{ url_for('main.submit_idea') }}" class="btn btn-brand">
-                                <i class="bi bi-plus-lg"></i> New idea💡
-                            </a>
-                            <div class="position-relative">
-                                <div class="navbar-avatar avatar-{{ current_user.avatar_color }}" id="avatarToggle" style="cursor:pointer;">
-                                    {{ current_user.initials }}
-                                </div>
-                                <div class="avatar-dropdown" id="avatarMenu">
-                                    <div class="avatar-dropdown-header">
-                                        <p class="avatar-dropdown-name">{{ current_user.display_name }}</p>
-                                        <p class="avatar-dropdown-email">{{ current_user.email }}</p>
-                                    </div>
-                                    <a href="{{ url_for('main.dashboard') }}" class="avatar-dropdown-item">
-                                        <i class="bi bi-grid"></i> Dashboard
-                                    </a>
-                                    <a href="{{ url_for('main.profile', username=current_user.username) }}" class="avatar-dropdown-item">
-                                        <i class="bi bi-person"></i> Profile
-                                    </a>
-                                    <a href="{{ url_for('main.submit_idea') }}" class="avatar-dropdown-item">
-                                        <i class="bi bi-plus-circle"></i> New idea
-                                    </a>
-                                    <div class="avatar-dropdown-divider"></div>
-                                    <a href="{{ url_for('auth.logout') }}" class="avatar-dropdown-item avatar-dropdown-item--danger">
-                                        <i class="bi bi-box-arrow-right"></i> Log out
-                                    </a>
-                                </div>
-                            </div>
-                        {% else %}
-                            <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">Log in</a>
-                            <a href="{{ url_for('auth.register') }}" class="btn btn-brand">Get started</a>
-                        {% endif %}
-                    </div>
-                </div>
+            <a class="navbar-brand" href="/">
+                <span class="brand-mark"><i class="bi bi-lightbulb-fill"></i></span>
+                <span>Idea Incubator</span>
+            </a>
+            <div class="d-flex align-items-center gap-3">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">Log in</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-brand">Get started</a>
+            </div>
             </div>
         </nav>
+
+        {% else %}
+        <!-- Full navbar for all other pages -->
+        <nav class="navbar navbar-iih navbar-expand-lg">
+            <div class="container-iih w-100 d-flex align-items-center justify-content-between">
+            <a class="navbar-brand" href="/">
+                <span class="brand-mark"><i class="bi bi-lightbulb-fill"></i></span>
+                <span>Idea Incubator</span>
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+                <i class="bi bi-list fs-3"></i>
+            </button>
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                <li class="nav-item"><a class="nav-link" href="/explore" data-page="explore">Explore</a></li>
+                <li class="nav-item"><a class="nav-link" href="/dashboard" data-page="dashboard">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.about') }}" data-page="about">About</a></li>
+                </ul>
+                <div class="d-flex align-items-center gap-3">
+                {% if current_user.is_authenticated %}
+                    <a href="{{ url_for('main.submit_idea') }}" class="btn btn-brand">
+                    <i class="bi bi-plus-lg"></i> New idea💡
+                    </a>
+                    <div class="position-relative">
+                    <div class="navbar-avatar avatar-{{ current_user.avatar_color }}" id="avatarToggle" style="cursor:pointer;">
+                        {{ current_user.initials }}
+                    </div>
+                    <div class="avatar-dropdown" id="avatarMenu">
+                        <div class="avatar-dropdown-header">
+                        <p class="avatar-dropdown-name">{{ current_user.display_name }}</p>
+                        <p class="avatar-dropdown-email">{{ current_user.email }}</p>
+                        </div>
+                        <a href="{{ url_for('main.dashboard') }}" class="avatar-dropdown-item">
+                        <i class="bi bi-grid"></i> Dashboard
+                        </a>
+                        <a href="{{ url_for('main.profile', username=current_user.username) }}" class="avatar-dropdown-item">
+                        <i class="bi bi-person"></i> Profile
+                        </a>
+                        <a href="{{ url_for('main.submit_idea') }}" class="avatar-dropdown-item">
+                        <i class="bi bi-plus-circle"></i> New idea
+                        </a>
+                        <div class="avatar-dropdown-divider"></div>
+                        <a href="{{ url_for('auth.logout') }}" class="avatar-dropdown-item avatar-dropdown-item--danger">
+                        <i class="bi bi-box-arrow-right"></i> Log out
+                        </a>
+                    </div>
+                    </div>
+                {% else %}
+                    <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">Log in</a>
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-brand">Get started</a>
+                {% endif %}
+                </div>
+            </div>
+            </div>
+        </nav>
+
+        {% endif %}
 
         {% block content %}{% endblock %}
 

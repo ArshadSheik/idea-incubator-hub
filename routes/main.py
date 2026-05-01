@@ -857,6 +857,7 @@ def register_html():
 
 # ─────────────────────────────────────────
 @main_bp.route("/ideas/new")
+@login_required
 def submit_idea():
     from forms import IdeaForm
     form = IdeaForm()
@@ -864,6 +865,7 @@ def submit_idea():
 
 
 @main_bp.route("/profile/<username>")
+@login_required
 def profile(username):
     profile_user = User.query.filter_by(username=username).first_or_404()
 
