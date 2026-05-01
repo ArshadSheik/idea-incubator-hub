@@ -8,7 +8,7 @@ from flask import Blueprint, jsonify, redirect, render_template, request, url_fo
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
-from models.models import Collaboration, Comment, Idea, User, Vote, db, Notification
+from models.models import Collaboration, Comment, Idea, User, Vote, db, Notification, Bookmark
 
 main_bp = Blueprint("main", __name__)
 
@@ -973,3 +973,39 @@ def mark_all_notifications_read():
     ).update({"is_read": True})
     db.session.commit()
     return jsonify({"ok": True})
+
+@main_bp.route("/api/profile/bookmarks")
+@login_required
+def profile_bookmarks():
+    """Returns the current user's bookmarked ideas as serialized idea cards."""
+    bookmarks = (
+        Bookmark.query
+        .filter_by(user_id=current_user.id)
+        .order_by(Bookmark.created_at.desc())
+        .all()
+    )
+    ideas = [b.idea for b in bookmarks if b.idea and b.idea.privacy == 'public']
+    return jsonify({
+        "ok": True,
+        "bookmarks": [_serialize_explore_idea(idea) for idea in ideas]
+    })
+
+
+@main_bp.route("/api/ideas/<int:idea_id>/bookmark", methods=["POST"])
+@login_required
+def toggle_bookmark(idea_id: int):
+    """Toggle a bookmark on an idea for the current user."""
+    idea = Idea.query.get_or_404(idea_id)
+    existing = Bookmark.query.filter_by(
+        user_id=current_user.id, idea_id=idea.id
+    ).first()
+
+    if existing:
+        db.session.delete(existing)
+        bookmarked = False
+    else:
+        db.session.add(Bookmark(user_id=current_user.id, idea_id=idea.id))
+        bookmarked = True
+
+    db.session.commit()
+    return jsonify({"ok": True, "bookmarked": bookmarked})
