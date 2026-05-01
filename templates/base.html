@@ -28,7 +28,7 @@
                     <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
                         <li class="nav-item"><a class="nav-link" href="/explore" data-page="explore">Explore</a></li>
                         <li class="nav-item"><a class="nav-link" href="/dashboard" data-page="dashboard">Dashboard</a></li>
-                        <li class="nav-item"><a class="nav-link" href="/explore" data-page="about">About</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ url_for('main.about') }}" data-page="about">About</a></li>
                     </ul>
                     <div class="d-flex align-items-center gap-3">
                         {% if current_user.is_authenticated %}
