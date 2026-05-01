@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block title %}About — Idea Incubator Hub{% endblock %}
+{% block page_name %}about{% endblock %}
+
+{% block content %}
+
+<section class="about-hero text-center">
+  <div class="container-iih">
+    <h1 class="about-title">About Idea Incubator Hub</h1>
+    <p class="about-sub">A student-built platform for CITS3403/5505 at UWA — share early-stage ideas, get community feedback, and find people to build with.</p>
+  </div>
+</section>
+
+<section class="about-mission">
+  <div class="container-iih">
+    <div class="row align-items-center g-5">
+      <div class="col-md-6">
+        <h2>What is it?</h2>
+        <p>Idea Incubator Hub is a community platform where anyone can post a startup idea, receive upvotes and structured feedback from other users, and find collaborators to actually build it with.</p>
+        <p>Ideas move through stages — from Ideation through Validation and Building all the way to Launched. At each stage the community can vote, comment, and jump on board as collaborators.</p>
+      </div>
+      <div class="col-md-6">
+        <div class="stat-grid">
+          <div class="about-stat" data-stat="ideas">
+            <span class="stat-num" id="statIdeas">0</span>
+            <span class="stat-label">Ideas posted</span>
+          </div>
+          <div class="about-stat" data-stat="users">
+            <span class="stat-num" id="statUsers">0</span>
+            <span class="stat-label">Community members</span>
+          </div>
+          <div class="about-stat" data-stat="votes">
+            <span class="stat-num" id="statVotes">0</span>
+            <span class="stat-label">Votes cast</span>
+          </div>
+          <div class="about-stat" data-stat="comments">
+            <span class="stat-num" id="statComments">0</span>
+            <span class="stat-label">Comments</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="about-team">
+  <div class="container-iih">
+    <h2 class="text-center mb-5">Meet the Team</h2>
+    <div class="row g-4 justify-content-center">
+      {% for member in team_members %}
+        <div class="col-6 col-md-4 col-lg-2">
+          <div class="team-card text-center">
+            <div class="avatar team-avatar avatar-{{ member.color }}">{{ member.initials }}</div>
+            <p class="team-name">{{ member.name }}</p>
+            <p class="team-role">{{ member.role }}</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="about-tech">
+  <div class="container-iih text-center">
+    <h2 class="mb-3">Built with</h2>
+    <p class="text-muted-iih">Flask · SQLAlchemy · SQLite · Bootstrap 5 · jQuery · AJAX · Jinja2 · Flask-Login · Flask-WTF</p>
+    <p class="text-muted-iih small">University of Western Australia · CITS3403 / CITS5505 · Agile Web Development</p>
+  </div>
+</section>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Animate stat counters up from 0 when section scrolls into view
+document.addEventListener('DOMContentLoaded', () => {
+  fetch('/api/stats')
+    .then(r => r.json())
+    .then(data => {
+      animateCount('statIdeas',    data.ideas);
+      animateCount('statUsers',    data.users);
+      animateCount('statVotes',    data.votes);
+      animateCount('statComments', data.comments);
+    })
+    .catch(() => {}); // silently fail if endpoint isn't ready
+});
+
+function animateCount(id, target) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const duration = 1200;
+  const step     = target / (duration / 16);
+  let current    = 0;
+  const timer = setInterval(() => {
+    current += step;
+    if (current >= target) { current = target; clearInterval(timer); }
+    el.textContent = Math.floor(current).toLocaleString();
+  }, 16);
+}
+</script>
+{% endblock %}
