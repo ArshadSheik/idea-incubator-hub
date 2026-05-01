@@ -32,6 +32,18 @@
       </div>
 
       <div class="idea-section">
+        <h2 class="section-heading">Progress timeline</h2>
+        <div class="timeline-track">
+          {% for item in idea.stage_timeline %}
+          <div class="timeline-step timeline-step-{{ item.state }}">
+            <span class="timeline-dot"></span>
+            <span class="timeline-label">{{ item.label }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <div class="idea-section">
         <h2 class="section-heading">The idea</h2>
         <p>{{ idea.sections.idea }}</p>
       </div>
@@ -182,6 +194,33 @@
       </div>
 
       <div class="sidebar-card mt-3">
+        <h4 class="sidebar-title">Weekly momentum</h4>
+        <div class="momentum-chart">
+          {% for point in idea.weekly_momentum.points %}
+          <div class="momentum-day">
+            <div class="momentum-bars">
+              <span
+                class="momentum-bar momentum-bar-votes"
+                style="height: {{ ((point.votes / idea.weekly_momentum.max_total) * 100)|round(0, 'ceil') if idea.weekly_momentum.max_total else 0 }}%;"
+                title="Votes: {{ point.votes }}"
+              ></span>
+              <span
+                class="momentum-bar momentum-bar-comments"
+                style="height: {{ ((point.comments / idea.weekly_momentum.max_total) * 100)|round(0, 'ceil') if idea.weekly_momentum.max_total else 0 }}%;"
+                title="Comments: {{ point.comments }}"
+              ></span>
+            </div>
+            <small>{{ point.label }}</small>
+          </div>
+          {% endfor %}
+        </div>
+        <div class="momentum-legend">
+          <span><i class="bi bi-square-fill votes"></i> Votes</span>
+          <span><i class="bi bi-square-fill comments"></i> Comments</span>
+        </div>
+      </div>
+
+      <div class="sidebar-card mt-3">
         <h4 class="sidebar-title">Collaborators <span class="text-muted-iih small fw-normal">({{ idea.collaborators_total }})</span></h4>
         <div class="collab-list">
           {% for member in idea.collaborators %}
@@ -197,12 +236,43 @@
       </div>
 
       <div class="sidebar-card mt-3">
+        <h4 class="sidebar-title">Looking for collaborators</h4>
+        {% if idea.collaborator_needs %}
+        <div class="d-flex gap-2 flex-wrap">
+          {% for role in idea.collaborator_needs %}
+          <span class="tag tag-blue">{{ role }}</span>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted-iih mb-0">This team currently covers key roles.</p>
+        {% endif %}
+      </div>
+
+      <div class="sidebar-card mt-3">
         <h4 class="sidebar-title">Tags</h4>
         <div class="d-flex gap-2 flex-wrap">
           {% for tag in idea.tags %}
           <span class="tag">{{ tag }}</span>
           {% endfor %}
         </div>
+      </div>
+
+      <div class="sidebar-card mt-3">
+        <h4 class="sidebar-title">Related ideas</h4>
+        {% if idea.related_ideas %}
+        <div class="related-idea-list">
+          {% for related in idea.related_ideas %}
+          <a href="{{ url_for('main.idea_detail', idea_id=related.id) }}" class="related-idea-item text-decoration-none">
+            <span class="tag {{ related.tag_class }}">{{ related.category }}</span>
+            <strong>{{ related.title }}</strong>
+            <p class="mb-0">{{ related.summary }}</p>
+            <small class="text-muted-iih"><i class="bi bi-caret-up-fill"></i> {{ related.votes }}</small>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <p class="text-muted-iih mb-0">No similar ideas yet in this category.</p>
+        {% endif %}
       </div>
     </div>
   </div>
