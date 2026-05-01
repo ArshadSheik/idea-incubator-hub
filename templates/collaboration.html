@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+{% block title %}{{ idea.title }} — Board{% endblock %}
+{% block page_name %}collaboration{% endblock %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/collaboration.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="collab-layout">
+
+  <!-- Sidebar -->
+  <aside class="collab-sidebar">
+    <div class="sidebar-idea-card">
+      <h2 class="sidebar-idea-title">{{ idea.title }}</h2>
+      <p class="sidebar-idea-summary">{{ idea.summary }}</p>
+      <a href="{{ url_for('main.idea_detail', idea_id=idea.id) }}" class="btn btn-ghost btn-sm w-100">
+        <i class="bi bi-arrow-left"></i> Back to idea
+      </a>
+    </div>
+
+    <div class="sidebar-section">
+      <h3 class="sidebar-heading">Team ({{ team | length }})</h3>
+      <ul class="team-list">
+        {% for member in team %}
+          <li class="team-member">
+            <div class="avatar avatar-{{ member.avatar_color }} avatar-sm">{{ member.initials }}</div>
+            <span class="team-member-name">{{ member.display_name }}</span>
+          </li>
+        {% else %}
+          <li class="text-muted-iih small">No team members yet.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div class="sidebar-section">
+      <h3 class="sidebar-heading">Stage</h3>
+      <p class="sidebar-stage">{{ idea.stage.capitalize() if idea.stage else 'Ideation' }}</p>
+    </div>
+  </aside>
+
+  <!-- Kanban board -->
+  <main class="collab-main">
+    <div class="kanban-header">
+      <h1 class="kanban-title">Kanban Board</h1>
+      <button class="btn btn-brand btn-sm" id="addTaskBtn">
+        <i class="bi bi-plus-lg"></i> Add Task
+      </button>
+    </div>
+
+    <div class="kanban-board" id="kanbanBoard">
+      {% for col_status, col_label in [('todo','To Do'), ('in_progress','In Progress'), ('done','Done')] %}
+        <div class="kanban-col" data-status="{{ col_status }}" id="col-{{ col_status }}">
+          <div class="col-header">
+            <span class="col-dot dot-{{ col_status }}"></span>
+            <span class="col-title">{{ col_label }}</span>
+            <span class="col-count" id="count-{{ col_status }}">
+              {{ tasks | selectattr('status', 'equalto', col_status) | list | length }}
+            </span>
+          </div>
+          <div class="col-body" id="body-{{ col_status }}">
+            {% for task in tasks %}
+              {% if task.status == col_status %}
+                <div class="task-card priority-{{ task.priority }}"
+                     data-task-id="{{ task.id }}"
+                     data-status="{{ task.status }}"
+                     draggable="true">
+                  <div class="task-header">
+                    <span class="priority-dot dot-{{ task.priority }}"></span>
+                    <span class="task-title">{{ task.title }}</span>
+                    <button class="task-delete-btn" data-task-id="{{ task.id }}" title="Delete task">
+                      <i class="bi bi-x"></i>
+                    </button>
+                  </div>
+                  {% if task.description %}
+                    <p class="task-desc">{{ task.description[:80] }}{% if task.description | length > 80 %}…{% endif %}</p>
+                  {% endif %}
+                  <div class="task-footer">
+                    {% if task.assignee %}
+                      <div class="avatar avatar-xs avatar-{{ task.assignee.avatar_color }}" title="{{ task.assignee.display_name }}">
+                        {{ task.assignee.initials }}
+                      </div>
+                    {% else %}
+                      <span class="task-unassigned">Unassigned</span>
+                    {% endif %}
+                    <span class="task-priority-badge badge-{{ task.priority }}">{{ task.priority }}</span>
+                  </div>
+                </div>
+              {% endif %}
+            {% endfor %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </main>
+</div>
+
+<!-- Add Task Modal -->
+<div class="modal fade" id="taskModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">New Task</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Title <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" id="taskTitle" maxlength="120" placeholder="What needs to be done?">
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Description</label>
+          <textarea class="form-control" id="taskDesc" rows="3" placeholder="Optional details..."></textarea>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Priority</label>
+          <select class="form-select" id="taskPriority">
+            <option value="low">Low</option>
+            <option value="medium" selected>Medium</option>
+            <option value="high">High</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label fw-semibold">Assign to</label>
+          <select class="form-select" id="taskAssignee">
+            <option value="">Unassigned</option>
+            {% for member in team %}
+              <option value="{{ member.id }}">{{ member.display_name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-brand" id="saveTaskBtn">Add Task</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const IDEA_ID   = {{ idea.id }};
+  const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
+</script>
+<script src="{{ url_for('static', filename='js/collaboration.js') }}"></script>
+{% endblock %}

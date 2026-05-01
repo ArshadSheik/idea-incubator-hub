@@ -567,3 +567,31 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   });
 });
+
+// ── Bookmark toggle ────────────────────────────────────────────
+const bookmarkBtn = document.getElementById('bookmarkBtn');
+if (bookmarkBtn) {
+  bookmarkBtn.addEventListener('click', () => {
+    const ideaId = bookmarkBtn.dataset.ideaId;
+    fetch(`/api/ideas/${ideaId}/bookmark`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content,
+      }
+    })
+    .then(r => r.json())
+    .then(data => {
+      if (!data.ok) return;
+      const icon  = document.getElementById('bookmarkIcon');
+      const label = document.getElementById('bookmarkLabel');
+      if (data.bookmarked) {
+        icon.className  = 'bi bi-bookmark-fill';
+        label.textContent = 'Bookmarked';
+      } else {
+        icon.className  = 'bi bi-bookmark';
+        label.textContent = 'Bookmark';
+      }
+    });
+  });
+}

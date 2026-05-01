@@ -78,7 +78,10 @@
           <span>{% if idea.user_voted %}Upvoted{% else %}Upvote{% endif %}</span>
           <strong id="voteCount">{{ idea.votes }}</strong>
         </button>
-        <button class="vote-btn-secondary" id="saveBtn"><i class="bi bi-bookmark"></i> <span>Save</span></button>
+        <button class="vote-btn-secondary" id="bookmarkBtn" data-idea-id="{{ idea.id }}">
+          <i class="bi bi-bookmark" id="bookmarkIcon"></i>
+          <span id="bookmarkLabel">Bookmark</span>
+        </button>
         <button class="vote-btn-secondary" id="shareBtn"><i class="bi bi-share"></i> <span>Share</span></button>
         <button class="vote-btn-secondary ms-auto {% if idea.user_collaborating %}voted{% endif %}" id="collaborateBtn">
           <i class="bi bi-people"></i>
@@ -188,6 +191,9 @@
           </div>
           {% endfor %}
         </div>
+        <a href="{{ url_for('main.collaboration_board', idea_id=idea.id) }}" class="btn btn-ghost btn-sm">
+          <i class="bi bi-kanban"></i> View Board
+        </a>
       </div>
 
       <div class="sidebar-card mt-3">

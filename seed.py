@@ -32,6 +32,8 @@ def wipe_existing_data():
     # Clear the idea_tags join table first — it isn't auto-cleared
     # when the parent Idea or Tag rows are deleted.
     db.session.execute(idea_tags.delete())
+    Notification.query.delete()
+    Bookmark.query.delete()
     Comment.query.delete()
     Vote.query.delete()
     Idea.query.delete()
@@ -104,6 +106,33 @@ def create_votes_and_comments(users_by_username, ideas_created):
                 ))
     db.session.commit()
 
+def seed_bookmarks_and_notifications(users, ideas):
+    """Seed some bookmarks and notifications so profile/dashboard aren't empty."""
+    if not users or not ideas:
+        return
+
+    # First user bookmarks the first 3 ideas
+    for idea in ideas[:3]:
+        existing = Bookmark.query.filter_by(user_id=users[0].id, idea_id=idea.id).first()
+        if not existing:
+            db.session.add(Bookmark(user_id=users[0].id, idea_id=idea.id))
+
+    # Give first user some sample notifications
+    notifs = [
+        {"type": "vote",    "message": f"Someone upvoted '{ideas[0].title}'",       "link": f"/ideas/{ideas[0].id}"},
+        {"type": "comment", "message": f"New comment on '{ideas[0].title}'",         "link": f"/ideas/{ideas[0].id}"},
+        {"type": "collab",  "message": "Someone requested to join your idea team.",  "link": f"/ideas/{ideas[0].id}"},
+    ]
+    for n in notifs:
+        db.session.add(Notification(
+            user_id=users[0].id,
+            type=n["type"],
+            message=n["message"],
+            link=n["link"],
+        ))
+
+    db.session.commit()
+    print("  ✓ Bookmarks and notifications seeded")
 
 def seed():
     sample_users = load_json('users.json')
@@ -116,6 +145,7 @@ def seed():
         tags_by_name      = create_tags(sample_ideas)
         ideas_created     = create_ideas(sample_ideas, users_by_username, tags_by_name)
         create_votes_and_comments(users_by_username, ideas_created)
+        seed_bookmarks_and_notifications(list(users_by_username.values()), ideas_created)
 
         print('\nSeed complete.')
         print('Test login -> username: jamie  password: password123')

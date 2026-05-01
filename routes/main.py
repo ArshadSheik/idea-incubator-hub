@@ -8,7 +8,7 @@ from flask import Blueprint, jsonify, redirect, render_template, request, url_fo
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
-from models.models import Collaboration, Comment, Idea, User, Vote, db
+from models.models import Collaboration, Comment, Idea, User, Vote, db, Notification, Bookmark, Task
 
 main_bp = Blueprint("main", __name__)
 
@@ -854,3 +854,234 @@ def login_html():
 @main_bp.route("/register.html")
 def register_html():
     return redirect(url_for("auth.register"))
+
+# ─────────────────────────────────────────
+@main_bp.route("/ideas/new")
+@login_required
+def submit_idea():
+    from forms import IdeaForm
+    form = IdeaForm()
+    return render_template("submit_idea.html", form=form)
+
+
+@main_bp.route("/profile/<username>")
+@login_required
+def profile(username):
+    profile_user = User.query.filter_by(username=username).first_or_404()
+
+    ideas = (
+        Idea.query
+        .filter_by(user_id=profile_user.id, privacy='public')
+        .order_by(Idea.created_at.desc())
+        .all()
+    )
+    collaborations = (
+        Collaboration.query
+        .filter_by(user_id=profile_user.id, status='accepted')
+        .all()
+    )
+    collab_count         = len(collaborations)
+    total_votes_received = sum(i.vote_count for i in ideas)
+
+    # Check if the logged-in user is viewing their own profile
+    is_own_profile = (
+        current_user.is_authenticated and current_user.id == profile_user.id
+    )
+
+    return render_template(
+        "profile.html",
+        profile_user=profile_user,
+        ideas=[_serialize_explore_idea(i) for i in ideas],
+        collaborations=collaborations,
+        collab_count=collab_count,
+        total_votes_received=total_votes_received,
+        is_own_profile=is_own_profile,
+    )
+
+@main_bp.route("/about")
+def about():
+    team_members = [
+        {"name": "Arshad Sheik",  "role": "Main Page & Architecture", "initials": "AS", "color": 1},
+        {"name": "Member 2 Name", "role": "Auth & Login",             "initials": "M2", "color": 2},
+        {"name": "Member 3 Name", "role": "Explore Page",             "initials": "M3", "color": 3},
+        {"name": "Member 4 Name", "role": "Dashboard",                "initials": "M4", "color": 4},
+        {"name": "Member 5 Name", "role": "Collaboration Board",      "initials": "M5", "color": 5},
+    ]
+    return render_template("about.html", team_members=team_members)
+
+
+@main_bp.route("/api/stats")
+def platform_stats():
+    """Returns live platform counts — used by the About page stat counter animation."""
+    return jsonify({
+        "ideas":    Idea.query.filter_by(privacy='public').count(),
+        "users":    User.query.count(),
+        "votes":    Vote.query.count(),
+        "comments": Comment.query.count(),
+    })
+
+@main_bp.route("/api/notifications")
+@login_required
+def get_notifications():
+    """Returns the current user's 10 most recent notifications."""
+    notifs = (
+        Notification.query
+        .filter_by(user_id=current_user.id)
+        .order_by(Notification.created_at.desc())
+        .limit(10)
+        .all()
+    )
+    unread_count = Notification.query.filter_by(
+        user_id=current_user.id, is_read=False
+    ).count()
+
+    return jsonify({
+        "ok": True,
+        "unread_count": unread_count,
+        "notifications": [
+            {
+                "id": n.id,
+                "type": n.type,
+                "message": n.message,
+                "link": n.link,
+                "is_read": n.is_read,
+                "created_at": _relative_time(n.created_at),
+            }
+            for n in notifs
+        ]
+    })
+
+
+@main_bp.route("/api/notifications/<int:notif_id>/read", methods=["POST"])
+@login_required
+def mark_notification_read(notif_id: int):
+    """Marks a single notification as read."""
+    notif = Notification.query.filter_by(
+        id=notif_id, user_id=current_user.id
+    ).first_or_404()
+    notif.is_read = True
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+@main_bp.route("/api/notifications/read-all", methods=["POST"])
+@login_required
+def mark_all_notifications_read():
+    """Marks all of the current user's notifications as read."""
+    Notification.query.filter_by(
+        user_id=current_user.id, is_read=False
+    ).update({"is_read": True})
+    db.session.commit()
+    return jsonify({"ok": True})
+
+@main_bp.route("/api/profile/bookmarks")
+@login_required
+def profile_bookmarks():
+    """Returns the current user's bookmarked ideas as serialized idea cards."""
+    bookmarks = (
+        Bookmark.query
+        .filter_by(user_id=current_user.id)
+        .order_by(Bookmark.created_at.desc())
+        .all()
+    )
+    ideas = [b.idea for b in bookmarks if b.idea and b.idea.privacy == 'public']
+    return jsonify({
+        "ok": True,
+        "bookmarks": [_serialize_explore_idea(idea) for idea in ideas]
+    })
+
+
+@main_bp.route("/api/ideas/<int:idea_id>/bookmark", methods=["POST"])
+@login_required
+def toggle_bookmark(idea_id: int):
+    """Toggle a bookmark on an idea for the current user."""
+    idea = Idea.query.get_or_404(idea_id)
+    existing = Bookmark.query.filter_by(
+        user_id=current_user.id, idea_id=idea.id
+    ).first()
+
+    if existing:
+        db.session.delete(existing)
+        bookmarked = False
+    else:
+        db.session.add(Bookmark(user_id=current_user.id, idea_id=idea.id))
+        bookmarked = True
+
+    db.session.commit()
+    return jsonify({"ok": True, "bookmarked": bookmarked})
+
+@main_bp.route("/ideas/<int:idea_id>/board")
+@login_required
+def collaboration_board(idea_id: int):
+    """Kanban board for an idea's collaboration team."""
+    idea = Idea.query.get_or_404(idea_id)
+    tasks = Task.query.filter_by(idea_id=idea_id).order_by(Task.created_at.asc()).all()
+    team = (
+        Collaboration.query
+        .filter_by(idea_id=idea_id, status='accepted')
+        .all()
+    )
+    team_members = [c.user for c in team if c.user]
+
+    return render_template(
+        "collaboration.html",
+        idea=idea,
+        tasks=tasks,
+        team=team_members,
+    )
+
+
+@main_bp.route("/api/ideas/<int:idea_id>/tasks", methods=["POST"])
+@login_required
+def create_task(idea_id: int):
+    """Create a new task on the Kanban board."""
+    Idea.query.get_or_404(idea_id)
+    payload = request.get_json(silent=True) or {}
+    title = (payload.get("title") or "").strip()
+    if not title:
+        return jsonify({"ok": False, "error": "Title is required"}), 400
+
+    task = Task(
+        idea_id=idea_id,
+        created_by=current_user.id,
+        assigned_to=payload.get("assigned_to") or None,
+        title=title,
+        description=payload.get("description", ""),
+        status=payload.get("status", "todo"),
+        priority=payload.get("priority", "medium"),
+    )
+    db.session.add(task)
+    db.session.commit()
+    return jsonify({"ok": True, "task_id": task.id}), 201
+
+
+@main_bp.route("/api/ideas/<int:idea_id>/tasks/<int:task_id>", methods=["PUT"])
+@login_required
+def update_task(idea_id: int, task_id: int):
+    """Update a task — used for drag-and-drop status changes and edits."""
+    task = Task.query.filter_by(id=task_id, idea_id=idea_id).first_or_404()
+    payload = request.get_json(silent=True) or {}
+
+    if "status" in payload:
+        task.status = payload["status"]
+    if "title" in payload:
+        task.title = payload["title"]
+    if "description" in payload:
+        task.description = payload["description"]
+    if "priority" in payload:
+        task.priority = payload["priority"]
+    if "assigned_to" in payload:
+        task.assigned_to = payload["assigned_to"] or None
+
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+@main_bp.route("/api/ideas/<int:idea_id>/tasks/<int:task_id>", methods=["DELETE"])
+@login_required
+def delete_task(idea_id: int, task_id: int):
+    """Delete a task from the board."""
+    task = Task.query.filter_by(id=task_id, idea_id=idea_id).first_or_404()
+    db.session.delete(task)
+    db.session.commit()
+    return jsonify({"ok": True})
