@@ -199,6 +199,31 @@ a:hover { color: var(--brand-primary-dark); }
 }
 .navbar-avatar:hover { border-color: var(--brand-primary); }
 
+/* Avatar dropdown */
+.avatar-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+  padding: 0.5rem;
+  z-index: 1000;
+  display: none;
+}
+.avatar-dropdown.show { display: block; }
+.avatar-dropdown-header { padding: 0.5rem 0.75rem 0.75rem; border-bottom: 1px solid var(--border, #e5e7eb); margin-bottom: 0.25rem; }
+.avatar-dropdown-name  { font-weight: 600; font-size: 0.875rem; margin: 0; color: var(--ink-900, #111); }
+.avatar-dropdown-email { font-size: 0.75rem; color: var(--ink-400, #9ca3af); margin: 0; }
+.avatar-dropdown-item  { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem;
+  border-radius: 8px; text-decoration: none; color: var(--ink-700, #374151); font-size: 0.875rem; }
+.avatar-dropdown-item:hover { background: var(--surface-raised, #f9fafb); color: var(--ink-900, #111); }
+.avatar-dropdown-divider { border-top: 1px solid var(--border, #e5e7eb); margin: 0.25rem 0; }
+.avatar-dropdown-item--danger { color: var(--danger, #dc2626); }
+.avatar-dropdown-item--danger:hover { background: #fef2f2; }
+
 /* ─── Buttons ─── */
 .btn {
   font-family: var(--font-body);

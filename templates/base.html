@@ -36,11 +36,28 @@
                                 <i class="bi bi-plus-lg"></i> New idea💡
                             </a>
                             <div class="position-relative">
-                                <a href="{{ url_for('main.profile', username=current_user.username) }}" class="text-decoration-none">
-                                    <div class="navbar-avatar avatar-{{ current_user.avatar_color }}">
-                                        {{ current_user.initials }}
+                                <div class="navbar-avatar avatar-{{ current_user.avatar_color }}" id="avatarToggle" style="cursor:pointer;">
+                                    {{ current_user.initials }}
+                                </div>
+                                <div class="avatar-dropdown" id="avatarMenu">
+                                    <div class="avatar-dropdown-header">
+                                        <p class="avatar-dropdown-name">{{ current_user.display_name }}</p>
+                                        <p class="avatar-dropdown-email">{{ current_user.email }}</p>
                                     </div>
-                                </a>
+                                    <a href="{{ url_for('main.dashboard') }}" class="avatar-dropdown-item">
+                                        <i class="bi bi-grid"></i> Dashboard
+                                    </a>
+                                    <a href="{{ url_for('main.profile', username=current_user.username) }}" class="avatar-dropdown-item">
+                                        <i class="bi bi-person"></i> Profile
+                                    </a>
+                                    <a href="{{ url_for('main.submit_idea') }}" class="avatar-dropdown-item">
+                                        <i class="bi bi-plus-circle"></i> New idea
+                                    </a>
+                                    <div class="avatar-dropdown-divider"></div>
+                                    <a href="{{ url_for('auth.logout') }}" class="avatar-dropdown-item avatar-dropdown-item--danger">
+                                        <i class="bi bi-box-arrow-right"></i> Log out
+                                    </a>
+                                </div>
                             </div>
                         {% else %}
                             <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">Log in</a>
