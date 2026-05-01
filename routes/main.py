@@ -895,3 +895,25 @@ def profile(username):
         total_votes_received=total_votes_received,
         is_own_profile=is_own_profile,
     )
+
+@main_bp.route("/about")
+def about():
+    team_members = [
+        {"name": "Arshad Sheik",  "role": "Main Page & Architecture", "initials": "AS", "color": 1},
+        {"name": "Member 2 Name", "role": "Auth & Login",             "initials": "M2", "color": 2},
+        {"name": "Member 3 Name", "role": "Explore Page",             "initials": "M3", "color": 3},
+        {"name": "Member 4 Name", "role": "Dashboard",                "initials": "M4", "color": 4},
+        {"name": "Member 5 Name", "role": "Collaboration Board",      "initials": "M5", "color": 5},
+    ]
+    return render_template("about.html", team_members=team_members)
+
+
+@main_bp.route("/api/stats")
+def platform_stats():
+    """Returns live platform counts — used by the About page stat counter animation."""
+    return jsonify({
+        "ideas":    Idea.query.filter_by(privacy='public').count(),
+        "users":    User.query.count(),
+        "votes":    Vote.query.count(),
+        "comments": Comment.query.count(),
+    })
