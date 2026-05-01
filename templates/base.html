@@ -51,6 +51,24 @@
                 </ul>
                 <div class="d-flex align-items-center gap-3">
                 {% if current_user.is_authenticated %}
+                    <!-- Notification bell -->
+                    <div class="position-relative notif-bell-wrapper">
+                        <button class="notif-bell-btn" id="notifBell" aria-label="Notifications">
+                        <i class="bi bi-bell"></i>
+                        <span class="notif-badge d-none" id="notifBadge">0</span>
+                        </button>
+                        <div class="notif-dropdown" id="notifDropdown">
+                        <div class="notif-dropdown-header">
+                            <span class="notif-dropdown-title">Notifications</span>
+                            <button class="notif-mark-all-btn" id="markAllRead">Mark all read</button>
+                        </div>
+                        <div class="notif-list" id="notifList">
+                            <p class="notif-empty">Loading...</p>
+                        </div>
+                        </div>
+                    </div>
+
+                    <!-- New idea button + avatar dropdown (existing code below) -->
                     <a href="{{ url_for('main.submit_idea') }}" class="btn btn-brand">
                     <i class="bi bi-plus-lg"></i> New idea💡
                     </a>

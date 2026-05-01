@@ -8,7 +8,7 @@ from flask import Blueprint, jsonify, redirect, render_template, request, url_fo
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
-from models.models import Collaboration, Comment, Idea, User, Vote, db
+from models.models import Collaboration, Comment, Idea, User, Vote, db, Notification
 
 main_bp = Blueprint("main", __name__)
 
@@ -919,3 +919,57 @@ def platform_stats():
         "votes":    Vote.query.count(),
         "comments": Comment.query.count(),
     })
+
+@main_bp.route("/api/notifications")
+@login_required
+def get_notifications():
+    """Returns the current user's 10 most recent notifications."""
+    notifs = (
+        Notification.query
+        .filter_by(user_id=current_user.id)
+        .order_by(Notification.created_at.desc())
+        .limit(10)
+        .all()
+    )
+    unread_count = Notification.query.filter_by(
+        user_id=current_user.id, is_read=False
+    ).count()
+
+    return jsonify({
+        "ok": True,
+        "unread_count": unread_count,
+        "notifications": [
+            {
+                "id": n.id,
+                "type": n.type,
+                "message": n.message,
+                "link": n.link,
+                "is_read": n.is_read,
+                "created_at": _relative_time(n.created_at),
+            }
+            for n in notifs
+        ]
+    })
+
+
+@main_bp.route("/api/notifications/<int:notif_id>/read", methods=["POST"])
+@login_required
+def mark_notification_read(notif_id: int):
+    """Marks a single notification as read."""
+    notif = Notification.query.filter_by(
+        id=notif_id, user_id=current_user.id
+    ).first_or_404()
+    notif.is_read = True
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+@main_bp.route("/api/notifications/read-all", methods=["POST"])
+@login_required
+def mark_all_notifications_read():
+    """Marks all of the current user's notifications as read."""
+    Notification.query.filter_by(
+        user_id=current_user.id, is_read=False
+    ).update({"is_read": True})
+    db.session.commit()
+    return jsonify({"ok": True})
