@@ -8,7 +8,7 @@ from flask import Blueprint, jsonify, redirect, render_template, request, url_fo
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
-from models.models import Collaboration, Comment, Idea, User, Vote, db, Notification, Bookmark
+from models.models import Collaboration, Comment, Idea, User, Vote, db, Notification, Bookmark, Task
 
 main_bp = Blueprint("main", __name__)
 
@@ -1009,3 +1009,79 @@ def toggle_bookmark(idea_id: int):
 
     db.session.commit()
     return jsonify({"ok": True, "bookmarked": bookmarked})
+
+@main_bp.route("/ideas/<int:idea_id>/board")
+@login_required
+def collaboration_board(idea_id: int):
+    """Kanban board for an idea's collaboration team."""
+    idea = Idea.query.get_or_404(idea_id)
+    tasks = Task.query.filter_by(idea_id=idea_id).order_by(Task.created_at.asc()).all()
+    team = (
+        Collaboration.query
+        .filter_by(idea_id=idea_id, status='accepted')
+        .all()
+    )
+    team_members = [c.user for c in team if c.user]
+
+    return render_template(
+        "collaboration.html",
+        idea=idea,
+        tasks=tasks,
+        team=team_members,
+    )
+
+
+@main_bp.route("/api/ideas/<int:idea_id>/tasks", methods=["POST"])
+@login_required
+def create_task(idea_id: int):
+    """Create a new task on the Kanban board."""
+    Idea.query.get_or_404(idea_id)
+    payload = request.get_json(silent=True) or {}
+    title = (payload.get("title") or "").strip()
+    if not title:
+        return jsonify({"ok": False, "error": "Title is required"}), 400
+
+    task = Task(
+        idea_id=idea_id,
+        created_by=current_user.id,
+        assigned_to=payload.get("assigned_to") or None,
+        title=title,
+        description=payload.get("description", ""),
+        status=payload.get("status", "todo"),
+        priority=payload.get("priority", "medium"),
+    )
+    db.session.add(task)
+    db.session.commit()
+    return jsonify({"ok": True, "task_id": task.id}), 201
+
+
+@main_bp.route("/api/ideas/<int:idea_id>/tasks/<int:task_id>", methods=["PUT"])
+@login_required
+def update_task(idea_id: int, task_id: int):
+    """Update a task — used for drag-and-drop status changes and edits."""
+    task = Task.query.filter_by(id=task_id, idea_id=idea_id).first_or_404()
+    payload = request.get_json(silent=True) or {}
+
+    if "status" in payload:
+        task.status = payload["status"]
+    if "title" in payload:
+        task.title = payload["title"]
+    if "description" in payload:
+        task.description = payload["description"]
+    if "priority" in payload:
+        task.priority = payload["priority"]
+    if "assigned_to" in payload:
+        task.assigned_to = payload["assigned_to"] or None
+
+    db.session.commit()
+    return jsonify({"ok": True})
+
+
+@main_bp.route("/api/ideas/<int:idea_id>/tasks/<int:task_id>", methods=["DELETE"])
+@login_required
+def delete_task(idea_id: int, task_id: int):
+    """Delete a task from the board."""
+    task = Task.query.filter_by(id=task_id, idea_id=idea_id).first_or_404()
+    db.session.delete(task)
+    db.session.commit()
+    return jsonify({"ok": True})
