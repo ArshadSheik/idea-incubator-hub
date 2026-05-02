@@ -1112,14 +1112,25 @@ def profile(username):
 
 @main_bp.route("/about")
 def about():
+    about_stats = {
+        "ideas": Idea.query.filter_by(privacy="public").count(),
+        "users": User.query.count(),
+        "votes": Vote.query.count(),
+        "comments": Comment.query.count(),
+        "collaborations": Collaboration.query.filter_by(status="accepted").count(),
+    }
     team_members = [
         {"name": "Arshad Sheik",  "role": "Main Page & Architecture", "initials": "AS", "color": 1},
-        {"name": "Member 2 Name", "role": "Auth & Login",             "initials": "M2", "color": 2},
-        {"name": "Member 3 Name", "role": "Explore Page",             "initials": "M3", "color": 3},
-        {"name": "Member 4 Name", "role": "Dashboard",                "initials": "M4", "color": 4},
-        {"name": "Member 5 Name", "role": "Collaboration Board",      "initials": "M5", "color": 5},
+        {"name": "Dong Bo", "role": "Auth & Login",             "initials": "DB", "color": 2},
+        {"name": "Cong Yuan", "role": "Explore Page",             "initials": "CY", "color": 3},
+        {"name": "Yitian Kong", "role": "Dashboard",                "initials": "YK", "color": 4},
+        {"name": "Members", "role": "Collaboration Board",      "initials": "MS", "color": 5},
     ]
-    return render_template("about.html", team_members=team_members)
+    return render_template(
+        "about.html",
+        about_stats=about_stats,
+        team_members=team_members,
+    )
 
 
 @main_bp.route("/api/stats")
