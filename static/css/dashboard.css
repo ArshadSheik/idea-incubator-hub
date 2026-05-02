@@ -412,4 +412,8 @@
   .dash-section { padding: 1.25rem; }
   .my-idea-meta { gap: 0.75rem; font-size: 0.75rem; }
   .my-idea-emoji { width: 36px; height: 36px; font-size: 1.1rem; }
+  .sidebar-card { padding: 1.25rem;}
+  .quick-action { padding: 0.8rem 0.7rem;}
+  .qa-icon { width: 48px; height: 48px; border-radius: 14px;}
+  .digest-rank { width: 34px; height: 34px; border-radius: 12px; font-size: 0.85rem;}
 }
