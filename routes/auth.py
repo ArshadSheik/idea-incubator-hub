@@ -76,20 +76,22 @@ def login():
         return redirect(url_for("main.index"))
 
     if request.method == "POST":
-        email    = request.form.get("email", "").strip().lower()
+        login_input = request.form.get("email", "").strip()
         password = request.form.get("password", "")
         remember = request.form.get("remember") == "on"
-
-        user = User.query.filter_by(email=email).first()
+        
+        user = User.query.filter_by(email=login_input.lower()).first()
+        if user is None:
+            user = User.query.filter_by(username=login_input).first()
 
         if user is None or not user.check_password(password):
-            flash("Incorrect email or password.")
+            flash("Incorrect email/username or password.")
             return render_template("login.html")
 
         login_user(user, remember=remember)
-
         next_page = request.args.get("next")
         return redirect(next_page or url_for("main.dashboard"))
+
 
     return render_template("login.html")
 
