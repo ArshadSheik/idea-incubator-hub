@@ -267,9 +267,9 @@
 }
 .sidebar-title {
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 0.95rem;
-  margin: 0 0 1rem;
+  font-weight: 800;
+  font-size: 1.05rem;
+  margin: 0 0 1.1rem;
   color: var(--ink-900);
   text-transform: uppercase;
   letter-spacing: 0.04em;
