@@ -203,6 +203,25 @@
           <div class="smart-coach-kicker">AI-style coach</div>
           <h4 class="smart-coach-title">{{ dashboard_tip.title }}</h4>
           <p class="smart-coach-text">{{ dashboard_tip.body }}</p>
+          
+          <!-- External API suggestion -->
+           <div class="smart-coach-api-box">
+            <div class="smart-coach-api-label">
+              <i class="bi bi-lightning-charge-fill"></i>
+              Live API suggestion
+            </div>
+            
+            <p id="smartCoachApiTip" class="smart-coach-api-text">
+              Loading a quick idea tip...
+            </p>
+            
+            <button type="button" id="refreshSmartCoachTip" class="smart-coach-api-btn">
+              New tip
+            </button>
+            
+            <small id="smartCoachApiStatus" class="smart-coach-api-status"></small>
+          </div>
+          
           <a href="{{ dashboard_tip.action_url }}" class="btn btn-brand btn-sm-iih">
             {{ dashboard_tip.action_label }}
           </a>
