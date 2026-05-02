@@ -261,9 +261,9 @@
 .sidebar-card {
   background: var(--paper);
   border: 1px solid var(--ink-200);
-  border-radius: var(--radius-lg);
-  padding: 1.25rem;
-  box-shadow: var(--shadow-card);
+  border-radius: 28px;
+  padding: 1.65rem;
+  box-shadow: 0 12px 30px rgba(19, 22, 40, 0.08);
 }
 .sidebar-title {
   font-family: var(--font-display);
