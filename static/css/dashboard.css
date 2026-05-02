@@ -376,15 +376,17 @@
   border-radius: 14px;
   background: var(--brand-primary);
   color: white;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+  display: grid;
+  place-items: center;
   font-weight: 800;
   font-size: 0.95rem;
   font-family: var(--font-display);
+  line-height: 1;
+  text-align: center;
+  padding: 0;
   box-shadow: 0 10px 20px rgba(255, 103, 31, 0.28);
 }
-.digest-item strong {
+.digest-item > div strong {
   display: block;
   font-size: 1rem;
   color: white;
@@ -392,7 +394,8 @@
   line-height: 1.42;
   margin-bottom: 0.25rem;
 }
-.digest-item span {
+
+.digest-item > div span {
   display: block;
   font-size: 0.92rem;
   color: var(--ink-400);
