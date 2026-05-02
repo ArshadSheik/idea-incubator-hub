@@ -352,7 +352,10 @@
   color: inherit;
   transition: transform var(--tr-fast);
 }
-.digest-item:first-of-type { border-top: none; padding-top: 0.4rem; }
+.digest-item:first-of-type {
+  border-top: none;
+  padding-top: 0.6rem;
+}
 .digest-item:hover { transform: translateX(3px); text-decoration: none; color: inherit; }
 .digest-rank {
   flex-shrink: 0;
