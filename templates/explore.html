@@ -7,19 +7,33 @@
 {% endblock %}
 
 {% block content %}
+{% set current_next = request.full_path %}
+{% if current_next.endswith('?') %}
+  {% set current_next = request.path %}
+{% endif %}
 <section class="explore-header">
   <div class="container-iih">
-    <h1 class="fade-up">Explore ideas</h1>
-    <p class="fade-up stagger-1">Browse ideas from the community. Vote on the ones you love, comment with your take.</p>
-    <div class="explore-search-bar fade-up stagger-2">
-      <i class="bi bi-search"></i>
-      <input type="text" id="searchInput" placeholder="Search by title, category, or keyword..." value="{{ active_filters.q|default('') }}">
+    <h1 class="fade-up {% if not current_user.is_authenticated %}explore-guest-blur{% endif %}">Explore ideas</h1>
+    <p class="fade-up stagger-1 {% if not current_user.is_authenticated %}explore-guest-blur{% endif %}">Browse ideas from the community. Vote on the ones you love, comment with your take.</p>
+    <div class="explore-header-toolbar fade-up stagger-2">
+      <div class="explore-header-search-col {% if not current_user.is_authenticated %}explore-guest-blur{% endif %}">
+        <div class="explore-search-bar">
+          <i class="bi bi-search"></i>
+          <input type="text" id="searchInput" placeholder="Search by title, category, or keyword..." value="{{ active_filters.q|default('') }}">
+        </div>
+      </div>
+      {% if not current_user.is_authenticated %}
+      <div class="explore-header-guest-cta">
+        <a class="btn btn-brand" href="{{ url_for('auth.login', next=current_next) }}">Log in</a>
+        <a class="btn btn-outline-iih" href="{{ url_for('auth.register') }}">Create account</a>
+      </div>
+      {% endif %}
     </div>
   </div>
 </section>
 
 <section class="container-iih mt-4 mb-5">
-  <div class="filter-shell">
+  <div class="filter-shell {% if not current_user.is_authenticated %}is-locked{% endif %}">
     <div class="filter-bar">
       <div class="filter-group">
         <label class="filter-label" for="filterCategory">Category</label>
@@ -60,60 +74,62 @@
     </div>
   </div>
 
-  <div class="results-count mb-3">
-    Showing <strong id="resultsCount">{{ ideas|length }}</strong> ideas
-  </div>
+  <div class="explore-locked-shell {% if not current_user.is_authenticated %}is-locked{% endif %}">
+    <div class="results-count mb-3">
+      Showing <strong id="resultsCount">{{ ideas|length }}</strong> ideas
+    </div>
 
-  <div class="row g-4" id="ideaGrid" {% if ideas|length == 0 %}style="display:none;"{% endif %}>
-    {% for idea in ideas %}
-    <div
-      class="col-md-6 col-lg-4 idea-item"
-      data-category="{{ idea.category }}"
-      data-stage="{{ idea.stage_class|default('validation') }}"
-      data-title="{{ idea.title|lower }}"
-    >
-      <a href="/ideas/{{ idea.id }}" class="text-decoration-none">
-        <div class="idea-card card-iih h-100">
-          <div class="card-body-iih">
-            <div class="d-flex justify-content-between align-items-start mb-2">
-              <span class="tag {{ idea.tag_class }}">{{ idea.category }}</span>
-              <span class="stage-pill stage-{{ idea.stage_class|default('validation') }}">
-                <span class="stage-dot"></span>{{ idea.stage|default("Validation") }}
-              </span>
-            </div>
-            <h3 class="idea-card-title">{{ idea.title }}</h3>
-            <p class="idea-card-desc">{{ idea.summary }}</p>
-            <div class="idea-card-meta">
-              <div class="meta-item"><i class="bi bi-caret-up-fill text-brand"></i><strong>{{ idea.votes }}</strong></div>
-              <div class="meta-item"><i class="bi bi-chat"></i>{{ idea.comments_total }}</div>
-              <div class="meta-item"><i class="bi bi-people"></i>{{ idea.collaborators_total }}</div>
-            </div>
-            <hr class="divider">
-            <div class="d-flex align-items-center gap-2">
-              <span class="avatar avatar-sm {{ idea.author.avatar_class }}">{{ idea.author.initials }}</span>
-              <div>
-                <div class="small fw-semibold">{{ idea.author.name }}</div>
-                <div class="small text-muted-iih">{{ idea.posted }}</div>
+    <div class="row g-4" id="ideaGrid" {% if ideas|length == 0 %}style="display:none;"{% endif %}>
+      {% for idea in ideas %}
+      <div
+        class="col-md-6 col-lg-4 idea-item"
+        data-category="{{ idea.category }}"
+        data-stage="{{ idea.stage_class|default('validation') }}"
+        data-title="{{ idea.title|lower }}"
+      >
+        <a href="/ideas/{{ idea.id }}" class="text-decoration-none">
+          <div class="idea-card card-iih h-100">
+            <div class="card-body-iih">
+              <div class="d-flex justify-content-between align-items-start mb-2">
+                <span class="tag {{ idea.tag_class }}">{{ idea.category }}</span>
+                <span class="stage-pill stage-{{ idea.stage_class|default('validation') }}">
+                  <span class="stage-dot"></span>{{ idea.stage|default("Validation") }}
+                </span>
+              </div>
+              <h3 class="idea-card-title">{{ idea.title }}</h3>
+              <p class="idea-card-desc">{{ idea.summary }}</p>
+              <div class="idea-card-meta">
+                <div class="meta-item"><i class="bi bi-caret-up-fill text-brand"></i><strong>{{ idea.votes }}</strong></div>
+                <div class="meta-item"><i class="bi bi-chat"></i>{{ idea.comments_total }}</div>
+                <div class="meta-item"><i class="bi bi-people"></i>{{ idea.collaborators_total }}</div>
+              </div>
+              <hr class="divider">
+              <div class="d-flex align-items-center gap-2">
+                <span class="avatar avatar-sm {{ idea.author.avatar_class }}">{{ idea.author.initials }}</span>
+                <div>
+                  <div class="small fw-semibold">{{ idea.author.name }}</div>
+                  <div class="small text-muted-iih">{{ idea.posted }}</div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      </a>
+        </a>
+      </div>
+      {% endfor %}
     </div>
-    {% endfor %}
-  </div>
 
-  {% if ideas|length == 0 %}
-  <div id="emptyState" class="empty-state" style="display:block;">
-  {% else %}
-  <div id="emptyState" class="empty-state" style="display:none;">
-  {% endif %}
-    <div class="empty-icon"><i class="bi bi-search"></i></div>
-    <h3>No ideas match your filters</h3>
-    <p>Try different keywords or clear your filters.</p>
-    <button class="btn btn-brand" onclick="document.getElementById('resetFilters').click()">
-      <i class="bi bi-arrow-counterclockwise"></i> Reset filters
-    </button>
+    {% if ideas|length == 0 %}
+    <div id="emptyState" class="empty-state" style="display:block;">
+    {% else %}
+    <div id="emptyState" class="empty-state" style="display:none;">
+    {% endif %}
+      <div class="empty-icon"><i class="bi bi-search"></i></div>
+      <h3>No ideas match your filters</h3>
+      <p>Try different keywords or clear your filters.</p>
+      <button class="btn btn-brand" onclick="document.getElementById('resetFilters').click()">
+        <i class="bi bi-arrow-counterclockwise"></i> Reset filters
+      </button>
+    </div>
   </div>
 </section>
 {% endblock %}

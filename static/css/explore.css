@@ -19,9 +19,35 @@
 }
 
 /* ─── Search bar ─── */
+.explore-header-toolbar {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem 1.5rem;
+}
+.explore-header-search-col {
+  flex: 1 1 240px;
+  min-width: 0;
+  max-width: 520px;
+}
+/* Horizontally centered on the content column; vertical alignment matches search row */
+.explore-header-guest-cta {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  z-index: 2;
+}
+
 .explore-search-bar {
   position: relative;
-  max-width: 520px;
+  max-width: 100%;
 }
 .explore-search-bar i {
   position: absolute;
@@ -133,8 +159,37 @@
 
 .idea-item.hide { display: none !important; }
 
+.explore-guest-blur {
+  filter: blur(5px);
+  user-select: none;
+  pointer-events: none;
+}
+
+.filter-shell.is-locked {
+  filter: blur(5px);
+  user-select: none;
+  pointer-events: none;
+}
+
+.explore-locked-shell.is-locked #ideaGrid,
+.explore-locked-shell.is-locked #emptyState,
+.explore-locked-shell.is-locked .results-count {
+  filter: blur(5px);
+  user-select: none;
+  pointer-events: none;
+}
+
 @media (max-width: 767px) {
   .filter-bar { flex-direction: column; align-items: stretch; }
   .filter-group { min-width: 0; }
   .reset-btn { align-self: stretch; }
+  .explore-header-guest-cta {
+    position: relative;
+    left: auto;
+    top: auto;
+    transform: none;
+    width: 100%;
+    justify-content: center;
+    margin-top: 0.75rem;
+  }
 }

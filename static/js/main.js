@@ -117,3 +117,101 @@ document.addEventListener('DOMContentLoaded', () => {
     document.head.appendChild(style);
   }
 });
+
+/* ─── Notification bell ─── */
+const notifBell     = document.getElementById('notifBell');
+const notifDropdown = document.getElementById('notifDropdown');
+const notifBadge    = document.getElementById('notifBadge');
+const notifList     = document.getElementById('notifList');
+const markAllBtn    = document.getElementById('markAllRead');
+
+const NOTIF_ICONS = {
+  vote:    { icon: 'bi-caret-up-fill',   cls: 'type-vote'    },
+  comment: { icon: 'bi-chat-dots-fill',  cls: 'type-comment' },
+  collab:  { icon: 'bi-person-plus-fill',cls: 'type-collab'  },
+};
+
+function loadNotifications() {
+  if (!notifBell) return;
+  fetch('/api/notifications')
+    .then(r => r.json())
+    .then(data => {
+      if (!data.ok) return;
+
+      // Update badge
+      if (data.unread_count > 0) {
+        notifBadge.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
+        notifBadge.classList.remove('d-none');
+      } else {
+        notifBadge.classList.add('d-none');
+      }
+
+      // Render list
+      if (data.notifications.length === 0) {
+        notifList.innerHTML = '<p class="notif-empty">No notifications yet.</p>';
+        return;
+      }
+
+      notifList.innerHTML = data.notifications.map(n => {
+        const iconInfo = NOTIF_ICONS[n.type] || { icon: 'bi-bell', cls: 'type-comment' };
+        return `
+          <div class="notif-item ${n.is_read ? '' : 'unread'}" 
+               data-id="${n.id}" data-link="${n.link || '#'}">
+            <div class="notif-icon ${iconInfo.cls}">
+              <i class="bi ${iconInfo.icon}"></i>
+            </div>
+            <div>
+              <p class="notif-text mb-0">${n.message}</p>
+              <p class="notif-time mb-0">${n.created_at}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Click on individual notification
+      notifList.querySelectorAll('.notif-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const id   = item.dataset.id;
+          const link = item.dataset.link;
+          fetch(`/api/notifications/${id}/read`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
+          }).then(() => {
+            item.classList.remove('unread');
+            loadNotifications(); // refresh badge
+          });
+          if (link && link !== '#') window.location.href = link;
+        });
+      });
+    })
+    .catch(() => {});
+}
+
+if (notifBell) {
+  // Toggle dropdown
+  notifBell.addEventListener('click', (e) => {
+    e.stopPropagation();
+    notifDropdown.classList.toggle('show');
+    if (notifDropdown.classList.contains('show')) loadNotifications();
+  });
+
+  // Close on outside click
+  document.addEventListener('click', (e) => {
+    if (!notifDropdown.contains(e.target) && e.target !== notifBell) {
+      notifDropdown.classList.remove('show');
+    }
+  });
+
+  // Mark all read
+  if (markAllBtn) {
+    markAllBtn.addEventListener('click', () => {
+      fetch('/api/notifications/read-all', {
+        method: 'POST',
+        headers: { 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
+      }).then(() => loadNotifications());
+    });
+  }
+
+  // Load on page load to show badge immediately
+  loadNotifications();
+}

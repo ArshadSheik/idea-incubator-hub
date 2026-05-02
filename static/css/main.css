@@ -199,6 +199,122 @@ a:hover { color: var(--brand-primary-dark); }
 }
 .navbar-avatar:hover { border-color: var(--brand-primary); }
 
+/* Avatar dropdown */
+.avatar-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 200px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+  padding: 0.5rem;
+  z-index: 1000;
+  display: none;
+}
+.avatar-dropdown.show { display: block; }
+.avatar-dropdown-header { padding: 0.5rem 0.75rem 0.75rem; border-bottom: 1px solid var(--border, #e5e7eb); margin-bottom: 0.25rem; }
+.avatar-dropdown-name  { font-weight: 600; font-size: 0.875rem; margin: 0; color: var(--ink-900, #111); }
+.avatar-dropdown-email { font-size: 0.75rem; color: var(--ink-400, #9ca3af); margin: 0; }
+.avatar-dropdown-item  { display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem 0.75rem;
+  border-radius: 8px; text-decoration: none; color: var(--ink-700, #374151); font-size: 0.875rem; }
+.avatar-dropdown-item:hover { background: var(--surface-raised, #f9fafb); color: var(--ink-900, #111); }
+.avatar-dropdown-divider { border-top: 1px solid var(--border, #e5e7eb); margin: 0.25rem 0; }
+.avatar-dropdown-item--danger { color: var(--danger, #dc2626); }
+.avatar-dropdown-item--danger:hover { background: #fef2f2; }
+
+/* ── Notification bell ─────────────────────────────── */
+.notif-bell-wrapper { display: inline-block; }
+
+.notif-bell-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.4rem;
+  font-size: 1.2rem;
+  color: var(--ink-500, #6b7280);
+  position: relative;
+  line-height: 1;
+}
+.notif-bell-btn:hover { color: var(--ink-900, #111); }
+
+.notif-badge {
+  position: absolute;
+  top: 0; right: 0;
+  background: var(--danger, #dc2626);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 3px;
+  line-height: 1;
+}
+
+.notif-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 320px;
+  background: var(--surface, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.10);
+  z-index: 1001;
+  display: none;
+}
+.notif-dropdown.show { display: block; }
+
+.notif-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+}
+.notif-dropdown-title { font-weight: 600; font-size: 0.875rem; color: var(--ink-900, #111); }
+.notif-mark-all-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 0.75rem; color: var(--brand-600, #4f46e5);
+  padding: 0;
+}
+.notif-mark-all-btn:hover { text-decoration: underline; }
+
+.notif-list { max-height: 320px; overflow-y: auto; }
+
+.notif-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
+}
+.notif-item:last-child { border-bottom: none; }
+.notif-item:hover { background: var(--surface-raised, #f9fafb); }
+.notif-item.unread { background: var(--brand-50, #eff6ff); }
+.notif-item.unread:hover { background: var(--brand-100, #dbeafe); }
+
+.notif-icon {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.875rem; flex-shrink: 0;
+}
+.notif-icon.type-vote    { background: #fef3c7; color: #d97706; }
+.notif-icon.type-comment { background: #dbeafe; color: #2563eb; }
+.notif-icon.type-collab  { background: #d1fae5; color: #059669; }
+
+.notif-text  { font-size: 0.825rem; color: var(--ink-700, #374151); line-height: 1.4; }
+.notif-time  { font-size: 0.75rem; color: var(--ink-400, #9ca3af); margin-top: 0.2rem; }
+.notif-empty { text-align: center; padding: 1.5rem; color: var(--ink-400, #9ca3af); font-size: 0.875rem; margin: 0; }
+
 /* ─── Buttons ─── */
 .btn {
   font-family: var(--font-body);

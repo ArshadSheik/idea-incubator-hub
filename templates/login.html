@@ -36,8 +36,11 @@
 
         <!-- Form -->
         <!-- <form method="POST" class="auth-form" novalidate> -->
-        <form method="POST" action="{{ url_for('auth.login') }}" class="auth-form" novalidate>
+        <form method="POST" action="{{ url_for('auth.login', next=next_page) if next_page else url_for('auth.login') }}" class="auth-form" novalidate>
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if next_page %}
+            <input type="hidden" name="next" value="{{ next_page }}">
+            {% endif %}
             <!-- Email -->
             <div class="mb-3">
             <label class="form-label-iih" for="email">Email or username</label>

@@ -1,0 +1,121 @@
+/* ============================================================
+   PROFILE PAGE
+   ============================================================ */
+
+.profile-hero {
+  padding: 3rem 0;
+  background: linear-gradient(135deg, var(--brand-50, #f0f4ff) 0%, var(--surface, #fff) 100%);
+  border-bottom: 1px solid var(--border, #e5e7eb);
+}
+
+.profile-header {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.profile-avatar-lg {
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  font-size: 1.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profile-name     { font-size: 1.75rem; font-weight: 700; margin-bottom: 0.15rem; }
+.profile-username { color: var(--ink-400, #9ca3af); margin-bottom: 0.5rem; }
+.profile-bio      { color: var(--ink-500, #6b7280); max-width: 480px; margin-bottom: 0.75rem; }
+
+.profile-stats { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+
+.stat-pill {
+  background: var(--surface-raised, #f9fafb);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 999px;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8rem;
+  color: var(--ink-600, #4b5563);
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+/* Tabs */
+.profile-body { padding: 2rem 0 4rem; }
+
+.profile-tabs { border-bottom: 2px solid var(--border, #e5e7eb); gap: 0; }
+
+.profile-tabs .nav-link {
+  color: var(--ink-500, #6b7280);
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -2px;
+  padding: 0.75rem 1.25rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.profile-tabs .nav-link.active {
+  color: var(--brand-600, #4f46e5);
+  border-bottom-color: var(--brand-600, #4f46e5);
+}
+
+.tab-count {
+  background: var(--surface-raised, #f3f4f6);
+  border-radius: 999px;
+  padding: 0.1rem 0.5rem;
+  font-size: 0.75rem;
+  color: var(--ink-500, #6b7280);
+}
+
+/* Collab card */
+.collab-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 10px;
+  margin-bottom: 0.75rem;
+  background: var(--surface, #fff);
+  gap: 1rem;
+}
+
+.collab-idea-title {
+  font-weight: 600;
+  color: var(--ink-900, #111);
+  text-decoration: none;
+}
+.collab-idea-title:hover { color: var(--brand-600, #4f46e5); }
+
+.badge-role {
+  background: var(--brand-50, #eff6ff);
+  color: var(--brand-700, #3730a3);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Empty state */
+.empty-state {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: var(--ink-400, #9ca3af);
+}
+.empty-state i { font-size: 2.5rem; display: block; margin-bottom: 0.75rem; }
+.empty-state p { margin-bottom: 1rem; }
+
+@media (max-width: 576px) {
+  .profile-header { flex-direction: column; align-items: center; text-align: center; }
+  .profile-stats  { justify-content: center; }
+}

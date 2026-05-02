@@ -8,8 +8,8 @@ document.addEventListener("DOMContentLoaded", () => {
     return match ? match[1] : null;
   };
   const ideaIdForStorage = getIdeaId();
-  const savedIdeasStorageKey = "saved_ideas";
   const likeStorageKey = ideaIdForStorage ? `idea:${ideaIdForStorage}:liked_comments` : null;
+  const aiInsightsStorageKey = ideaIdForStorage ? `idea:${ideaIdForStorage}:ai_insights` : null;
   const actionFeedbackEl = document.getElementById("actionFeedback");
   let feedbackTimer = null;
 
@@ -29,18 +29,19 @@ document.addEventListener("DOMContentLoaded", () => {
     localStorage.setItem(likeStorageKey, JSON.stringify(Array.from(likedSet)));
   };
 
-  const readSavedIdeas = () => {
+  const readAiInsightsCache = () => {
+    if (!aiInsightsStorageKey) return null;
     try {
-      const raw = localStorage.getItem(savedIdeasStorageKey);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return new Set(Array.isArray(parsed) ? parsed.map(String) : []);
+      const raw = localStorage.getItem(aiInsightsStorageKey);
+      return raw ? JSON.parse(raw) : null;
     } catch (_) {
-      return new Set();
+      return null;
     }
   };
 
-  const writeSavedIdeas = (savedSet) => {
-    localStorage.setItem(savedIdeasStorageKey, JSON.stringify(Array.from(savedSet)));
+  const writeAiInsightsCache = (insights) => {
+    if (!aiInsightsStorageKey) return;
+    localStorage.setItem(aiInsightsStorageKey, JSON.stringify(insights));
   };
 
   const setLikeButtonState = (btn, liked, count) => {
@@ -97,32 +98,183 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const upvoteBtn = document.getElementById("upvoteBtn");
   const voteCountEl = document.getElementById("voteCount");
-  const saveBtn = document.getElementById("saveBtn");
+  const bookmarkBtn = document.getElementById("bookmarkBtn");
+  const bookmarkIcon = document.getElementById("bookmarkIcon");
+  const bookmarkLabel = document.getElementById("bookmarkLabel");
   const shareBtn = document.getElementById("shareBtn");
   const collaborateBtn = document.getElementById("collaborateBtn");
-  const savedIdeas = readSavedIdeas();
+  const aiInsightsBtn = document.getElementById("aiInsightsBtn");
+  const aiInsightsLoading = document.getElementById("aiInsightsLoading");
+  const aiInsightsError = document.getElementById("aiInsightsError");
+  const aiInsightsCard = document.getElementById("aiInsightsCard");
+  const aiSummaryText = document.getElementById("aiSummaryText");
+  const aiStrengthsList = document.getElementById("aiStrengthsList");
+  const aiSuggestionsList = document.getElementById("aiSuggestionsList");
+  const aiDownloadBtn = document.getElementById("aiDownloadBtn");
+  let currentAiInsights = readAiInsightsCache();
 
-  if (saveBtn && ideaIdForStorage) {
-    const setSaveState = (saved) => {
-      saveBtn.classList.toggle("voted", saved);
-      const label = saveBtn.querySelector("span");
-      if (label) label.textContent = saved ? "Saved" : "Save";
-      const icon = saveBtn.querySelector("i");
-      if (icon) {
-        icon.className = saved ? "bi bi-bookmark-fill" : "bi bi-bookmark";
+  const renderAiInsights = (insights) => {
+    if (!insights) return;
+    if (aiSummaryText) aiSummaryText.textContent = insights.summary || "No summary available.";
+    if (aiStrengthsList) {
+      aiStrengthsList.innerHTML = "";
+      (insights.strengths || []).forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        aiStrengthsList.appendChild(li);
+      });
+    }
+    if (aiSuggestionsList) {
+      aiSuggestionsList.innerHTML = "";
+      (insights.suggestions || []).forEach((item) => {
+        const li = document.createElement("li");
+        li.textContent = item;
+        aiSuggestionsList.appendChild(li);
+      });
+    }
+    aiInsightsCard?.classList.remove("d-none");
+    aiDownloadBtn?.classList.remove("d-none");
+  };
+
+  const buildInsightsText = (insights) => {
+    const strengths = (insights.strengths || []).map((s) => `- ${s}`).join("\n");
+    const suggestions = (insights.suggestions || []).map((s) => `- ${s}`).join("\n");
+    return [
+      "AI Insights",
+      "",
+      "Summary",
+      insights.summary || "",
+      "",
+      "Strengths",
+      strengths || "-",
+      "",
+      "Suggestions",
+      suggestions || "-",
+      "",
+      `Source: ${window.location.href}`,
+    ].join("\n");
+  };
+
+  if (currentAiInsights) {
+    renderAiInsights(currentAiInsights);
+    if (aiInsightsBtn) {
+      aiInsightsBtn.classList.add("voted");
+      const text = aiInsightsBtn.querySelector("span");
+      if (text) {
+        text.textContent = "Insights ready";
+      } else {
+        aiInsightsBtn.innerHTML = `<i class="bi bi-stars"></i> Insights ready`;
+      }
+    }
+  }
+
+  if (aiDownloadBtn) {
+    aiDownloadBtn.addEventListener("click", () => {
+      if (!currentAiInsights || !ideaIdForStorage) return;
+      const blob = new Blob([buildInsightsText(currentAiInsights)], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `idea-${ideaIdForStorage}-ai-insights.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    });
+  }
+
+  if (aiInsightsBtn) {
+    aiInsightsBtn.addEventListener("click", async () => {
+      const ideaId = getIdeaId();
+      if (!ideaId) return;
+
+      if (currentAiInsights) {
+        renderAiInsights(currentAiInsights);
+        showActionFeedback("AI insights already generated. You can download them directly.", "info");
+        return;
+      }
+
+      aiInsightsBtn.disabled = true;
+      aiInsightsLoading?.classList.remove("d-none");
+      aiInsightsError?.classList.add("d-none");
+      aiInsightsCard?.classList.add("d-none");
+      try {
+        const response = await fetch(`/ideas/${ideaId}/ai-insights`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+          },
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload.error || `AI insight request failed: ${response.status}`);
+        }
+
+        currentAiInsights = payload.insights || {};
+        writeAiInsightsCache(currentAiInsights);
+        renderAiInsights(currentAiInsights);
+        aiInsightsBtn.classList.add("voted");
+        aiInsightsBtn.innerHTML = `<i class="bi bi-stars"></i> Insights ready`;
+      } catch (error) {
+        console.error(error);
+        if (aiInsightsError) {
+          aiInsightsError.textContent = "Unable to generate AI insights right now. Please try again.";
+          aiInsightsError.classList.remove("d-none");
+        }
+      } finally {
+        aiInsightsLoading?.classList.add("d-none");
+        aiInsightsBtn.disabled = false;
+      }
+    });
+  }
+
+  if (bookmarkBtn && ideaIdForStorage) {
+    const setBookmarkState = (bookmarked) => {
+      bookmarkBtn.classList.toggle("voted", bookmarked);
+      if (bookmarkIcon) {
+        bookmarkIcon.className = bookmarked ? "bi bi-bookmark-fill" : "bi bi-bookmark";
+      }
+      if (bookmarkLabel) {
+        bookmarkLabel.textContent = bookmarked ? "Bookmarked" : "Bookmark";
       }
     };
 
-    setSaveState(savedIdeas.has(String(ideaIdForStorage)));
-    saveBtn.addEventListener("click", () => {
-      const key = String(ideaIdForStorage);
-      if (savedIdeas.has(key)) {
-        savedIdeas.delete(key);
-      } else {
-        savedIdeas.add(key);
+    const loadBookmarkState = async () => {
+      try {
+        const response = await fetch(`/api/ideas/${ideaIdForStorage}/bookmark-status`);
+        const payload = await response.json();
+        if (response.ok && payload.ok) {
+          setBookmarkState(Boolean(payload.bookmarked));
+        }
+      } catch (error) {
+        console.error(error);
       }
-      writeSavedIdeas(savedIdeas);
-      setSaveState(savedIdeas.has(key));
+    };
+
+    loadBookmarkState();
+    bookmarkBtn.addEventListener("click", async () => {
+      bookmarkBtn.disabled = true;
+      try {
+        const response = await fetch(`/api/ideas/${ideaIdForStorage}/bookmark`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+          },
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload.error || `Bookmark request failed: ${response.status}`);
+        }
+        const bookmarked = Boolean(payload.bookmarked);
+        setBookmarkState(bookmarked);
+      } catch (error) {
+        console.error(error);
+        showActionFeedback("Unable to update bookmark right now. Please try again.");
+      } finally {
+        bookmarkBtn.disabled = false;
+      }
     });
   }
 
