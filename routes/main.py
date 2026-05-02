@@ -254,6 +254,47 @@ def _build_dashboard_activity(user_id: int, limit: int = 6) -> list[dict]:
     items.sort(key=lambda x: x["_sort_time"] or datetime.min, reverse=True)
     return items[:limit]
 
+def _build_dashboard_tip(ideas, stats):
+    if not ideas:
+        return {
+            "icon": "bi bi-stars",
+            "title": "Start your first idea",
+            "body": "You have not posted any ideas yet. Start by sharing one idea and collecting early feedback.",
+            "action_label": "Post a new idea",
+            "action_url": url_for("main.submit_idea"),
+        }
+
+    top_idea = max(
+        ideas,
+        key=lambda idea: (idea.vote_count or 0) + (idea.comment_count or 0) + (idea.collaborator_count or 0),
+    )
+
+    if stats["comments_received"] > 0:
+        return {
+            "icon": "bi bi-chat-heart",
+            "title": "Review your feedback",
+            "body": f'Your idea "{top_idea.title}" is getting community feedback. Check the comments and refine your pitch.',
+            "action_label": "Open top idea",
+            "action_url": url_for("main.idea_detail", idea_id=top_idea.id),
+        }
+
+    if stats["upvotes_received"] > 0:
+        return {
+            "icon": "bi bi-graph-up-arrow",
+            "title": "Build on your traction",
+            "body": f'Your idea "{top_idea.title}" has early votes. Add more detail or invite collaborators to keep momentum.',
+            "action_label": "View idea",
+            "action_url": url_for("main.idea_detail", idea_id=top_idea.id),
+        }
+
+    return {
+        "icon": "bi bi-megaphone",
+        "title": "Get your first signal",
+        "body": "Your ideas are live, but they need more community signals. Share them and ask for feedback.",
+        "action_label": "Browse community",
+        "action_url": url_for("main.explore"),
+    }
+
 def _serialize_detail_idea(idea: Idea) -> dict:
     author = idea.author
     stage_class = idea.stage or "validation"
@@ -780,6 +821,7 @@ def dashboard():
     }
 
     recent_activity = _build_dashboard_activity(current_user.id, limit=6)
+    dashboard_tip = _build_dashboard_tip(ideas, stats)
 
     weekly_digest = (
         Idea.query
@@ -797,6 +839,7 @@ def dashboard():
         stage_counts=stage_counts,
         my_ideas=[_serialize_dashboard_idea(idea) for idea in ideas],
         recent_activity=recent_activity,
+        dashboard_tip=dashboard_tip,
         weekly_digest=weekly_digest,
     )
 
