@@ -363,16 +363,18 @@
 }
 .digest-rank {
   flex-shrink: 0;
-  width: 28px; height: 28px;
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
   background: var(--brand-primary);
   color: white;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  font-weight: 700;
-  font-size: 0.85rem;
+  font-weight: 800;
+  font-size: 0.95rem;
   font-family: var(--font-display);
+  box-shadow: 0 10px 20px rgba(255, 103, 31, 0.28);
 }
 .digest-item strong {
   display: block;
