@@ -91,11 +91,13 @@ def login():
         if _is_safe_redirect(referrer):
             next_page = referrer
     if request.method == "POST":
-        email    = request.form.get("email", "").strip().lower()
+        login_input = request.form.get("email", "").strip()
         password = request.form.get("password", "")
         remember = request.form.get("remember") == "on"
-
-        user = User.query.filter_by(email=email).first()
+        
+        user = User.query.filter_by(email=login_input.lower()).first()
+        if user is None:
+            user = User.query.filter_by(username=login_input).first()
 
         if user is None or not user.check_password(password):
             flash("Incorrect email or password.")
