@@ -292,4 +292,58 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const tipText = document.getElementById("smartCoachApiTip");
+  const refreshBtn = document.getElementById("refreshSmartCoachTip");
+  const statusText = document.getElementById("smartCoachApiStatus");
+
+  if (!tipText || !refreshBtn || !statusText) {
+    return;
+  }
+
+  const fallbackTips = [
+    "Start with one clear problem your idea is trying to solve.",
+    "Describe who your idea helps before explaining the features.",
+    "A strong idea usually begins with a simple user pain point.",
+    "Try writing your idea in one sentence first.",
+    "Ask for early feedback before making the idea too complex."
+  ];
+
+  async function loadSmartCoachTip() {
+    refreshBtn.disabled = true;
+    statusText.textContent = "Loading suggestion...";
+
+    try {
+      const response = await fetch("https://api.adviceslip.com/advice?timestamp=" + Date.now(), {
+        cache: "no-store"
+      });
+
+      if (!response.ok) {
+        throw new Error("API request failed.");
+      }
+
+      const data = await response.json();
+
+      if (data && data.slip && data.slip.advice) {
+        tipText.textContent = data.slip.advice;
+        statusText.textContent = "Loaded from external API.";
+      } else {
+        throw new Error("Unexpected API response.");
+      }
+    } catch (error) {
+      const randomTip = fallbackTips[Math.floor(Math.random() * fallbackTips.length)];
+      tipText.textContent = randomTip;
+      statusText.textContent = "API unavailable. Showing local fallback tip.";
+    } finally {
+      refreshBtn.disabled = false;
+    }
+  }
+
+  loadSmartCoachTip();
+
+  refreshBtn.addEventListener("click", loadSmartCoachTip);
+});
+</script>
 {% endblock %}
