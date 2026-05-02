@@ -16,6 +16,10 @@
     <body data-page="{% block page_name %}{% endblock %}" {% block body_attrs %}{% endblock %}>
 
         {% set page = self.page_name() %}
+        {% set current_next = request.full_path %}
+        {% if current_next.endswith('?') %}
+            {% set current_next = request.path %}
+        {% endif %}
 
         {% if page == 'landing' and not current_user.is_authenticated %}
         <!-- Minimal navbar for landing page guests -->
@@ -26,7 +30,7 @@
                 <span>Idea Incubator</span>
             </a>
             <div class="d-flex align-items-center gap-3">
-                <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">Log in</a>
+                <a href="{{ url_for('auth.login', next=current_next) }}" class="btn btn-ghost">Log in</a>
                 <a href="{{ url_for('auth.register') }}" class="btn btn-brand">Get started</a>
             </div>
             </div>
@@ -40,14 +44,19 @@
                 <span class="brand-mark"><i class="bi bi-lightbulb-fill"></i></span>
                 <span>Idea Incubator</span>
             </a>
+            {% if current_user.is_authenticated %}
             <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
                 <i class="bi bi-list fs-3"></i>
             </button>
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link" href="/explore" data-page="explore">Explore</a></li>
-                <li class="nav-item"><a class="nav-link" href="/dashboard" data-page="dashboard">Dashboard</a></li>
+                <li class="nav-item">
+                  <a class="nav-link" href="{{ url_for('main.explore') }}" data-page="explore">Explore</a>
+                </li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('main.about') }}" data-page="about">About</a></li>
+                {% if current_user.is_authenticated %}
+                <li class="nav-item"><a class="nav-link" href="/dashboard" data-page="dashboard">Dashboard</a></li>
+                {% endif %}
                 </ul>
                 <div class="d-flex align-items-center gap-3">
                 {% if current_user.is_authenticated %}
@@ -97,11 +106,20 @@
                     </div>
                     </div>
                 {% else %}
-                    <a href="{{ url_for('auth.login') }}" class="btn btn-ghost">Log in</a>
+                    <a href="{{ url_for('auth.login', next=current_next) }}" class="btn btn-ghost">Log in</a>
                     <a href="{{ url_for('auth.register') }}" class="btn btn-brand">Get started</a>
                 {% endif %}
                 </div>
             </div>
+            {% else %}
+            <div class="d-flex align-items-center gap-3 mx-auto">
+                <a class="nav-link mb-0" href="{{ url_for('main.explore') }}" data-page="explore">Explore</a>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <a href="{{ url_for('auth.login', next=current_next) }}" class="btn btn-ghost">Log in</a>
+                <a href="{{ url_for('auth.register') }}" class="btn btn-brand">Get started</a>
+            </div>
+            {% endif %}
             </div>
         </nav>
 

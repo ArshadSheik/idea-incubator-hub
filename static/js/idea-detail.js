@@ -8,7 +8,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return match ? match[1] : null;
   };
   const ideaIdForStorage = getIdeaId();
-  const savedIdeasStorageKey = "saved_ideas";
   const likeStorageKey = ideaIdForStorage ? `idea:${ideaIdForStorage}:liked_comments` : null;
   const aiInsightsStorageKey = ideaIdForStorage ? `idea:${ideaIdForStorage}:ai_insights` : null;
   const actionFeedbackEl = document.getElementById("actionFeedback");
@@ -28,20 +27,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const writeLikedComments = (likedSet) => {
     if (!likeStorageKey) return;
     localStorage.setItem(likeStorageKey, JSON.stringify(Array.from(likedSet)));
-  };
-
-  const readSavedIdeas = () => {
-    try {
-      const raw = localStorage.getItem(savedIdeasStorageKey);
-      const parsed = raw ? JSON.parse(raw) : [];
-      return new Set(Array.isArray(parsed) ? parsed.map(String) : []);
-    } catch (_) {
-      return new Set();
-    }
-  };
-
-  const writeSavedIdeas = (savedSet) => {
-    localStorage.setItem(savedIdeasStorageKey, JSON.stringify(Array.from(savedSet)));
   };
 
   const readAiInsightsCache = () => {
@@ -113,7 +98,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const upvoteBtn = document.getElementById("upvoteBtn");
   const voteCountEl = document.getElementById("voteCount");
-  const saveBtn = document.getElementById("saveBtn");
+  const bookmarkBtn = document.getElementById("bookmarkBtn");
+  const bookmarkIcon = document.getElementById("bookmarkIcon");
+  const bookmarkLabel = document.getElementById("bookmarkLabel");
   const shareBtn = document.getElementById("shareBtn");
   const collaborateBtn = document.getElementById("collaborateBtn");
   const aiInsightsBtn = document.getElementById("aiInsightsBtn");
@@ -124,7 +111,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const aiStrengthsList = document.getElementById("aiStrengthsList");
   const aiSuggestionsList = document.getElementById("aiSuggestionsList");
   const aiDownloadBtn = document.getElementById("aiDownloadBtn");
-  const savedIdeas = readSavedIdeas();
   let currentAiInsights = readAiInsightsCache();
 
   const renderAiInsights = (insights) => {
@@ -243,27 +229,52 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (saveBtn && ideaIdForStorage) {
-    const setSaveState = (saved) => {
-      saveBtn.classList.toggle("voted", saved);
-      const label = saveBtn.querySelector("span");
-      if (label) label.textContent = saved ? "Saved" : "Save";
-      const icon = saveBtn.querySelector("i");
-      if (icon) {
-        icon.className = saved ? "bi bi-bookmark-fill" : "bi bi-bookmark";
+  if (bookmarkBtn && ideaIdForStorage) {
+    const setBookmarkState = (bookmarked) => {
+      bookmarkBtn.classList.toggle("voted", bookmarked);
+      if (bookmarkIcon) {
+        bookmarkIcon.className = bookmarked ? "bi bi-bookmark-fill" : "bi bi-bookmark";
+      }
+      if (bookmarkLabel) {
+        bookmarkLabel.textContent = bookmarked ? "Bookmarked" : "Bookmark";
       }
     };
 
-    setSaveState(savedIdeas.has(String(ideaIdForStorage)));
-    saveBtn.addEventListener("click", () => {
-      const key = String(ideaIdForStorage);
-      if (savedIdeas.has(key)) {
-        savedIdeas.delete(key);
-      } else {
-        savedIdeas.add(key);
+    const loadBookmarkState = async () => {
+      try {
+        const response = await fetch(`/api/ideas/${ideaIdForStorage}/bookmark-status`);
+        const payload = await response.json();
+        if (response.ok && payload.ok) {
+          setBookmarkState(Boolean(payload.bookmarked));
+        }
+      } catch (error) {
+        console.error(error);
       }
-      writeSavedIdeas(savedIdeas);
-      setSaveState(savedIdeas.has(key));
+    };
+
+    loadBookmarkState();
+    bookmarkBtn.addEventListener("click", async () => {
+      bookmarkBtn.disabled = true;
+      try {
+        const response = await fetch(`/api/ideas/${ideaIdForStorage}/bookmark`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+          },
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload.error || `Bookmark request failed: ${response.status}`);
+        }
+        const bookmarked = Boolean(payload.bookmarked);
+        setBookmarkState(bookmarked);
+      } catch (error) {
+        console.error(error);
+        showActionFeedback("Unable to update bookmark right now. Please try again.");
+      } finally {
+        bookmarkBtn.disabled = false;
+      }
     });
   }
 
@@ -567,31 +578,3 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   });
 });
-
-// ── Bookmark toggle ────────────────────────────────────────────
-const bookmarkBtn = document.getElementById('bookmarkBtn');
-if (bookmarkBtn) {
-  bookmarkBtn.addEventListener('click', () => {
-    const ideaId = bookmarkBtn.dataset.ideaId;
-    fetch(`/api/ideas/${ideaId}/bookmark`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content,
-      }
-    })
-    .then(r => r.json())
-    .then(data => {
-      if (!data.ok) return;
-      const icon  = document.getElementById('bookmarkIcon');
-      const label = document.getElementById('bookmarkLabel');
-      if (data.bookmarked) {
-        icon.className  = 'bi bi-bookmark-fill';
-        label.textContent = 'Bookmarked';
-      } else {
-        icon.className  = 'bi bi-bookmark';
-        label.textContent = 'Bookmark';
-      }
-    });
-  });
-}

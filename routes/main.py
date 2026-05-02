@@ -2,7 +2,7 @@ import json
 import os
 from urllib import error as urlerror
 from urllib import request as urlrequest
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -23,6 +23,19 @@ CATEGORY_TAG_CLASS = {
     "Social": "tag-mint",
     "Creator": "tag-yellow",
     "Creator Economy": "tag-yellow",
+}
+
+STAGE_FLOW = ["ideation", "validation", "building", "launched"]
+COLLABORATOR_ROLE_SUGGESTIONS = {
+    "FinTech": ["Backend developer", "Compliance advisor", "Product designer"],
+    "EdTech": ["Learning designer", "Frontend developer", "Growth marketer"],
+    "GreenTech": ["Operations specialist", "Data analyst", "Partnership lead"],
+    "DevTools": ["Developer advocate", "Backend developer", "Product manager"],
+    "Health": ["Domain expert", "Backend developer", "UX researcher"],
+    "Productivity": ["Frontend developer", "Product designer", "Growth marketer"],
+    "Social": ["Community manager", "Frontend developer", "Growth marketer"],
+    "Creator": ["Creator partnerships", "Product designer", "Growth marketer"],
+    "Creator Economy": ["Creator partnerships", "Product manager", "Growth marketer"],
 }
 
 
@@ -97,6 +110,59 @@ def _serialize_dashboard_idea(idea: Idea) -> dict:
         "collaborators": idea.collaborator_count,
         "views": f"{(idea.views or 0):,}",
         "updated": f"Updated {_relative_time(idea.updated_at or idea.created_at)}",
+    }
+
+
+def _serialize_public_snapshot_idea(idea: Idea) -> dict:
+    stage_class = idea.stage or "validation"
+    return {
+        "id": idea.id,
+        "title": idea.title,
+        "category": idea.category,
+        "tag_class": CATEGORY_TAG_CLASS.get(idea.category, "tag-brand"),
+        "summary": idea.summary,
+        "stage": stage_class.capitalize(),
+        "stage_class": stage_class,
+        "votes": idea.vote_count,
+        "comments": idea.comment_count,
+    }
+
+
+def _build_public_market_trends() -> list[dict]:
+    categories = (
+        db.session.query(Idea.category, func.count(Idea.id).label("idea_count"))
+        .filter_by(privacy="public")
+        .group_by(Idea.category)
+        .order_by(func.count(Idea.id).desc())
+        .limit(4)
+        .all()
+    )
+    total_public_ideas = Idea.query.filter_by(privacy="public").count() or 1
+    trend_items = []
+    for category, count in categories:
+        percentage = int((count / total_public_ideas) * 100)
+        trend_items.append(
+            {
+                "category": category,
+                "idea_count": count,
+                "share_percent": percentage,
+            }
+        )
+    return trend_items
+
+
+def _build_public_explore_context() -> dict:
+    snapshot_ideas = (
+        Idea.query.filter_by(privacy="public")
+        .order_by(Idea.created_at.desc())
+        .limit(8)
+        .all()
+    )
+    return {
+        "market_trends": _build_public_market_trends(),
+        "idea_snapshot": [_serialize_public_snapshot_idea(idea) for idea in snapshot_ideas],
+        "total_public_ideas": Idea.query.filter_by(privacy="public").count(),
+        "total_builders": User.query.count(),
     }
 
 
@@ -191,7 +257,7 @@ def _build_dashboard_activity(user_id: int, limit: int = 6) -> list[dict]:
 def _serialize_detail_idea(idea: Idea) -> dict:
     author = idea.author
     stage_class = idea.stage or "validation"
-    actor = _get_actor_user()
+    actor = current_user if current_user and current_user.is_authenticated else None
     user_voted = False
     user_collaborating = False
     if actor is not None:
@@ -247,6 +313,17 @@ def _serialize_detail_idea(idea: Idea) -> dict:
         }
         for entry in collaborators
     ]
+    collaborator_needs = _suggest_collaborator_needs(idea, collaborator_data)
+    related_ideas = (
+        Idea.query.filter(
+            Idea.privacy == "public",
+            Idea.id != idea.id,
+            Idea.category == idea.category,
+        )
+        .order_by(Idea.created_at.desc())
+        .limit(3)
+        .all()
+    )
 
     tags = [f"#{tag.name}" for tag in idea.tags]
 
@@ -290,6 +367,7 @@ def _serialize_detail_idea(idea: Idea) -> dict:
         "user_collaborating": user_collaborating,
         "comments_total": idea.comment_count,
         "collaborators_total": idea.collaborator_count,
+        "stage_timeline": _build_stage_timeline(stage_class),
         "sections": sections,
         "score": idea.overall_score,
         "score_breakdown": {
@@ -300,6 +378,9 @@ def _serialize_detail_idea(idea: Idea) -> dict:
         },
         "tags": tags,
         "collaborators": collaborator_data,
+        "collaborator_needs": collaborator_needs,
+        "related_ideas": [_serialize_related_idea(item) for item in related_ideas],
+        "weekly_momentum": _build_weekly_momentum(idea.id),
         "discussion_preview": comment_preview,
     }
 
@@ -317,6 +398,102 @@ def _serialize_comment(comment: Comment) -> dict:
         "likes": comment.like_count or 0,
         "parent_id": comment.parent_id,
     }
+
+
+def _build_stage_timeline(current_stage: str | None) -> list[dict]:
+    stage = (current_stage or "validation").lower()
+    current_idx = STAGE_FLOW.index(stage) if stage in STAGE_FLOW else 1
+    timeline = []
+    for idx, key in enumerate(STAGE_FLOW):
+        if idx < current_idx:
+            state = "completed"
+        elif idx == current_idx:
+            state = "active"
+        else:
+            state = "upcoming"
+        timeline.append(
+            {
+                "key": key,
+                "label": key.capitalize(),
+                "state": state,
+            }
+        )
+    return timeline
+
+
+def _suggest_collaborator_needs(idea: Idea, collaborators: list[dict]) -> list[str]:
+    suggestions = COLLABORATOR_ROLE_SUGGESTIONS.get(
+        idea.category,
+        ["Backend developer", "Product designer", "Growth marketer"],
+    )
+    existing_roles = {str(item.get("role", "")).strip().lower() for item in collaborators}
+    needed = []
+    for role in suggestions:
+        role_lower = role.lower()
+        if all(role_lower not in existing for existing in existing_roles):
+            needed.append(role)
+    return needed[:3]
+
+
+def _serialize_related_idea(idea: Idea) -> dict:
+    return {
+        "id": idea.id,
+        "title": idea.title,
+        "category": idea.category,
+        "tag_class": CATEGORY_TAG_CLASS.get(idea.category, "tag-brand"),
+        "summary": idea.summary,
+        "votes": idea.vote_count,
+    }
+
+
+def _build_weekly_momentum(idea_id: int) -> dict:
+    today = datetime.utcnow().date()
+    start_date = today - timedelta(days=6)
+
+    vote_rows = (
+        db.session.query(Vote.created_at)
+        .filter(
+            Vote.idea_id == idea_id,
+            Vote.created_at >= datetime.combine(start_date, datetime.min.time()),
+        )
+        .all()
+    )
+    comment_rows = (
+        db.session.query(Comment.created_at)
+        .filter(
+            Comment.idea_id == idea_id,
+            Comment.created_at >= datetime.combine(start_date, datetime.min.time()),
+        )
+        .all()
+    )
+
+    vote_by_day: dict[str, int] = {}
+    comment_by_day: dict[str, int] = {}
+    for (dt,) in vote_rows:
+        key = dt.date().isoformat()
+        vote_by_day[key] = vote_by_day.get(key, 0) + 1
+    for (dt,) in comment_rows:
+        key = dt.date().isoformat()
+        comment_by_day[key] = comment_by_day.get(key, 0) + 1
+
+    points = []
+    max_total = 1
+    for day_offset in range(7):
+        day = start_date + timedelta(days=day_offset)
+        key = day.isoformat()
+        votes = vote_by_day.get(key, 0)
+        comments = comment_by_day.get(key, 0)
+        total = votes + comments
+        max_total = max(max_total, total)
+        points.append(
+            {
+                "label": day.strftime("%a"),
+                "votes": votes,
+                "comments": comments,
+                "total": total,
+            }
+        )
+    return {"points": points, "max_total": max_total}
 
 
 def _build_ai_insights(idea: Idea) -> dict:
@@ -466,19 +643,6 @@ def _generate_ai_insights_with_openai(idea: Idea) -> dict:
         "provider": provider_name,
         "model": model,
     }
-
-
-def _get_actor_user():
-    """
-    Temporary actor resolution for write endpoints:
-    - use logged-in user when available
-    - otherwise fallback to first seeded user for local development
-    """
-    if current_user and current_user.is_authenticated:
-        return current_user
-    return User.query.order_by(User.id.asc()).first()
-
-
 @main_bp.app_errorhandler(404)
 def page_not_found(_error):
     return render_template("404.html"), 404
@@ -562,6 +726,12 @@ def explore():
         },
     )
 
+
+@main_bp.route("/explore/public")
+def explore_public():
+    return redirect(url_for("main.explore"))
+
+
 @main_bp.route("/dashboard")
 @login_required
 def dashboard():
@@ -632,17 +802,17 @@ def dashboard():
 
 
 @main_bp.route("/ideas/<int:idea_id>")
+@login_required
 def idea_detail(idea_id: int):
     idea = Idea.query.get_or_404(idea_id)
     return render_template("idea_detail.html", idea=_serialize_detail_idea(idea))
 
 
 @main_bp.route("/ideas/<int:idea_id>/vote", methods=["POST"])
+@login_required
 def toggle_idea_vote(idea_id: int):
     idea = Idea.query.get_or_404(idea_id)
-    actor = _get_actor_user()
-    if actor is None:
-        return jsonify({"ok": False, "error": "No available user to cast vote"}), 400
+    actor = current_user
 
     existing_vote = Vote.query.filter_by(user_id=actor.id, idea_id=idea.id).first()
     if existing_vote:
@@ -665,11 +835,10 @@ def toggle_idea_vote(idea_id: int):
 
 
 @main_bp.route("/ideas/<int:idea_id>/collaborate", methods=["POST"])
+@login_required
 def toggle_idea_collaboration(idea_id: int):
     idea = Idea.query.get_or_404(idea_id)
-    actor = _get_actor_user()
-    if actor is None:
-        return jsonify({"ok": False, "error": "No available user to collaborate"}), 400
+    actor = current_user
 
     existing = Collaboration.query.filter_by(
         user_id=actor.id,
@@ -703,11 +872,10 @@ def toggle_idea_collaboration(idea_id: int):
 
 
 @main_bp.route("/ideas/<int:idea_id>/comments", methods=["POST"])
+@login_required
 def create_idea_comment(idea_id: int):
     idea = Idea.query.get_or_404(idea_id)
-    actor = _get_actor_user()
-    if actor is None:
-        return jsonify({"ok": False, "error": "No available user to post comment"}), 400
+    actor = current_user
 
     payload = request.get_json(silent=True) or {}
     text = (payload.get("text") or request.form.get("text") or "").strip()
@@ -737,6 +905,7 @@ def create_idea_comment(idea_id: int):
 
 
 @main_bp.route("/ideas/<int:idea_id>/comments/<int:comment_id>/like", methods=["POST"])
+@login_required
 def toggle_comment_like(idea_id: int, comment_id: int):
     idea = Idea.query.get_or_404(idea_id)
     comment = Comment.query.filter_by(id=comment_id, idea_id=idea.id).first_or_404()
@@ -775,12 +944,11 @@ def toggle_comment_like(idea_id: int, comment_id: int):
 
 
 @main_bp.route("/ideas/<int:idea_id>/comments/<int:comment_id>/replies", methods=["POST"])
+@login_required
 def create_comment_reply(idea_id: int, comment_id: int):
     idea = Idea.query.get_or_404(idea_id)
     parent_comment = Comment.query.filter_by(id=comment_id, idea_id=idea.id).first_or_404()
-    actor = _get_actor_user()
-    if actor is None:
-        return jsonify({"ok": False, "error": "No available user to post reply"}), 400
+    actor = current_user
 
     payload = request.get_json(silent=True) or {}
     text = (payload.get("text") or request.form.get("text") or "").strip()
@@ -802,6 +970,7 @@ def create_comment_reply(idea_id: int, comment_id: int):
 
 
 @main_bp.route("/ideas/<int:idea_id>/ai-insights", methods=["POST"])
+@login_required
 def generate_idea_insights(idea_id: int):
     idea = Idea.query.get_or_404(idea_id)
     try:
@@ -1009,6 +1178,18 @@ def toggle_bookmark(idea_id: int):
 
     db.session.commit()
     return jsonify({"ok": True, "bookmarked": bookmarked})
+
+
+@main_bp.route("/api/ideas/<int:idea_id>/bookmark-status", methods=["GET"])
+@login_required
+def bookmark_status(idea_id: int):
+    """Return bookmark state on an idea for the current user."""
+    Idea.query.get_or_404(idea_id)
+    existing = Bookmark.query.filter_by(
+        user_id=current_user.id,
+        idea_id=idea_id,
+    ).first()
+    return jsonify({"ok": True, "bookmarked": existing is not None})
 
 @main_bp.route("/ideas/<int:idea_id>/board")
 @login_required

@@ -266,7 +266,7 @@
           <span class="tag tag-yellow mb-3">🔥 Trending right now</span>
           <h2 class="mb-0">This week's most-voted ideas</h2>
         </div>
-        <a href="#" class="btn btn-outline-iih">
+        <a href="{{ url_for('main.explore') }}" class="btn btn-outline-iih">
           See all ideas <i class="bi bi-arrow-right"></i>
         </a>
       </div>
@@ -276,7 +276,10 @@
           {% set tag_class_map = {'FinTech':'tag-brand','EdTech':'tag-violet','GreenTech':'tag-mint','DevTools':'tag-dark','Health':'tag-pink','Productivity':'tag-blue','Social':'tag-mint','Creator Economy':'tag-yellow'} %}
           {% for idea in trending_ideas %}
           <div class="col-md-6 col-lg-4" data-scroll-reveal>
-            <a href="#" class="text-decoration-none">
+            <a
+              href="{% if current_user.is_authenticated %}{{ url_for('main.idea_detail', idea_id=idea.id) }}{% else %}{{ url_for('auth.login', next=url_for('main.idea_detail', idea_id=idea.id)) }}{% endif %}"
+              class="text-decoration-none"
+            >
               <div class="idea-card card-iih">
                 <div class="card-body-iih">
                   <div class="d-flex justify-content-between align-items-start mb-3">
@@ -327,7 +330,7 @@
           <!-- Fallback hardcoded cards if DB is empty -->
           <div class="col-12 text-center py-5">
             <p class="text-muted-iih">No ideas yet — be the first to share one!</p>
-            <a href="#" class="btn btn-brand">Share an idea</a>
+            <a href="{{ url_for('main.submit_idea') }}" class="btn btn-brand">Share an idea</a>
           </div>
         {% endif %}
       </div>
@@ -398,7 +401,7 @@
             <p class="mb-0 fs-5" style="color: var(--ink-300);">Join {{ total_users }}+ builders turning late-night ideas into real products. Free forever.</p>
           </div>
           <div class="col-lg-4 text-lg-end">
-            <a href="#" class="btn btn-brand btn-lg-iih">
+            <a href="{{ url_for('auth.register') }}" class="btn btn-brand btn-lg-iih">
               Start shipping <i class="bi bi-rocket-takeoff"></i>
             </a>
           </div>
