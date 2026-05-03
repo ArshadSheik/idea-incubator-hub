@@ -885,6 +885,17 @@ def toggle_idea_vote(idea_id: int):
         voted = True
 
     db.session.commit()
+
+    # Notify idea author if someone else voted
+    if voted and idea.user_id != current_user.id:
+        db.session.add(Notification(
+            user_id=idea.user_id,
+            type="vote",
+            message=f"{current_user.display_name} upvoted your idea '{idea.title}'",
+            link=f"/ideas/{idea.id}",
+        ))
+        db.session.commit()
+
     return jsonify(
         {
             "ok": True,
@@ -953,6 +964,16 @@ def create_idea_comment(idea_id: int):
     )
     db.session.add(comment)
     db.session.commit()
+
+    # Notify idea author if someone else commented
+    if comment.user_id != idea.user_id:
+        db.session.add(Notification(
+            user_id=idea.user_id,
+            type="comment",
+            message=f"{current_user.display_name} commented on your idea '{idea.title}'",
+            link=f"/ideas/{idea.id}",
+        ))
+        db.session.commit()
 
     return (
         jsonify(
