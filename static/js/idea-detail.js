@@ -577,4 +577,78 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.disabled = false;
       });
   });
+
+  // ── Market News ────────────────────────────────────────────────
+  (function loadMarketNews() {
+    const container = document.getElementById('newsContent');
+    if (!container) return;
+
+    // Uses getIdeaId() — already defined at top of this file
+    const ideaId = getIdeaId();
+    if (!ideaId) return;
+
+    fetch(`/api/ideas/${ideaId}/news`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.ok || !data.articles.length) {
+          container.innerHTML = '<p class="text-muted-iih small text-center py-2">No recent news found.</p>';
+          return;
+        }
+        container.innerHTML = data.articles.slice(0, 4).map(a => `
+          <a href="${a.url}" target="_blank" rel="noopener" class="news-item">
+            <p class="news-title mb-0">${a.title}</p>
+            <span class="news-meta">${a.source} · ${new Date(a.published_at).toLocaleDateString()}</span>
+          </a>
+        `).join('');
+      })
+      .catch(() => {
+        container.innerHTML = '<p class="text-muted-iih small text-center py-2">Could not load news.</p>';
+      });
+  })();
+
+  // ── Wikipedia category context ─────────────────────────────────
+  (function loadWikipediaContext() {
+    const wikiText    = document.getElementById('wikiText');
+    const wikiLink    = document.getElementById('wikiLink');
+    const wikiToggle  = document.getElementById('wikiToggle');
+    const wikiContent = document.getElementById('wikiContent');
+    if (!wikiText) return;
+
+    const WIKI_TOPICS = {
+      'FinTech':         'Financial_technology',
+      'EdTech':          'Educational_technology',
+      'GreenTech':       'Green_technology',
+      'Health':          'Health_technology',
+      'DevTools':        'Programming_tool',
+      'Productivity':    'Productivity_software',
+      'Social':          'Social_media',
+      'Creator Economy': 'Creator_economy',
+      'Other':           'Startup_company',
+    };
+
+    const category = document.body.dataset.ideaCategory || 'Other';
+    const topic    = WIKI_TOPICS[category] || 'Startup_company';
+
+    fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${topic}`)
+      .then(r => r.json())
+      .then(data => {
+        wikiText.textContent = data.extract
+          ? data.extract.split('.').slice(0, 2).join('.') + '.'
+          : 'No summary available.';
+        if (data.content_urls?.desktop?.page) {
+          wikiLink.href = data.content_urls.desktop.page;
+          wikiLink.classList.remove('d-none');
+        }
+      })
+      .catch(() => { wikiText.textContent = 'Could not load context.'; });
+
+    if (wikiToggle) {
+      wikiToggle.addEventListener('click', () => {
+        wikiContent.classList.toggle('collapsed');
+        wikiToggle.querySelector('i').className =
+          wikiContent.classList.contains('collapsed') ? 'bi bi-chevron-right' : 'bi bi-chevron-down';
+      });
+    }
+  })();
+
 });

@@ -2,6 +2,7 @@
 
 {% block title %}{{ idea.title }} — Idea Incubator Hub{% endblock %}
 {% block page_name %}idea-detail{% endblock %}
+{% block body_attrs %}data-idea-category="{{ idea.category }}"{% endblock %}
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/idea-detail.css') }}">
 {% endblock %}
@@ -254,6 +255,31 @@
           {% for tag in idea.tags %}
           <span class="tag">{{ tag }}</span>
           {% endfor %}
+        </div>
+      </div>
+
+      <!-- Market News — added here, after Tags -->
+      <div class="sidebar-card mt-3" id="newsPanel">
+        <h4 class="sidebar-title"><i class="bi bi-newspaper me-2"></i>Market News</h4>
+        <div id="newsContent">
+          <p class="text-muted-iih small text-center py-2">
+            <span class="spinner-border spinner-border-sm"></span> Loading...
+          </p>
+        </div>
+      </div>
+
+      <div class="sidebar-card mt-3" id="wikiPanel">
+        <h4 class="sidebar-title">
+          <i class="bi bi-book me-2"></i>About {{ idea.category }}
+          <button class="wiki-toggle-btn" id="wikiToggle">
+            <i class="bi bi-chevron-down"></i>
+          </button>
+        </h4>
+        <div id="wikiContent" class="wiki-content">
+          <p class="text-muted-iih small" id="wikiText">Loading...</p>
+          <a href="#" id="wikiLink" target="_blank" rel="noopener" class="wiki-readmore d-none">
+            Read more on Wikipedia <i class="bi bi-arrow-up-right"></i>
+          </a>
         </div>
       </div>
 

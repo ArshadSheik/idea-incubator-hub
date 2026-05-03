@@ -60,6 +60,16 @@
   line-height: 1.65;
 }
 
+.news-item {
+  display: block; padding: 0.6rem 0;
+  border-bottom: 1px solid var(--border, #e5e7eb);
+  text-decoration: none; color: inherit;
+}
+.news-item:last-child { border-bottom: none; }
+.news-item:hover .news-title { color: var(--brand-600, #4f46e5); }
+.news-title { font-size: 0.8rem; font-weight: 500; color: var(--ink-800, #1f2937); line-height: 1.4; }
+.news-meta  { font-size: 0.7rem; color: var(--ink-400, #9ca3af); }
+
 .timeline-track {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -350,6 +360,11 @@
   color: var(--ink-600);
   line-height: 1.5;
 }
+
+.wiki-toggle-btn { background: none; border: none; cursor: pointer; color: var(--ink-400); float: right; }
+.wiki-content.collapsed { display: none; }
+.wiki-readmore { font-size: 0.75rem; color: var(--brand-600, #4f46e5); text-decoration: none; display: block; margin-top: 0.5rem; }
+.wiki-readmore:hover { text-decoration: underline; }
 
 @media (max-width: 767px) {
   .idea-header-card,

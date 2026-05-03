@@ -16,7 +16,7 @@
       <div class="d-flex flex-wrap align-items-end justify-content-between gap-3">
         <div>
           <div class="greeting fade-up">
-            Good afternoon,
+            {{ greeting }},
             <span class="text-brand">
               {{ current_user.first_name if current_user.is_authenticated and current_user.first_name else "User" }}
             </span>
@@ -69,6 +69,29 @@
           <div class="stat-card-value">{{ stats.active_collaborators }}</div>
           <div class="stat-card-label">Active collaborators</div>
           <div class="stat-card-trend trend-neutral">Live from your current data</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ CHARTS ═══════════ -->
+  <section class="container-iih mt-4">
+    <!-- Charts row -->
+    <div class="row g-4 mb-4" id="chartsRow">
+      <div class="col-md-5">
+        <div class="dashboard-card chart-card">
+          <h3 class="card-section-title">Ideas by Stage</h3>
+          <div class="chart-wrapper-sm">
+            <canvas id="stageChart"></canvas>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-7">
+        <div class="dashboard-card chart-card">
+          <h3 class="card-section-title">Submissions this week</h3>
+          <div class="chart-wrapper-sm">
+            <canvas id="weeklyChart"></canvas>
+          </div>
         </div>
       </div>
     </div>
@@ -250,38 +273,18 @@
         <!-- Suggestions -->
         <div class="sidebar-card mt-3">
           <h4 class="sidebar-title">People to follow</h4>
+          {% for user in suggested_users %}
           <div class="follow-item">
-            <span class="avatar avatar-2">MK</span>
+            <div class="avatar avatar-{{ user.avatar_color }}">{{ user.initials }}</div>
             <div class="flex-grow-1 min-w-0">
-              <div class="fw-semibold small text-truncate">Maya Kapoor</div>
-              <div class="small text-muted-iih">EdTech · 9 ideas</div>
+              <div class="fw-semibold small text-truncate">{{ user.display_name }}</div>
+              <div class="small text-muted-iih">{{ user.idea_count }} ideas</div>
             </div>
-            <button class="btn btn-outline-iih btn-sm-iih follow-btn">Follow</button>
+            <a href="{{ url_for('main.profile', username=user.username) }}" class="btn btn-outline-iih btn-sm-iih">View</a>
           </div>
-          <div class="follow-item">
-            <span class="avatar avatar-3">SR</span>
-            <div class="flex-grow-1 min-w-0">
-              <div class="fw-semibold small text-truncate">Sam Reyes</div>
-              <div class="small text-muted-iih">Designer · 4 ideas</div>
-            </div>
-            <button class="btn btn-outline-iih btn-sm-iih follow-btn">Follow</button>
-          </div>
-          <div class="follow-item">
-            <span class="avatar avatar-4">TW</span>
-            <div class="flex-grow-1 min-w-0">
-              <div class="fw-semibold small text-truncate">Taylor Wong</div>
-              <div class="small text-muted-iih">FinTech · 6 ideas</div>
-            </div>
-            <button class="btn btn-outline-iih btn-sm-iih follow-btn">Follow</button>
-          </div>
-          <div class="follow-item">
-            <span class="avatar avatar-5">AG</span>
-            <div class="flex-grow-1 min-w-0">
-              <div class="fw-semibold small text-truncate">Alex Garcia</div>
-              <div class="small text-muted-iih">DevTools · 11 ideas</div>
-            </div>
-            <button class="btn btn-outline-iih btn-sm-iih follow-btn">Follow</button>
-          </div>
+          {% else %}
+          <p class="text-muted-iih small mb-0">No other users yet.</p>
+          {% endfor %}
         </div>
 
       </div>

@@ -402,6 +402,10 @@
   line-height: 1.35;
 }
 
+.chart-card       { padding: 1.25rem; }
+
+.chart-wrapper-sm { position: relative; height: 200px; }
+
 /* ─── Smart coach card ─── */
 .smart-coach-card {
   position: relative;

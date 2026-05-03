@@ -8,7 +8,7 @@ from flask import Blueprint, jsonify, redirect, render_template, request, url_fo
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
-from models.models import Collaboration, Comment, Idea, User, Vote, db, Notification, Bookmark, Task
+from models.models import Collaboration, Comment, Idea, User, Vote, db, Notification, Bookmark, Task, Tag
 
 main_bp = Blueprint("main", __name__)
 
@@ -833,6 +833,22 @@ def dashboard():
         .all()
     )
 
+    hour = datetime.now().hour
+    if hour < 12:
+        greeting = "Good morning"
+    elif hour < 18:
+        greeting = "Good afternoon"
+    else:
+        greeting = "Good evening"
+
+    suggested_users = (
+        User.query
+        .filter(User.id != current_user.id)
+        .order_by(func.random())
+        .limit(4)
+        .all()
+    )
+
     return render_template(
         "dashboard.html",
         stats=stats,
@@ -841,6 +857,8 @@ def dashboard():
         recent_activity=recent_activity,
         dashboard_tip=dashboard_tip,
         weekly_digest=weekly_digest,
+        greeting=greeting,
+        suggested_users=suggested_users
     )
 
 
@@ -848,6 +866,7 @@ def dashboard():
 @login_required
 def idea_detail(idea_id: int):
     idea = Idea.query.get_or_404(idea_id)
+    idea.increment_views()
     return render_template("idea_detail.html", idea=_serialize_detail_idea(idea))
 
 
@@ -866,6 +885,17 @@ def toggle_idea_vote(idea_id: int):
         voted = True
 
     db.session.commit()
+
+    # Notify idea author if someone else voted
+    if voted and idea.user_id != current_user.id:
+        db.session.add(Notification(
+            user_id=idea.user_id,
+            type="vote",
+            message=f"{current_user.display_name} upvoted your idea '{idea.title}'",
+            link=f"/ideas/{idea.id}",
+        ))
+        db.session.commit()
+
     return jsonify(
         {
             "ok": True,
@@ -934,6 +964,16 @@ def create_idea_comment(idea_id: int):
     )
     db.session.add(comment)
     db.session.commit()
+
+    # Notify idea author if someone else commented
+    if comment.user_id != idea.user_id:
+        db.session.add(Notification(
+            user_id=idea.user_id,
+            type="comment",
+            message=f"{current_user.display_name} commented on your idea '{idea.title}'",
+            link=f"/ideas/{idea.id}",
+        ))
+        db.session.commit()
 
     return (
         jsonify(
@@ -1066,14 +1106,6 @@ def login_html():
 @main_bp.route("/register.html")
 def register_html():
     return redirect(url_for("auth.register"))
-
-# ─────────────────────────────────────────
-@main_bp.route("/ideas/new")
-@login_required
-def submit_idea():
-    from forms import IdeaForm
-    form = IdeaForm()
-    return render_template("submit_idea.html", form=form)
 
 
 @main_bp.route("/profile/<username>")
@@ -1320,3 +1352,129 @@ def delete_task(idea_id: int, task_id: int):
     db.session.delete(task)
     db.session.commit()
     return jsonify({"ok": True})
+
+@main_bp.route("/ideas/new", methods=["GET", "POST"])
+@login_required
+def submit_idea():
+    from forms import IdeaForm
+    form = IdeaForm()
+
+    if form.validate_on_submit():
+        # Parse tags from comma-separated string
+        tag_names = [t.strip() for t in (form.tags.data or "").split(",") if t.strip()]
+        tags = []
+        for name in tag_names:
+            tag = Tag.query.filter_by(name=name).first()
+            if not tag:
+                tag = Tag(name=name)
+                db.session.add(tag)
+            tags.append(tag)
+
+        idea = Idea(
+            user_id     = current_user.id,
+            title       = form.title.data,
+            summary     = form.summary.data,
+            description = form.description.data,
+            category    = form.category.data,
+            stage       = form.stage.data,
+            privacy     = form.privacy.data,
+            emoji       = form.emoji.data or "💡",
+        )
+        idea.tags = tags
+        db.session.add(idea)
+        db.session.commit()
+
+        # Create a notification for the user confirming submission
+        db.session.add(Notification(
+            user_id = current_user.id,
+            type    = "milestone",
+            message = f"Your idea '{idea.title}' was posted successfully!",
+            link    = f"/ideas/{idea.id}",
+        ))
+        db.session.commit()
+
+        return redirect(url_for("main.idea_detail", idea_id=idea.id))
+
+    return render_template("submit_idea.html", form=form)
+
+@main_bp.route("/api/ideas/<int:idea_id>/news")
+def idea_news(idea_id: int):
+    """Market news for an idea's category — cached 24h."""
+    idea = Idea.query.get_or_404(idea_id)
+    try:
+        from services.news_service import get_news_for_category
+        articles = get_news_for_category(idea.category)
+        return jsonify({"ok": True, "articles": articles})
+    except Exception as e:
+        return jsonify({"ok": False, "articles": [], "error": str(e)})
+
+
+@main_bp.route("/api/trending-categories")
+def trending_categories():
+    """Returns category counts for the trending widget on explore."""
+    from sqlalchemy import func
+    rows = (
+        db.session.query(Idea.category, func.count(Idea.id).label("count"))
+        .filter_by(privacy="public")
+        .group_by(Idea.category)
+        .order_by(func.count(Idea.id).desc())
+        .limit(6)
+        .all()
+    )
+    return jsonify([{"category": r.category, "count": r.count} for r in rows])
+
+@main_bp.route("/api/chart-data")
+def chart_data():
+    """Aggregated data for dashboard and explore charts."""
+    from sqlalchemy import func
+
+    # Ideas by stage
+    stage_rows = (
+        db.session.query(Idea.stage, func.count(Idea.id))
+        .filter_by(privacy="public")
+        .group_by(Idea.stage)
+        .all()
+    )
+
+    # Ideas by category
+    cat_rows = (
+        db.session.query(Idea.category, func.count(Idea.id))
+        .filter_by(privacy="public")
+        .group_by(Idea.category)
+        .order_by(func.count(Idea.id).desc())
+        .limit(8)
+        .all()
+    )
+
+    # Ideas submitted per day for last 7 days
+    from datetime import datetime, timedelta
+    seven_days = []
+    for i in range(6, -1, -1):
+        day = datetime.utcnow().date() - timedelta(days=i)
+        count = Idea.query.filter(
+            db.func.date(Idea.created_at) == day,
+            Idea.privacy == "public"
+        ).count()
+        seven_days.append({"date": day.strftime("%a"), "count": count})
+
+    return jsonify({
+        "by_stage":    [{"stage": r[0] or "ideation", "count": r[1]} for r in stage_rows],
+        "by_category": [{"category": r[0], "count": r[1]} for r in cat_rows],
+        "weekly":      seven_days,
+    })
+
+@main_bp.route("/profile/edit", methods=["GET", "POST"])
+@login_required
+def edit_profile():
+    from forms import ProfileEditForm
+    form = ProfileEditForm(obj=current_user)
+
+    if form.validate_on_submit():
+        current_user.first_name   = form.first_name.data.strip()
+        current_user.last_name    = form.last_name.data.strip()
+        current_user.bio          = form.bio.data.strip()
+        current_user.avatar_color = int(form.avatar_color.data)
+        db.session.commit()
+        return redirect(url_for("main.profile", username=current_user.username))
+
+    return render_template("edit_profile.html", form=form)

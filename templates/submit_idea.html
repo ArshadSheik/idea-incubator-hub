@@ -24,7 +24,7 @@
         <div class="step-dot" id="dot2">2</div>
       </div>
 
-      <form method="POST" action="#" class="submit-form" id="submitIdeaForm" novalidate>
+      <form method="POST" action="{{ url_for('main.submit_idea') }}" class="submit-form" id="submitIdeaForm" novalidate>
         {{ form.hidden_tag() }}
 
         <!-- Step 1: Basics -->
