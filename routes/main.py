@@ -866,6 +866,7 @@ def dashboard():
 @login_required
 def idea_detail(idea_id: int):
     idea = Idea.query.get_or_404(idea_id)
+    idea.increment_views()
     return render_template("idea_detail.html", idea=_serialize_detail_idea(idea))
 
 
