@@ -1390,3 +1390,43 @@ def trending_categories():
         .all()
     )
     return jsonify([{"category": r.category, "count": r.count} for r in rows])
+
+@main_bp.route("/api/chart-data")
+def chart_data():
+    """Aggregated data for dashboard and explore charts."""
+    from sqlalchemy import func
+
+    # Ideas by stage
+    stage_rows = (
+        db.session.query(Idea.stage, func.count(Idea.id))
+        .filter_by(privacy="public")
+        .group_by(Idea.stage)
+        .all()
+    )
+
+    # Ideas by category
+    cat_rows = (
+        db.session.query(Idea.category, func.count(Idea.id))
+        .filter_by(privacy="public")
+        .group_by(Idea.category)
+        .order_by(func.count(Idea.id).desc())
+        .limit(8)
+        .all()
+    )
+
+    # Ideas submitted per day for last 7 days
+    from datetime import datetime, timedelta
+    seven_days = []
+    for i in range(6, -1, -1):
+        day = datetime.utcnow().date() - timedelta(days=i)
+        count = Idea.query.filter(
+            db.func.date(Idea.created_at) == day,
+            Idea.privacy == "public"
+        ).count()
+        seven_days.append({"date": day.strftime("%a"), "count": count})
+
+    return jsonify({
+        "by_stage":    [{"stage": r[0] or "ideation", "count": r[1]} for r in stage_rows],
+        "by_category": [{"category": r[0], "count": r[1]} for r in cat_rows],
+        "weekly":      seven_days,
+    })
