@@ -833,6 +833,22 @@ def dashboard():
         .all()
     )
 
+    hour = datetime.now().hour
+    if hour < 12:
+        greeting = "Good morning"
+    elif hour < 18:
+        greeting = "Good afternoon"
+    else:
+        greeting = "Good evening"
+
+    suggested_users = (
+        User.query
+        .filter(User.id != current_user.id)
+        .order_by(func.random())
+        .limit(4)
+        .all()
+    )
+
     return render_template(
         "dashboard.html",
         stats=stats,
@@ -841,6 +857,8 @@ def dashboard():
         recent_activity=recent_activity,
         dashboard_tip=dashboard_tip,
         weekly_digest=weekly_digest,
+        greeting=greeting,
+        suggested_users=suggested_users
     )
 
 
