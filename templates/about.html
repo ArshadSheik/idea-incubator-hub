@@ -2,41 +2,140 @@
 {% block title %}About — Idea Incubator Hub{% endblock %}
 {% block page_name %}about{% endblock %}
 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/about.css') }}">
+{% endblock %}
+
 {% block content %}
 
-<section class="about-hero text-center">
+<section class="about-hero">
   <div class="container-iih">
-    <h1 class="about-title">About Idea Incubator Hub</h1>
-    <p class="about-sub">A student-built platform for CITS3403/5505 at UWA — share early-stage ideas, get community feedback, and find people to build with.</p>
+    <div class="about-hero-grid">
+      <div>
+        <span class="about-kicker">Idea Incubator Hub</span>
+        <h1>Turn early ideas into validated opportunities.</h1>
+        <p>
+          A student-built platform for CITS3403/5505 at UWA where builders can
+          share startup ideas, collect feedback, find collaborators, and improve
+          ideas using community signals.
+        </p>
+
+        <div class="about-actions">
+          <a href="{{ url_for('main.explore') }}" class="btn btn-brand">
+            <i class="bi bi-compass"></i> Explore ideas
+          </a>
+          <a href="{{ url_for('main.submit_idea') }}" class="btn btn-outline-iih">
+            <i class="bi bi-plus-lg"></i> Post your idea
+          </a>
+        </div>
+      </div>
+
+      <div class="about-ai-card">
+        <div class="about-ai-icon">
+          <i class="bi bi-stars"></i>
+        </div>
+        <h3>Smart idea validation</h3>
+        <p>
+          The platform uses votes, comments, collaboration activity, and validation
+          scores to help users understand which ideas are gaining traction.
+        </p>
+      </div>
+    </div>
   </div>
 </section>
 
-<section class="about-mission">
-  <div class="container-iih">
-    <div class="row align-items-center g-5">
-      <div class="col-md-6">
-        <h2>What is it?</h2>
-        <p>Idea Incubator Hub is a community platform where anyone can post a startup idea, receive upvotes and structured feedback from other users, and find collaborators to actually build it with.</p>
-        <p>Ideas move through stages — from Ideation through Validation and Building all the way to Launched. At each stage the community can vote, comment, and jump on board as collaborators.</p>
+<section class="container-iih about-stats-section">
+  <div class="about-stats-grid">
+    <div class="about-stat-card">
+      <strong>{{ about_stats.ideas }}</strong>
+      <span>Public ideas</span>
+    </div>
+    <div class="about-stat-card">
+      <strong>{{ about_stats.users }}</strong>
+      <span>Builders</span>
+    </div>
+    <div class="about-stat-card">
+      <strong>{{ about_stats.votes }}</strong>
+      <span>Votes cast</span>
+    </div>
+    <div class="about-stat-card">
+      <strong>{{ about_stats.comments }}</strong>
+      <span>Comments</span>
+    </div>
+  </div>
+</section>
+
+<section class="container-iih about-section">
+  <div class="section-intro">
+    <span class="about-kicker">How it works</span>
+    <h2>From idea to community validation</h2>
+    <p>Post, test, and improve your idea with feedback from real users.</p>
+  </div>
+
+  <div class="about-feature-grid">
+    <div class="about-feature-card">
+      <div class="feature-number">1</div>
+      <h3>Share your idea</h3>
+      <p>
+        Post the problem, solution, category, stage, and tags so the community
+        can quickly understand your concept.
+      </p>
+    </div>
+
+    <div class="about-feature-card">
+      <div class="feature-number">2</div>
+      <h3>Collect feedback</h3>
+      <p>
+        Receive votes, comments, and collaboration requests to see whether your
+        idea has early traction.
+      </p>
+    </div>
+
+    <div class="about-feature-card">
+      <div class="feature-number">3</div>
+      <h3>Improve and build</h3>
+      <p>
+        Use community signals and validation scores to refine your idea and move
+        it toward launch.
+      </p>
+    </div>
+  </div>
+</section>
+
+<section class="container-iih about-section">
+  <div class="about-smart-grid">
+    <div class="about-smart-card">
+      <span class="about-kicker">Smart features</span>
+      <h2>Built for early-stage startup validation</h2>
+      <p>
+        Idea Incubator Hub is designed around the way student projects and early
+        startup ideas actually grow: feedback, iteration, collaboration, and
+        evidence.
+      </p>
+    </div>
+
+    <div class="about-feature-list">
+      <div class="about-list-item">
+        <i class="bi bi-graph-up-arrow"></i>
+        <div>
+          <h4>Validation scores</h4>
+          <p>Ideas can be evaluated using market, support, feasibility, and differentiation signals.</p>
+        </div>
       </div>
-      <div class="col-md-6">
-        <div class="stat-grid">
-          <div class="about-stat" data-stat="ideas">
-            <span class="stat-num" id="statIdeas">0</span>
-            <span class="stat-label">Ideas posted</span>
-          </div>
-          <div class="about-stat" data-stat="users">
-            <span class="stat-num" id="statUsers">0</span>
-            <span class="stat-label">Community members</span>
-          </div>
-          <div class="about-stat" data-stat="votes">
-            <span class="stat-num" id="statVotes">0</span>
-            <span class="stat-label">Votes cast</span>
-          </div>
-          <div class="about-stat" data-stat="comments">
-            <span class="stat-num" id="statComments">0</span>
-            <span class="stat-label">Comments</span>
-          </div>
+
+      <div class="about-list-item">
+        <i class="bi bi-stars"></i>
+        <div>
+          <h4>AI-style guidance</h4>
+          <p>Smart suggestions help users decide whether to post, improve, share, or collaborate next.</p>
+        </div>
+      </div>
+
+      <div class="about-list-item">
+        <i class="bi bi-people"></i>
+        <div>
+          <h4>Collaboration discovery</h4>
+          <p>Users can find ideas that need contributors and join projects that match their interests.</p>
         </div>
       </div>
     </div>
@@ -45,7 +144,12 @@
 
 <section class="about-team">
   <div class="container-iih">
-    <h2 class="text-center mb-5">Meet the Team</h2>
+    <div class="section-intro text-center mx-auto">
+      <span class="about-kicker">Team</span>
+      <h2>Meet the Team</h2>
+      <p>Built as a UWA Agile Web Development group project.</p>
+    </div>
+
     <div class="row g-4 justify-content-center">
       {% for member in team_members %}
         <div class="col-6 col-md-4 col-lg-2">
@@ -63,39 +167,23 @@
 <section class="about-tech">
   <div class="container-iih text-center">
     <h2 class="mb-3">Built with</h2>
-    <p class="text-muted-iih">Flask · SQLAlchemy · SQLite · Bootstrap 5 · jQuery · AJAX · Jinja2 · Flask-Login · Flask-WTF</p>
-    <p class="text-muted-iih small">University of Western Australia · CITS3403 / CITS5505 · Agile Web Development</p>
+    <p class="text-muted-iih">
+      Flask · SQLAlchemy · SQLite · Bootstrap 5 · Jinja2 · Flask-Login · Flask-WTF
+    </p>
+    <p class="text-muted-iih small">
+      University of Western Australia · CITS3403 / CITS5505 · Agile Web Development
+    </p>
   </div>
 </section>
 
-{% endblock %}
+<section class="about-cta">
+  <div class="container-iih">
+    <h2>Ready to test your next idea?</h2>
+    <p>Share it with the community and start collecting feedback today.</p>
+    <a href="{{ url_for('main.submit_idea') }}" class="btn btn-brand">
+      <i class="bi bi-plus-lg"></i> Post a new idea
+    </a>
+  </div>
+</section>
 
-{% block scripts %}
-<script>
-// Animate stat counters up from 0 when section scrolls into view
-document.addEventListener('DOMContentLoaded', () => {
-  fetch('/api/stats')
-    .then(r => r.json())
-    .then(data => {
-      animateCount('statIdeas',    data.ideas);
-      animateCount('statUsers',    data.users);
-      animateCount('statVotes',    data.votes);
-      animateCount('statComments', data.comments);
-    })
-    .catch(() => {}); // silently fail if endpoint isn't ready
-});
-
-function animateCount(id, target) {
-  const el = document.getElementById(id);
-  if (!el) return;
-  const duration = 1200;
-  const step     = target / (duration / 16);
-  let current    = 0;
-  const timer = setInterval(() => {
-    current += step;
-    if (current >= target) { current = target; clearInterval(timer); }
-    el.textContent = Math.floor(current).toLocaleString();
-  }, 16);
-}
-</script>
 {% endblock %}

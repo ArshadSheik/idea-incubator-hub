@@ -261,15 +261,15 @@
 .sidebar-card {
   background: var(--paper);
   border: 1px solid var(--ink-200);
-  border-radius: var(--radius-lg);
-  padding: 1.25rem;
-  box-shadow: var(--shadow-card);
+  border-radius: 28px;
+  padding: 1.65rem;
+  box-shadow: 0 12px 30px rgba(19, 22, 40, 0.08);
 }
 .sidebar-title {
   font-family: var(--font-display);
-  font-weight: 700;
-  font-size: 0.95rem;
-  margin: 0 0 1rem;
+  font-weight: 800;
+  font-size: 1.05rem;
+  margin: 0 0 1.1rem;
   color: var(--ink-900);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -277,35 +277,55 @@
 .quick-action {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
-  padding: 0.75rem;
-  border-radius: var(--radius-md);
+  gap: 1rem;
+  padding: 0.95rem 0.85rem;
+  border-radius: 18px;
   text-decoration: none;
   color: inherit;
-  transition: background var(--tr-fast);
-  margin: 0 -0.5rem;
+  transition: background var(--tr-fast), transform var(--tr-fast), box-shadow var(--tr-fast);
+  margin: 0;
 }
-.quick-action:hover { background: var(--ink-100); color: inherit; text-decoration: none; }
+.quick-action + .quick-action {
+  margin-top: 0.35rem;
+}
+.quick-action:hover {
+  background: var(--ink-100);
+  color: inherit;
+  text-decoration: none;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 18px rgba(20, 24, 40, 0.06);
+}
 .qa-icon {
-  width: 40px; height: 40px;
-  border-radius: 10px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.1rem;
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: grid;
+  place-items: center;
+  font-size: 1.15rem;
+  line-height: 1;
   flex-shrink: 0;
+  padding: 0;
 }
-.quick-action strong {
+
+.qa-icon i {
   display: block;
-  font-size: 0.92rem;
+  line-height: 1;
+  margin: 0;
+}
+.quick-action > div strong {
+  display: block;
+  font-size: 1rem;
   color: var(--ink-900);
-  line-height: 1.3;
+  line-height: 1.25;
+  font-weight: 800;
+  margin-bottom: 0.18rem;
 }
-.quick-action span {
+
+.quick-action > div span {
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   color: var(--ink-500);
-  line-height: 1.3;
+  line-height: 1.35;
 }
 
 /* ─── Digest card (dark) ─── */
@@ -315,6 +335,9 @@
   border: none;
   position: relative;
   overflow: hidden;
+  border-radius: 30px;
+  padding: 1.7rem 1.6rem;
+  box-shadow: 0 18px 40px rgba(7, 10, 30, 0.24);
 }
 .digest-card::before {
   content: '';
@@ -329,39 +352,160 @@
 .digest-icon { font-size: 1.15rem; }
 .digest-item {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.6rem 0;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 1rem 0;
   border-top: 1px solid rgba(255,255,255,0.1);
   text-decoration: none;
   color: inherit;
   transition: transform var(--tr-fast);
 }
-.digest-item:first-of-type { border-top: none; padding-top: 0.4rem; }
-.digest-item:hover { transform: translateX(3px); text-decoration: none; color: inherit; }
+.digest-item:first-of-type {
+  border-top: none;
+  padding-top: 0.6rem;
+}
+.digest-item:hover {
+  transform: translateX(2px);
+  text-decoration: none;
+  color: inherit;
+}
 .digest-rank {
   flex-shrink: 0;
-  width: 28px; height: 28px;
-  border-radius: 8px;
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
   background: var(--brand-primary);
   color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+  font-size: 0.95rem;
+  font-family: var(--font-display);
+  line-height: 1;
+  text-align: center;
+  padding: 0;
+  box-shadow: 0 10px 20px rgba(255, 103, 31, 0.28);
+}
+.digest-item > div strong {
+  display: block;
+  font-size: 1rem;
+  color: white;
+  font-weight: 800;
+  line-height: 1.42;
+  margin-bottom: 0.25rem;
+}
+
+.digest-item > div span {
+  display: block;
+  font-size: 0.92rem;
+  color: var(--ink-400);
+  line-height: 1.35;
+}
+
+/* ─── Smart coach card ─── */
+.smart-coach-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 90, 31, 0.18);
+  background:
+    radial-gradient(circle at top right, rgba(255, 90, 31, 0.13), transparent 32%),
+    var(--paper);
+}
+
+.smart-coach-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  display: grid;
+  place-items: center;
+  background: var(--brand-primary-light);
+  color: var(--brand-primary);
+  font-size: 1.25rem;
+  margin-bottom: 0.9rem;
+}
+
+.smart-coach-kicker {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-primary);
+  margin-bottom: 0.35rem;
+}
+
+.smart-coach-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: var(--ink-900);
+  margin-bottom: 0.45rem;
+}
+
+.smart-coach-text {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--ink-600);
+  margin-bottom: 1rem;
+}
+
+/* ─── Smart coach API suggestion ─── */
+.smart-coach-api-box {
+  margin: 0.9rem 0 1rem;
+  padding: 0.85rem 0.9rem;
+  border-radius: 18px;
+  background: rgba(255, 90, 31, 0.07);
+  border: 1px solid rgba(255, 90, 31, 0.14);
+}
+
+.smart-coach-api-label {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-bottom: 0.45rem;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--brand-primary);
+}
+
+.smart-coach-api-text {
+  margin: 0 0 0.65rem;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--ink-700);
+}
+
+.smart-coach-api-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  border: none;
+  border-radius: 999px;
+  padding: 0.4rem 0.8rem;
+  font-size: 0.78rem;
   font-weight: 700;
-  font-size: 0.85rem;
-  font-family: var(--font-display);
+  color: var(--brand-primary);
+  background: var(--brand-primary-light);
+  cursor: pointer;
+  transition: transform 0.18s ease, background 0.18s ease, opacity 0.18s ease;
 }
-.digest-item strong {
-  display: block;
-  font-size: 0.88rem;
-  color: white;
-  font-weight: 600;
+
+.smart-coach-api-btn:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 90, 31, 0.16);
 }
-.digest-item span {
+
+.smart-coach-api-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.smart-coach-api-status {
   display: block;
-  font-size: 0.75rem;
-  color: var(--ink-400);
+  margin-top: 0.45rem;
+  font-size: 0.72rem;
+  color: var(--ink-500);
 }
 
 /* ─── Follow items ─── */
@@ -385,4 +529,8 @@
   .dash-section { padding: 1.25rem; }
   .my-idea-meta { gap: 0.75rem; font-size: 0.75rem; }
   .my-idea-emoji { width: 36px; height: 36px; font-size: 1.1rem; }
+  .sidebar-card { padding: 1.25rem;}
+  .quick-action { padding: 0.8rem 0.7rem;}
+  .qa-icon { width: 48px; height: 48px; border-radius: 14px;}
+  .digest-rank { width: 34px; height: 34px; border-radius: 12px; font-size: 0.85rem;}
 }
