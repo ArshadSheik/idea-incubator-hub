@@ -361,6 +361,11 @@
   line-height: 1.5;
 }
 
+.wiki-toggle-btn { background: none; border: none; cursor: pointer; color: var(--ink-400); float: right; }
+.wiki-content.collapsed { display: none; }
+.wiki-readmore { font-size: 0.75rem; color: var(--brand-600, #4f46e5); text-decoration: none; display: block; margin-top: 0.5rem; }
+.wiki-readmore:hover { text-decoration: underline; }
+
 @media (max-width: 767px) {
   .idea-header-card,
   .idea-section { padding: 1.25rem; }
