@@ -8,7 +8,7 @@ from flask import Blueprint, jsonify, redirect, render_template, request, url_fo
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
-from models.models import Collaboration, Comment, Idea, User, Vote, db, Notification, Bookmark, Task
+from models.models import Collaboration, Comment, Idea, User, Vote, db, Notification, Bookmark, Task, Tag
 
 main_bp = Blueprint("main", __name__)
 
@@ -1320,3 +1320,47 @@ def delete_task(idea_id: int, task_id: int):
     db.session.delete(task)
     db.session.commit()
     return jsonify({"ok": True})
+
+@main_bp.route("/ideas/new", methods=["GET", "POST"])
+@login_required
+def submit_idea():
+    from forms import IdeaForm
+    form = IdeaForm()
+
+    if form.validate_on_submit():
+        # Parse tags from comma-separated string
+        tag_names = [t.strip() for t in (form.tags.data or "").split(",") if t.strip()]
+        tags = []
+        for name in tag_names:
+            tag = Tag.query.filter_by(name=name).first()
+            if not tag:
+                tag = Tag(name=name)
+                db.session.add(tag)
+            tags.append(tag)
+
+        idea = Idea(
+            user_id     = current_user.id,
+            title       = form.title.data,
+            summary     = form.summary.data,
+            description = form.description.data,
+            category    = form.category.data,
+            stage       = form.stage.data,
+            privacy     = form.privacy.data,
+            emoji       = form.emoji.data or "💡",
+        )
+        idea.tags = tags
+        db.session.add(idea)
+        db.session.commit()
+
+        # Create a notification for the user confirming submission
+        db.session.add(Notification(
+            user_id = current_user.id,
+            type    = "milestone",
+            message = f"Your idea '{idea.title}' was posted successfully!",
+            link    = f"/ideas/{idea.id}",
+        ))
+        db.session.commit()
+
+        return redirect(url_for("main.idea_detail", idea_id=idea.id))
+
+    return render_template("submit_idea.html", form=form)
