@@ -1364,3 +1364,29 @@ def submit_idea():
         return redirect(url_for("main.idea_detail", idea_id=idea.id))
 
     return render_template("submit_idea.html", form=form)
+
+@main_bp.route("/api/ideas/<int:idea_id>/news")
+def idea_news(idea_id: int):
+    """Market news for an idea's category — cached 24h."""
+    idea = Idea.query.get_or_404(idea_id)
+    try:
+        from services.news_service import get_news_for_category
+        articles = get_news_for_category(idea.category)
+        return jsonify({"ok": True, "articles": articles})
+    except Exception as e:
+        return jsonify({"ok": False, "articles": [], "error": str(e)})
+
+
+@main_bp.route("/api/trending-categories")
+def trending_categories():
+    """Returns category counts for the trending widget on explore."""
+    from sqlalchemy import func
+    rows = (
+        db.session.query(Idea.category, func.count(Idea.id).label("count"))
+        .filter_by(privacy="public")
+        .group_by(Idea.category)
+        .order_by(func.count(Idea.id).desc())
+        .limit(6)
+        .all()
+    )
+    return jsonify([{"category": r.category, "count": r.count} for r in rows])

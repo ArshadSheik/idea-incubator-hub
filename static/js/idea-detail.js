@@ -577,4 +577,32 @@ document.addEventListener("DOMContentLoaded", () => {
         btn.disabled = false;
       });
   });
+
+  // ── Market News ────────────────────────────────────────────────
+  (function loadMarketNews() {
+    const container = document.getElementById('newsContent');
+    if (!container) return;
+
+    // Uses getIdeaId() — already defined at top of this file
+    const ideaId = getIdeaId();
+    if (!ideaId) return;
+
+    fetch(`/api/ideas/${ideaId}/news`)
+      .then(r => r.json())
+      .then(data => {
+        if (!data.ok || !data.articles.length) {
+          container.innerHTML = '<p class="text-muted-iih small text-center py-2">No recent news found.</p>';
+          return;
+        }
+        container.innerHTML = data.articles.slice(0, 4).map(a => `
+          <a href="${a.url}" target="_blank" rel="noopener" class="news-item">
+            <p class="news-title mb-0">${a.title}</p>
+            <span class="news-meta">${a.source} · ${new Date(a.published_at).toLocaleDateString()}</span>
+          </a>
+        `).join('');
+      })
+      .catch(() => {
+        container.innerHTML = '<p class="text-muted-iih small text-center py-2">Could not load news.</p>';
+      });
+  })();
 });
