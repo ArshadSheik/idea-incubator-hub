@@ -1430,3 +1430,19 @@ def chart_data():
         "by_category": [{"category": r[0], "count": r[1]} for r in cat_rows],
         "weekly":      seven_days,
     })
+
+@main_bp.route("/profile/edit", methods=["GET", "POST"])
+@login_required
+def edit_profile():
+    from forms import ProfileEditForm
+    form = ProfileEditForm(obj=current_user)
+
+    if form.validate_on_submit():
+        current_user.first_name   = form.first_name.data.strip()
+        current_user.last_name    = form.last_name.data.strip()
+        current_user.bio          = form.bio.data.strip()
+        current_user.avatar_color = int(form.avatar_color.data)
+        db.session.commit()
+        return redirect(url_for("main.profile", username=current_user.username))
+
+    return render_template("edit_profile.html", form=form)

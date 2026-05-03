@@ -106,6 +106,16 @@
   flex-shrink: 0;
 }
 
+.avatar-color-picker { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 0.5rem; }
+.avatar-color-option {
+  width: 44px; height: 44px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 0.875rem; cursor: pointer;
+  border: 3px solid transparent; transition: border-color 0.15s;
+}
+.avatar-color-option.selected { border-color: var(--brand-600, #4f46e5); }
+.profile-avatar-img { width: 88px; height: 88px; border-radius: 50%; object-fit: cover; }
+
 /* Empty state */
 .empty-state {
   text-align: center;
