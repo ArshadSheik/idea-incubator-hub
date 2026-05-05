@@ -100,6 +100,15 @@
           <i class="bi bi-people"></i>
           <span>{% if idea.user_collaborating %}Joined as collaborator{% else %}Join as collaborator{% endif %}</span>
         </button>
+        {% if idea.is_owner %}
+        <form method="post" action="{{ url_for('main.delete_idea', idea_id=idea.id) }}" class="d-inline ms-2" onsubmit="return confirm('Delete this idea permanently? This action cannot be undone.')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="vote-btn-secondary text-danger border-danger">
+            <i class="bi bi-trash"></i>
+            <span>Delete idea</span>
+          </button>
+        </form>
+        {% endif %}
       </div>
       <div id="actionFeedback" class="alert d-none mt-3 mb-0" role="alert"></div>
 
