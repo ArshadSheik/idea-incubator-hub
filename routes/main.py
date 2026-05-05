@@ -406,6 +406,7 @@ def _serialize_detail_idea(idea: Idea) -> dict:
         "votes": idea.vote_count,
         "user_voted": user_voted,
         "user_collaborating": user_collaborating,
+        "is_owner": actor is not None and actor.id == idea.user_id,
         "comments_total": idea.comment_count,
         "collaborators_total": idea.collaborator_count,
         "stage_timeline": _build_stage_timeline(stage_class),
