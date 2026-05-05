@@ -1102,6 +1102,32 @@ def generate_idea_insights(idea_id: int):
         return jsonify({"ok": False, "error": str(exc)}), 502
 
 
+@main_bp.route("/ideas/<int:idea_id>/stage", methods=["POST"])
+@login_required
+def update_idea_stage(idea_id: int):
+    """Update idea stage. Only the idea owner can do this."""
+    idea = Idea.query.get_or_404(idea_id)
+    if idea.user_id != current_user.id:
+        abort(403)
+
+    payload = request.get_json(silent=True) or {}
+    stage = (payload.get("stage") or request.form.get("stage") or "").strip().lower()
+    if stage not in Idea.STAGES:
+        return jsonify({"ok": False, "error": "Invalid stage value"}), 400
+
+    idea.stage = stage
+    db.session.commit()
+    return jsonify(
+        {
+            "ok": True,
+            "idea_id": idea.id,
+            "stage": stage.capitalize(),
+            "stage_class": stage,
+            "stage_timeline": _build_stage_timeline(stage),
+        }
+    )
+
+
 @main_bp.route("/login")
 def login():
     return redirect(url_for("auth.login"))
@@ -1169,6 +1195,7 @@ def profile(username):
         ideas=ideas,
         collaborations=collaborations,
         collab_count=collab_count,
+        bookmark_count=bookmark_count,
         total_votes_received=total_votes_received,
         is_own_profile=is_own_profile,
     )
