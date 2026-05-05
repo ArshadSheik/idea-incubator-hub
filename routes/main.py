@@ -1183,6 +1183,7 @@ def profile(username):
     )
     collab_count         = len(collaborations)
     total_votes_received = sum(i.vote_count for i in ideas)
+    bookmark_count       = Bookmark.query.filter_by(user_id=profile_user.id).count()
 
     # Check if the logged-in user is viewing their own profile
     is_own_profile = (
