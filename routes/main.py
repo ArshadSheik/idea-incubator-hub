@@ -4,11 +4,23 @@ from urllib import error as urlerror
 from urllib import request as urlrequest
 from datetime import datetime, timedelta
 
-from flask import Blueprint, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
-from models.models import Collaboration, Comment, Idea, User, Vote, db, Notification, Bookmark, Task, Tag
+from models.models import (
+    AIAnalysis,
+    Bookmark,
+    Collaboration,
+    Comment,
+    Idea,
+    Notification,
+    Tag,
+    Task,
+    User,
+    Vote,
+    db,
+)
 
 main_bp = Blueprint("main", __name__)
 
@@ -1051,6 +1063,24 @@ def create_comment_reply(idea_id: int, comment_id: int):
     db.session.commit()
 
     return jsonify({"ok": True, "reply": _serialize_comment(reply)}), 201
+
+
+@main_bp.route("/ideas/<int:idea_id>/delete", methods=["POST"])
+@login_required
+def delete_idea(idea_id: int):
+    """Delete an idea owned by the current user."""
+    idea = Idea.query.get_or_404(idea_id)
+    if idea.user_id != current_user.id:
+        abort(403)
+
+    # Keep deletes robust even when FK cascades are not configured on every table.
+    Bookmark.query.filter_by(idea_id=idea.id).delete(synchronize_session=False)
+    AIAnalysis.query.filter_by(idea_id=idea.id).delete(synchronize_session=False)
+    Notification.query.filter_by(link=f"/ideas/{idea.id}").delete(synchronize_session=False)
+    db.session.delete(idea)
+    db.session.commit()
+    flash("Idea deleted successfully.", "success")
+    return redirect(url_for("main.profile", username=current_user.username))
 
 
 @main_bp.route("/ideas/<int:idea_id>/ai-insights", methods=["POST"])
