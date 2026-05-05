@@ -1135,7 +1135,7 @@ def profile(username):
     return render_template(
         "profile.html",
         profile_user=profile_user,
-        ideas=[_serialize_explore_idea(i) for i in ideas],
+        ideas=ideas,
         collaborations=collaborations,
         collab_count=collab_count,
         total_votes_received=total_votes_received,
