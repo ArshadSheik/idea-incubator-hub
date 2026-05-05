@@ -56,12 +56,22 @@ def auth_client(app):
 
 
 @pytest.fixture(scope="function")
-def sample_idea(app, auth_client):
-    """Creates a public idea owned by the test user, returns its id."""
+def sample_idea(app):
+    """Creates a public idea directly in DB — no auth client needed."""
     with app.app_context():
-        user = User.query.filter_by(email="test@example.com").first()
+        # Create an owner user if not exists
+        owner = User.query.filter_by(email="owner@example.com").first()
+        if not owner:
+            owner = User(
+                first_name="Idea", last_name="Owner",
+                username="ideaowner", email="owner@example.com",
+            )
+            owner.set_password("password123")
+            db.session.add(owner)
+            db.session.commit()
+
         idea = Idea(
-            user_id=user.id, title="Test Idea",
+            user_id=owner.id, title="Test Idea",
             summary="A test summary.", description="Full description.",
             category="FinTech", stage="ideation", privacy="public",
         )
@@ -338,22 +348,29 @@ class TestIdeaSubmission:
         assert "/ideas/" in r.headers.get("Location", "")
 
     def test_submit_idea_creates_milestone_notification(self, auth_client, app):
+        with app.app_context():
+            user = User.query.filter_by(email="test@example.com").first()
+            initial_count = Notification.query.filter_by(
+                user_id=user.id, type="milestone"
+            ).count()
+
         auth_client.post("/ideas/new", data={
             "title": "Notif Test Idea",
             "summary": "Testing notification on submit.",
-            "description": "Full description.",
+            "description": "Full description of the idea here.",
             "category": "Health",
             "stage": "ideation",
             "privacy": "public",
             "emoji": "💊",
             "tags": "",
         }, follow_redirects=True)
+
         with app.app_context():
             user = User.query.filter_by(email="test@example.com").first()
-            notif = Notification.query.filter_by(
+            final_count = Notification.query.filter_by(
                 user_id=user.id, type="milestone"
-            ).first()
-            assert notif is not None
+            ).count()
+        assert final_count > initial_count
 
 
 class TestIdeaDetail:
@@ -410,17 +427,23 @@ class TestVoteEndpoint:
 
     def test_vote_requires_login(self, client, sample_idea):
         r = client.post(f"/ideas/{sample_idea}/vote",
-                        content_type="application/json")
+                        content_type="application/json",
+                        follow_redirects=False)
         assert r.status_code in (302, 401)
+        assert "login" in r.headers.get("Location", "").lower()
 
     def test_vote_creates_notification_for_author(self, app, sample_idea):
-        """Voting on someone else's idea creates a notification for them."""
         with app.app_context():
             voter = User(first_name="Voter", last_name="User",
-                         username="voter", email="voter@example.com")
+                        username="voter", email="voter@example.com")
             voter.set_password("password123")
             db.session.add(voter)
             db.session.commit()
+            idea = Idea.query.get(sample_idea)
+            author_id = idea.user_id
+            initial_count = Notification.query.filter_by(
+                user_id=author_id, type="vote"
+            ).count()
 
         voter_client = app.test_client()
         voter_client.post("/auth/login", data={
@@ -428,14 +451,12 @@ class TestVoteEndpoint:
             "password": "password123",
         }, follow_redirects=True)
         voter_client.post(f"/ideas/{sample_idea}/vote",
-                          content_type="application/json")
-
+                        content_type="application/json")
         with app.app_context():
-            idea = Idea.query.get(sample_idea)
-            notif = Notification.query.filter_by(
-                user_id=idea.user_id, type="vote"
-            ).first()
-            assert notif is not None
+            final_count = Notification.query.filter_by(
+                user_id=author_id, type="vote"
+            ).count()
+        assert final_count > initial_count
 
 
 class TestCommentEndpoint:
@@ -466,17 +487,23 @@ class TestCommentEndpoint:
 
     def test_comment_requires_login(self, client, sample_idea):
         r = client.post(f"/ideas/{sample_idea}/comments",
-                        json={"text": "Trying without auth"})
+                        json={"text": "Trying without auth"},
+                        follow_redirects=False)
         assert r.status_code in (302, 401)
+        assert "login" in r.headers.get("Location", "").lower()
 
     def test_comment_creates_notification_for_author(self, app, sample_idea):
-        """Commenting on someone else's idea creates a notification."""
         with app.app_context():
             commenter = User(first_name="Cmtr", last_name="User",
-                             username="commenter", email="cmtr@example.com")
+                            username="commenter", email="cmtr@example.com")
             commenter.set_password("password123")
             db.session.add(commenter)
             db.session.commit()
+            idea = Idea.query.get(sample_idea)
+            author_id = idea.user_id
+            initial_count = Notification.query.filter_by(
+                user_id=author_id, type="comment"
+            ).count()
 
         cmtr_client = app.test_client()
         cmtr_client.post("/auth/login", data={
@@ -484,14 +511,13 @@ class TestCommentEndpoint:
             "password": "password123",
         }, follow_redirects=True)
         cmtr_client.post(f"/ideas/{sample_idea}/comments",
-                         json={"text": "Nice idea!"})
+                        json={"text": "Nice idea!"})
 
         with app.app_context():
-            idea = Idea.query.get(sample_idea)
-            notif = Notification.query.filter_by(
-                user_id=idea.user_id, type="comment"
-            ).first()
-            assert notif is not None
+            final_count = Notification.query.filter_by(
+                user_id=author_id, type="comment"
+            ).count()
+        assert final_count > initial_count
 
 
 class TestBookmarkEndpoint:
@@ -528,8 +554,10 @@ class TestBookmarkEndpoint:
 
     def test_bookmark_requires_login(self, client, sample_idea):
         r = client.post(f"/api/ideas/{sample_idea}/bookmark",
-                        content_type="application/json")
+                        content_type="application/json",
+                        follow_redirects=False)
         assert r.status_code in (302, 401)
+        assert "login" in r.headers.get("Location", "").lower()
 
 
 class TestCollaborateEndpoint:
@@ -685,8 +713,10 @@ class TestApiEndpoints:
         assert isinstance(data, list)
 
     def test_collaboration_board_requires_login(self, client, sample_idea):
-        r = client.get(f"/ideas/{sample_idea}/board", follow_redirects=False)
+        r = client.get(f"/ideas/{sample_idea}/board",
+                    follow_redirects=False)
         assert r.status_code in (301, 302)
+        assert "login" in r.headers.get("Location", "").lower()
 
     def test_collaboration_board_accessible_when_logged_in(self, auth_client, sample_idea):
         r = auth_client.get(f"/ideas/{sample_idea}/board")
