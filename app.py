@@ -47,7 +47,7 @@ def create_app(config_name='default'):
     # ── User loader (required by Flask-Login) ──────────────────────
     @login_manager.user_loader
     def load_user(user_id):
-        return User.query.get(int(user_id))
+        return db.session.get(User, int(user_id))
     
     google_bp = make_google_blueprint(
         client_id=app.config['GOOGLE_CLIENT_ID'],
