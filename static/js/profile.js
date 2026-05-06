@@ -89,4 +89,71 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
   }
+
+  // Profile stat pills
+  const statButtons = document.querySelectorAll('.profile-stat');
+  if (statButtons.length) {
+    const profileUsername = document.querySelector('.profile-username')?.textContent?.replace('@', '').trim();
+    const followModalEl = document.getElementById('followListModal');
+    const followModalTitle = document.getElementById('followListTitle');
+    const followListLoading = document.getElementById('followListLoading');
+    const followListEmpty = document.getElementById('followListEmpty');
+    const followListError = document.getElementById('followListError');
+    const followListItems = document.getElementById('followListItems');
+    const modal = (followModalEl && window.bootstrap?.Modal) ? new window.bootstrap.Modal(followModalEl) : null;
+
+    const resetFollowModal = () => {
+      if (followListLoading) followListLoading.classList.remove('d-none');
+      if (followListEmpty) followListEmpty.classList.add('d-none');
+      if (followListError) { followListError.classList.add('d-none'); followListError.textContent = ''; }
+      if (followListItems) followListItems.innerHTML = '';
+    };
+
+    const renderFollowUsers = (users) => {
+      if (!followListItems) return;
+      followListItems.innerHTML = users.map((u) => `
+        <a class="follow-item" href="/profile/${encodeURIComponent(u.username)}">
+          <span class="avatar avatar-sm avatar-${u.avatar_color}">${escapeHtml(u.initials)}</span>
+          <div class="follow-item__text">
+            <div class="follow-item__name">${escapeHtml(u.display_name)}</div>
+            <div class="follow-item__handle">@${escapeHtml(u.username)}</div>
+          </div>
+          <i class="bi bi-chevron-right ms-auto text-muted"></i>
+        </a>
+      `).join('');
+    };
+
+    statButtons.forEach((btn) => {
+      btn.addEventListener('click', () => {
+        const kind = btn.dataset.stat;
+        if (kind !== 'followers' && kind !== 'following') return;
+        if (!profileUsername) return;
+        if (!modal) return;
+
+        resetFollowModal();
+        if (followModalTitle) followModalTitle.textContent = kind === 'followers' ? 'Followers' : 'Following';
+        modal.show();
+
+        fetch(`/api/profile/${encodeURIComponent(profileUsername)}/${kind}`)
+          .then((r) => r.json())
+          .then((data) => {
+            if (followListLoading) followListLoading.classList.add('d-none');
+            if (!data.ok) throw new Error('request failed');
+            const users = Array.isArray(data.users) ? data.users : [];
+            if (!users.length) {
+              followListEmpty?.classList.remove('d-none');
+              return;
+            }
+            renderFollowUsers(users);
+          })
+          .catch(() => {
+            if (followListLoading) followListLoading.classList.add('d-none');
+            if (followListError) {
+              followListError.textContent = 'Could not load list right now.';
+              followListError.classList.remove('d-none');
+            }
+          });
+      });
+    });
+  }
 });
