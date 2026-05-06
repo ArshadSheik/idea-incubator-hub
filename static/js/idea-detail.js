@@ -340,35 +340,6 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  if (shareBtn) {
-    shareBtn.addEventListener("click", async () => {
-      const shareData = {
-        title: document.title,
-        text: "Check out this idea on Idea Incubator Hub",
-        url: window.location.href,
-      };
-
-      try {
-        if (navigator.share) {
-          await navigator.share(shareData);
-        } else {
-          await navigator.clipboard.writeText(window.location.href);
-          const label = shareBtn.querySelector("span");
-          if (label) {
-            const prev = label.textContent;
-            label.textContent = "Copied link";
-            setTimeout(() => {
-              label.textContent = prev || "Share";
-            }, 1500);
-          }
-        }
-      } catch (error) {
-        console.error(error);
-        showActionFeedback("Unable to share this idea right now.", "info");
-      }
-    });
-  }
-
   if (collaborateBtn) {
     collaborateBtn.addEventListener("click", async () => {
       const ideaId = getIdeaId();
@@ -712,5 +683,138 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   })();
+
+  (function () {
+    const modal      = document.getElementById('shareModal');
+    const openBtn    = document.getElementById('shareBtn');
+    const closeBtn   = document.getElementById('shareModalClose');
+    const copyBtn    = document.getElementById('shareCopyBtn');
+    const copyIcon   = document.getElementById('shareCopyIcon');
+    const copyLabel  = document.getElementById('shareCopyLabel');
+    const linkInput  = document.getElementById('shareLinkInput');
+    const toast      = document.getElementById('shareToast');
+
+    if (!modal || !openBtn) return;
+
+    const pageUrl   = linkInput.value;
+    const ideaTitle = document.querySelector('h1')?.textContent?.trim() || 'Check out this idea';
+    const summary   = document.querySelector('.idea-section p')?.textContent?.trim()?.slice(0, 120) || '';
+
+    // ── Open / Close ──────────────────────────────────────────────
+    function openModal() {
+      modal.classList.add('active');
+      document.body.style.overflow = 'hidden';
+      buildShareLinks();
+    }
+
+    function closeModal() {
+      modal.classList.remove('active');
+      document.body.style.overflow = '';
+    }
+
+    openBtn.addEventListener('click', openModal);
+    closeBtn.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+    // ── Build share URLs ──────────────────────────────────────────
+    function buildShareLinks() {
+      const encoded  = encodeURIComponent(pageUrl);
+      const encTitle = encodeURIComponent(ideaTitle);
+      const encText  = encodeURIComponent(`${ideaTitle} — ${summary}`);
+
+      document.getElementById('shareTwitter').href =
+        `https://twitter.com/intent/tweet?url=${encoded}&text=${encText}`;
+
+      document.getElementById('shareLinkedin').href =
+        `https://www.linkedin.com/sharing/share-offsite/?url=${encoded}`;
+
+      document.getElementById('shareFacebook').href =
+        `https://www.facebook.com/sharer/sharer.php?u=${encoded}`;
+
+      document.getElementById('shareReddit').href =
+        `https://reddit.com/submit?url=${encoded}&title=${encTitle}`;
+
+      document.getElementById('shareWhatsapp').href =
+        `https://wa.me/?text=${encText}%20${encoded}`;
+
+      document.getElementById('shareEmail').addEventListener('click', () => {
+        window.location.href =
+          `mailto:?subject=${encTitle}&body=${encodeURIComponent(summary + '\n\n' + pageUrl)}`;
+      });
+    }
+
+    // ── Copy link ─────────────────────────────────────────────────
+    copyBtn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(pageUrl);
+      } catch {
+        // fallback for older browsers
+        linkInput.select();
+        document.execCommand('copy');
+      }
+      // Update button state
+      copyIcon.className  = 'bi bi-clipboard-check';
+      copyLabel.textContent = 'Copied!';
+      copyBtn.style.background = 'var(--color-success, #22c55e)';
+
+      // Show toast
+      toast.classList.remove('d-none');
+      toast.classList.add('show');
+
+      setTimeout(() => {
+        copyIcon.className  = 'bi bi-clipboard';
+        copyLabel.textContent = 'Copy';
+        copyBtn.style.background = '';
+        toast.classList.remove('show');
+        setTimeout(() => toast.classList.add('d-none'), 300);
+      }, 2000);
+    });
+    
+  })();
+
+  // ── Trending Hashtags ──────────────────────────────────────────
+  (function loadTrendingHashtags() {
+    const container = document.getElementById('hashtagContent');
+    if (!container) return;
+
+    fetch('/api/trending-hashtags')
+      .then(r => r.json())
+      .then(data => {
+        if (!data.length) {
+          container.innerHTML = '<p class="text-muted-iih small text-center py-2">No trending tags yet.</p>';
+          return;
+        }
+
+        // 최대값 기준으로 bar 너비 계산
+        const maxTotal = Math.max(...data.map(d => d.total), 1);
+
+        container.innerHTML = data.map((item, i) => {
+          const barWidth = Math.round((item.total / maxTotal) * 100);
+          const isHot    = item.recent > 0;
+          const rankIcon = i === 0 ? '🔥' : i === 1 ? '⚡' : i === 2 ? '✨' : '#';
+
+          return `
+            <a href="/explore?tag=${encodeURIComponent(item.tag)}"
+              class="hashtag-item text-decoration-none"
+              title="${item.total} ideas · ${item.recent} this week">
+              <div class="hashtag-top">
+                <span class="hashtag-rank">${rankIcon}</span>
+                <span class="hashtag-name">#${item.tag}</span>
+                ${isHot ? '<span class="hashtag-hot">NEW</span>' : ''}
+                <span class="hashtag-count ms-auto">${item.total}</span>
+              </div>
+              <div class="hashtag-bar-track">
+                <div class="hashtag-bar-fill" style="width: ${barWidth}%"></div>
+              </div>
+            </a>
+          `;
+        }).join('');
+      })
+      .catch(() => {
+        container.innerHTML = '<p class="text-muted-iih small text-center py-2">Could not load hashtags.</p>';
+      });
+  })();
+
 
 });
