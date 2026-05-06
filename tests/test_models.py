@@ -80,33 +80,33 @@ class TestUserPassword:
     def test_password_is_hashed(self, app):
         uid = _make_user(app)
         with app.app_context():
-            user = User.query.get(uid)
+            user = db.session.get(User, uid)
             assert user.password_hash != "password123"
             assert user.password_hash is not None
 
     def test_correct_password_accepted(self, app):
         uid = _make_user(app)
         with app.app_context():
-            user = User.query.get(uid)
+            user = db.session.get(User, uid)
             assert user.check_password("password123") is True
 
     def test_wrong_password_rejected(self, app):
         uid = _make_user(app)
         with app.app_context():
-            user = User.query.get(uid)
+            user = db.session.get(User, uid)
             assert user.check_password("wrongpassword") is False
 
     def test_empty_password_rejected(self, app):
         uid = _make_user(app)
         with app.app_context():
-            user = User.query.get(uid)
+            user = db.session.get(User, uid)
             assert user.check_password("") is False
 
     def test_hash_uses_pbkdf2(self, app):
         """Confirm Werkzeug uses pbkdf2 (salted hash) not plain MD5/SHA."""
         uid = _make_user(app)
         with app.app_context():
-            user = User.query.get(uid)
+            user = db.session.get(User, uid)
             assert "pbkdf2" in user.password_hash or "scrypt" in user.password_hash
 
 
@@ -116,25 +116,25 @@ class TestUserProperties:
     def test_display_name(self, app):
         uid = _make_user(app, first="Arshad", last="Sheik")
         with app.app_context():
-            user = User.query.get(uid)
+            user = db.session.get(User, uid)
             assert user.display_name == "Arshad Sheik"
 
     def test_initials(self, app):
         uid = _make_user(app, first="Arshad", last="Sheik")
         with app.app_context():
-            user = User.query.get(uid)
+            user = db.session.get(User, uid)
             assert user.initials == "AS"
 
     def test_initials_uppercase(self, app):
         uid = _make_user(app, first="john", last="doe")
         with app.app_context():
-            user = User.query.get(uid)
+            user = db.session.get(User, uid)
             assert user.initials == "JD"
 
     def test_idea_count_zero_initially(self, app):
         uid = _make_user(app)
         with app.app_context():
-            user = User.query.get(uid)
+            user = db.session.get(User, uid)
             assert user.idea_count == 0
 
     def test_idea_count_increments(self, app):
@@ -142,15 +142,15 @@ class TestUserProperties:
         _make_idea(app, uid)
         _make_idea(app, uid, title="Second idea")
         with app.app_context():
-            user = User.query.get(uid)
+            user = db.session.get(User, uid)
             assert user.idea_count == 2
 
     def test_has_voted_false_initially(self, app):
         uid = _make_user(app)
         iid = _make_idea(app, uid)
         with app.app_context():
-            user = User.query.get(uid)
-            idea = Idea.query.get(iid)
+            user = db.session.get(User, uid)
+            idea = db.session.get(Idea, iid)
             assert user.has_voted(idea) is False
 
     def test_has_voted_true_after_voting(self, app):
@@ -159,16 +159,16 @@ class TestUserProperties:
         with app.app_context():
             db.session.add(Vote(user_id=uid, idea_id=iid))
             db.session.commit()
-            user = User.query.get(uid)
-            idea = Idea.query.get(iid)
+            user = db.session.get(User, uid)
+            idea = db.session.get(Idea, iid)
             assert user.has_voted(idea) is True
 
     def test_is_collaborating_false_initially(self, app):
         uid = _make_user(app)
         iid = _make_idea(app, uid)
         with app.app_context():
-            user = User.query.get(uid)
-            idea = Idea.query.get(iid)
+            user = db.session.get(User, uid)
+            idea = db.session.get(Idea, iid)
             assert user.is_collaborating(idea) is False
 
 
@@ -183,7 +183,7 @@ class TestIdeaCounts:
         uid = _make_user(app)
         iid = _make_idea(app, uid)
         with app.app_context():
-            idea = Idea.query.get(iid)
+            idea = db.session.get(Idea, iid)
             assert idea.vote_count == 0
 
     def test_vote_count_increments(self, app):
@@ -193,14 +193,14 @@ class TestIdeaCounts:
         with app.app_context():
             db.session.add(Vote(user_id=uid2, idea_id=iid))
             db.session.commit()
-            idea = Idea.query.get(iid)
+            idea = db.session.get(Idea, iid)
             assert idea.vote_count == 1
 
     def test_comment_count_zero_initially(self, app):
         uid = _make_user(app)
         iid = _make_idea(app, uid)
         with app.app_context():
-            idea = Idea.query.get(iid)
+            idea = db.session.get(Idea, iid)
             assert idea.comment_count == 0
 
     def test_comment_count_increments(self, app):
@@ -209,14 +209,14 @@ class TestIdeaCounts:
         with app.app_context():
             db.session.add(Comment(user_id=uid, idea_id=iid, body="Great idea!"))
             db.session.commit()
-            idea = Idea.query.get(iid)
+            idea = db.session.get(Idea, iid)
             assert idea.comment_count == 1
 
     def test_collaborator_count_zero_initially(self, app):
         uid = _make_user(app)
         iid = _make_idea(app, uid)
         with app.app_context():
-            idea = Idea.query.get(iid)
+            idea = db.session.get(Idea, iid)
             assert idea.collaborator_count == 0
 
     def test_collaborator_count_increments(self, app):
@@ -229,7 +229,7 @@ class TestIdeaCounts:
                 role="contributor", status="accepted"
             ))
             db.session.commit()
-            idea = Idea.query.get(iid)
+            idea = db.session.get(Idea, iid)
             assert idea.collaborator_count == 1
 
 
@@ -240,14 +240,14 @@ class TestIdeaScore:
         uid = _make_user(app)
         iid = _make_idea(app, uid)
         with app.app_context():
-            idea = Idea.query.get(iid)
+            idea = db.session.get(Idea, iid)
             assert isinstance(idea.overall_score, (int, float))
 
     def test_overall_score_between_0_and_100(self, app):
         uid = _make_user(app)
         iid = _make_idea(app, uid)
         with app.app_context():
-            idea = Idea.query.get(iid)
+            idea = db.session.get(Idea, iid)
             assert 0 <= idea.overall_score <= 100
 
 
@@ -258,16 +258,16 @@ class TestIdeaIncrementViews:
         uid = _make_user(app)
         iid = _make_idea(app, uid)
         with app.app_context():
-            idea = Idea.query.get(iid)
+            idea = db.session.get(Idea, iid)
             assert idea.views == 0
 
     def test_increment_views_increases_count(self, app):
         uid = _make_user(app)
         iid = _make_idea(app, uid)
         with app.app_context():
-            idea = Idea.query.get(iid)
+            idea = db.session.get(Idea, iid)
             idea.increment_views()
-            idea = Idea.query.get(iid)
+            idea = db.session.get(Idea, iid)
             assert idea.views == 1
 
     def test_increment_views_multiple_times(self, app):
@@ -275,9 +275,9 @@ class TestIdeaIncrementViews:
         iid = _make_idea(app, uid)
         with app.app_context():
             for _ in range(5):
-                idea = Idea.query.get(iid)
+                idea = db.session.get(Idea, iid)
                 idea.increment_views()
-            idea = Idea.query.get(iid)
+            idea = db.session.get(Idea, iid)
             assert idea.views == 5
 
 
@@ -378,7 +378,7 @@ class TestNotification:
             db.session.commit()
             notif.is_read = True
             db.session.commit()
-            saved = Notification.query.get(notif.id)
+            saved = db.session.get(Notification, notif.id)
             assert saved.is_read is True
 
 
@@ -415,5 +415,5 @@ class TestTask:
             db.session.commit()
             task.status = "done"
             db.session.commit()
-            saved = Task.query.get(task.id)
+            saved = db.session.get(Task, task.id)
             assert saved.status == "done"

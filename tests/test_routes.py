@@ -382,10 +382,10 @@ class TestIdeaDetail:
 
     def test_idea_detail_increments_views(self, auth_client, app, sample_idea):
         with app.app_context():
-            before = Idea.query.get(sample_idea).views
+            before = db.session.get(Idea, sample_idea).views
         auth_client.get(f"/ideas/{sample_idea}")
         with app.app_context():
-            after = Idea.query.get(sample_idea).views
+            after = db.session.get(Idea, sample_idea).views
         assert after == before + 1
 
     def test_nonexistent_idea_returns_404(self, auth_client):
@@ -439,7 +439,7 @@ class TestVoteEndpoint:
             voter.set_password("password123")
             db.session.add(voter)
             db.session.commit()
-            idea = Idea.query.get(sample_idea)
+            idea = db.session.get(Idea, sample_idea)
             author_id = idea.user_id
             initial_count = Notification.query.filter_by(
                 user_id=author_id, type="vote"
@@ -499,7 +499,7 @@ class TestCommentEndpoint:
             commenter.set_password("password123")
             db.session.add(commenter)
             db.session.commit()
-            idea = Idea.query.get(sample_idea)
+            idea = db.session.get(Idea, sample_idea)
             author_id = idea.user_id
             initial_count = Notification.query.filter_by(
                 user_id=author_id, type="comment"
@@ -648,7 +648,7 @@ class TestTaskEndpoints:
         assert r2.status_code == 200
 
         with app.app_context():
-            task = Task.query.get(task_id)
+            task = db.session.get(Task, task_id)
             assert task.status == "done"
 
     def test_delete_task(self, auth_client, app, sample_idea):
@@ -660,7 +660,7 @@ class TestTaskEndpoints:
         assert r2.status_code == 200
 
         with app.app_context():
-            assert Task.query.get(task_id) is None
+            assert db.session.get(Task, task_id) is None
 
 
 class TestProfileEndpoints:
