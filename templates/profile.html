@@ -41,8 +41,8 @@
 </section>
 
 <!-- ═══════════ PROFILE TABS ═══════════ -->
-<section class="profile-body">
-  <div class="container-iih">
+<section class="profile-body profile-body--tabs">
+  <div class="container-iih profile-body-inner">
 
     <ul class="nav profile-tabs mb-4" id="profileTabs" role="tablist">
       <li class="nav-item">
@@ -74,11 +74,9 @@
       <!-- Ideas tab -->
       <div class="tab-pane fade show active" id="tab-ideas" role="tabpanel">
         {% if ideas %}
-          <div class="row g-4">
+          <div class="profile-cards-grid">
             {% for idea in ideas %}
-              <div class="col-md-6">
-                {% include 'partials/_idea_card.html' %}
-              </div>
+              {% include 'partials/_idea_card.html' %}
             {% endfor %}
           </div>
         {% else %}
@@ -95,17 +93,22 @@
       <!-- Collaborations tab -->
       <div class="tab-pane fade" id="tab-collabs" role="tabpanel">
         {% if collaborations %}
+          <div class="profile-cards-stack">
           {% for collab in collaborations %}
-            <div class="collab-card">
-              <div>
-                <a href="{{ url_for('main.idea_detail', idea_id=collab.idea.id) }}" class="collab-idea-title">
-                  {{ collab.idea.title }}
-                </a>
-                <p class="collab-idea-summary text-muted-iih small mb-0">{{ collab.idea.summary }}</p>
+            <a href="{{ url_for('main.idea_detail', idea_id=collab.idea.id) }}" class="psc-collab-card" data-scroll-reveal>
+              <div class="psc-collab-card__cube" aria-hidden="true"><span></span><span></span><span></span></div>
+              <div class="psc-collab-card__body">
+                <span class="psc-collab-card__emoji">{{ collab.idea.emoji or '💡' }}</span>
+                <div>
+                  <h3 class="psc-collab-card__title">{{ collab.idea.title }}</h3>
+                  <p class="psc-collab-card__summary">{{ collab.idea.summary }}</p>
+                  <span class="psc-collab-card__hint">Open idea <i class="bi bi-arrow-up-right"></i></span>
+                </div>
               </div>
-              <span class="badge-role">{{ collab.role }}</span>
-            </div>
+              <span class="psc-role-pill">{{ collab.role }}</span>
+            </a>
           {% endfor %}
+          </div>
         {% else %}
           <div class="empty-state">
             <i class="bi bi-people"></i>
@@ -117,7 +120,7 @@
       {% if is_own_profile %}
         <!-- Bookmarks tab (populated via AJAX once auth is live) -->
         <div class="tab-pane fade" id="tab-bookmarks" role="tabpanel">
-          <div class="row g-4" id="bookmarksGrid">
+          <div class="profile-bookmarks-wrap" id="bookmarksGrid">
             <div class="col-12">
               <p class="text-muted-iih text-center py-4" id="bookmarksLoading">
                 <span class="spinner-border spinner-border-sm me-2"></span> Loading bookmarks...

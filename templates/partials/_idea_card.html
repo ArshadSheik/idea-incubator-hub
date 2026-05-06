@@ -1,58 +1,57 @@
 {#
-  Reusable idea card partial.
-  Expects: `idea` — an Idea model object
-  Used in: index.html, explore.html
+  Profile idea card (layered depth, matches profile.css .psc-*)
+  Expects: `idea` — Idea model
 #}
-<div class="col-md-6 col-lg-4 idea-card-wrapper"
-     data-idea-id="{{ idea.id }}"
-     data-category="{{ idea.category }}">
-  <div class="idea-card h-100">
-    <div class="idea-card__header">
-      <span class="idea-emoji">{{ idea.emoji }}</span>
-      <span class="idea-category badge bg-light text-dark">{{ idea.category }}</span>
-    </div>
+{% set _psc_cat = {
+  'FinTech': 'psc-cat--fintech',
+  'EdTech': 'psc-cat--edtech',
+  'GreenTech': 'psc-cat--greentech',
+  'Health': 'psc-cat--health',
+  'DevTools': 'psc-cat--devtools',
+  'Productivity': 'psc-cat--productivity',
+  'Social': 'psc-cat--social',
+  'Creator Economy': 'psc-cat--creator',
+  'Other': 'psc-cat--other',
+}.get(idea.category, 'psc-cat--other') %}
 
-    <h3 class="idea-card__title">
-      <a href="#" class="stretched-link-child">{{ idea.title }}</a>
+<article class="psc-idea-card"
+         data-idea-id="{{ idea.id }}"
+         data-category="{{ idea.category }}"
+         data-scroll-reveal>
+  <div class="psc-idea-card__shape psc-idea-card__shape--1" aria-hidden="true"></div>
+  <div class="psc-idea-card__shape psc-idea-card__shape--2" aria-hidden="true"></div>
+  <div class="psc-idea-card__panel">
+    <header class="psc-idea-card__head">
+      <span class="psc-idea-card__emoji" aria-hidden="true">{{ idea.emoji or '💡' }}</span>
+      <span class="psc-cat {{ _psc_cat }}">{{ idea.category }}</span>
+      <span class="stage-pill stage-{{ idea.stage }}"><span class="stage-dot"></span>{{ idea.stage | title }}</span>
+    </header>
+
+    <h3 class="psc-idea-card__title">
+      <a href="{{ url_for('main.idea_detail', idea_id=idea.id) }}">{{ idea.title }}</a>
     </h3>
-    <p class="idea-card__summary text-muted">{{ idea.summary }}</p>
+    <p class="psc-idea-card__summary">{{ idea.summary }}</p>
 
-    <div class="idea-card__tags mb-2">
+    {% if idea.tags %}
+    <div class="psc-idea-card__tags">
       {% for tag in idea.tags[:3] %}
-        <span class="badge badge-tag">#{{ tag.name }}</span>
+        <span class="psc-tag-chip">#{{ tag.name }}</span>
       {% endfor %}
     </div>
+    {% endif %}
 
-    <div class="idea-card__meta d-flex align-items-center gap-2 mb-3">
-      <span class="stage-pill stage-{{ idea.stage }}">{{ idea.stage | title }}</span>
-      <span class="ms-auto idea-card__author small text-muted">
-        <span class="avatar avatar-xs avatar-{{ idea.author.avatar_color }}">
-          {{ idea.author.initials }}
-        </span>
-        {{ idea.author.display_name }}
-      </span>
+    <div class="psc-idea-card__row">
+      <div class="psc-idea-card__author">
+        <span class="avatar avatar-sm avatar-{{ idea.author.avatar_color }}">{{ idea.author.initials }}</span>
+        <span class="psc-idea-card__author-name">{{ idea.author.display_name }}</span>
+      </div>
     </div>
 
-    <div class="idea-card__footer d-flex align-items-center gap-3">
-      <!-- Vote button — AJAX powered -->
-      <button class="btn btn-vote {% if current_user.is_authenticated and current_user.has_voted(idea) %}voted{% endif %}"
-              data-idea-id="{{ idea.id }}"
-              {% if not current_user.is_authenticated %}
-                onclick="window.location='{{ url_for('auth.login') }}'"
-                title="Log in to vote"
-              {% endif %}>
-        <i class="bi bi-arrow-up-circle{% if current_user.is_authenticated and current_user.has_voted(idea) %}-fill{% endif %}"></i>
-        <span class="vote-count">{{ idea.vote_count }}</span>
-      </button>
-
-      <span class="text-muted small">
-        <i class="bi bi-chat"></i> {{ idea.comment_count }}
-      </span>
-      <span class="text-muted small">
-        <i class="bi bi-people"></i> {{ idea.collaborator_count }}
-      </span>
-
-      <a href="#" class="btn btn-sm btn-outline-primary ms-auto">View</a>
-    </div>
+    <footer class="psc-idea-card__footer">
+      <span class="psc-meta-stat" title="Upvotes"><i class="bi bi-caret-up-fill"></i>{{ idea.vote_count }}</span>
+      <span class="psc-meta-stat" title="Comments"><i class="bi bi-chat"></i>{{ idea.comment_count }}</span>
+      <span class="psc-meta-stat" title="Collaborators"><i class="bi bi-people"></i>{{ idea.collaborator_count }}</span>
+      <a href="{{ url_for('main.idea_detail', idea_id=idea.id) }}" class="psc-btn-view">View <i class="bi bi-arrow-up-right ms-1"></i></a>
+    </footer>
   </div>
-</div>
+</article>
