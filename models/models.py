@@ -4,6 +4,7 @@ All SQLAlchemy database models for Idea Incubator Hub.
 
 Tables:
   - User
+  - UserFollow   (followers / following edges)
   - Idea
   - Vote          (users upvoting ideas)
   - Comment       (threaded comments on ideas)
@@ -96,8 +97,52 @@ class User(UserMixin, db.Model):
             user_id=self.id, idea_id=idea.id, status='accepted'
         ).first() is not None
 
+    @property
+    def followers_count(self) -> int:
+        return UserFollow.query.filter_by(followed_id=self.id).count()
+
+    @property
+    def following_count(self) -> int:
+        return UserFollow.query.filter_by(follower_id=self.id).count()
+
+    def follows(self, other: 'User') -> bool:
+        if other is None or other.id == self.id:
+            return False
+        return UserFollow.query.filter_by(
+            follower_id=self.id, followed_id=other.id
+        ).first() is not None
+
     def __repr__(self):
         return f'<User {self.username}>'
+
+
+# ─────────────────────────────────────────
+# USER FOLLOW (directed edge: follower → followed)
+# ─────────────────────────────────────────
+class UserFollow(db.Model):
+    """
+    A follows B: follower_id=A, followed_id=B.
+    No self-follow (enforced in routes).
+    """
+    __tablename__ = 'user_follows'
+    __table_args__ = (
+        db.UniqueConstraint('follower_id', 'followed_id', name='uq_user_follow_pair'),
+    )
+
+    id          = db.Column(db.Integer, primary_key=True)
+    follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    created_at  = db.Column(db.DateTime, default=datetime.utcnow)
+
+    follower = db.relationship(
+        'User', foreign_keys=[follower_id], backref=db.backref('_out_follows', lazy='dynamic')
+    )
+    followed = db.relationship(
+        'User', foreign_keys=[followed_id], backref=db.backref('_in_follows', lazy='dynamic')
+    )
+
+    def __repr__(self):
+        return f'<UserFollow {self.follower_id} → {self.followed_id}>'
 
 
 # ─────────────────────────────────────────
