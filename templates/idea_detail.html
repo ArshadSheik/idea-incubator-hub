@@ -20,7 +20,7 @@
       <div class="idea-header-card">
         <div class="d-flex gap-2 mb-3 flex-wrap">
           <span class="tag {{ idea.tag_class }}">{{ idea.category }}</span>
-          <span class="stage-pill stage-{{ idea.stage_class }}"><span class="stage-dot"></span>{{ idea.stage }}</span>
+          <span class="stage-pill stage-{{ idea.stage_class }}" id="ideaStagePill"><span class="stage-dot"></span><span id="ideaStageLabel">{{ idea.stage }}</span></span>
         </div>
         <h1>{{ idea.title }}</h1>
         <div class="idea-author-row">
@@ -33,10 +33,22 @@
       </div>
 
       <div class="idea-section">
-        <h2 class="section-heading">Progress timeline</h2>
-        <div class="timeline-track">
+        <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+          <h2 class="section-heading mb-0">Progress timeline</h2>
+          {% if idea.is_owner %}
+          <div class="d-flex align-items-center gap-2">
+            <select id="stageSelect" class="form-select form-select-sm">
+              {% for item in idea.stage_timeline %}
+              <option value="{{ item.key }}" {% if item.key == idea.stage_class %}selected{% endif %}>{{ item.label }}</option>
+              {% endfor %}
+            </select>
+            <button type="button" class="btn btn-outline-iih btn-sm-iih" id="saveStageBtn">Save</button>
+          </div>
+          {% endif %}
+        </div>
+        <div class="timeline-track" id="ideaTimelineTrack">
           {% for item in idea.stage_timeline %}
-          <div class="timeline-step timeline-step-{{ item.state }}">
+          <div class="timeline-step timeline-step-{{ item.state }}" data-stage-key="{{ item.key }}">
             <span class="timeline-dot"></span>
             <span class="timeline-label">{{ item.label }}</span>
           </div>
@@ -100,6 +112,15 @@
           <i class="bi bi-people"></i>
           <span>{% if idea.user_collaborating %}Joined as collaborator{% else %}Join as collaborator{% endif %}</span>
         </button>
+        {% if idea.is_owner %}
+        <form method="post" action="{{ url_for('main.delete_idea', idea_id=idea.id) }}" class="d-inline ms-2" onsubmit="return confirm('Delete this idea permanently? This action cannot be undone.')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <button type="submit" class="vote-btn-secondary text-danger border-danger">
+            <i class="bi bi-trash"></i>
+            <span>Delete idea</span>
+          </button>
+        </form>
+        {% endif %}
       </div>
       <div id="actionFeedback" class="alert d-none mt-3 mb-0" role="alert"></div>
 

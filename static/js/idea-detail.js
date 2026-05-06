@@ -111,6 +111,11 @@ document.addEventListener("DOMContentLoaded", () => {
   const aiStrengthsList = document.getElementById("aiStrengthsList");
   const aiSuggestionsList = document.getElementById("aiSuggestionsList");
   const aiDownloadBtn = document.getElementById("aiDownloadBtn");
+  const stageSelect = document.getElementById("stageSelect");
+  const saveStageBtn = document.getElementById("saveStageBtn");
+  const timelineTrack = document.getElementById("ideaTimelineTrack");
+  const ideaStagePill = document.getElementById("ideaStagePill");
+  const ideaStageLabel = document.getElementById("ideaStageLabel");
   let currentAiInsights = readAiInsightsCache();
 
   const renderAiInsights = (insights) => {
@@ -225,6 +230,63 @@ document.addEventListener("DOMContentLoaded", () => {
       } finally {
         aiInsightsLoading?.classList.add("d-none");
         aiInsightsBtn.disabled = false;
+      }
+    });
+  }
+
+  if (stageSelect && saveStageBtn) {
+    saveStageBtn.addEventListener("click", async () => {
+      const ideaId = getIdeaId();
+      if (!ideaId) return;
+      const nextStage = (stageSelect.value || "").trim().toLowerCase();
+      if (!nextStage) return;
+
+      saveStageBtn.disabled = true;
+      try {
+        const response = await fetch(`/ideas/${ideaId}/stage`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(csrfToken ? { "X-CSRFToken": csrfToken } : {}),
+          },
+          body: JSON.stringify({ stage: nextStage }),
+        });
+        const payload = await response.json();
+        if (!response.ok || !payload.ok) {
+          throw new Error(payload.error || `Stage update failed: ${response.status}`);
+        }
+
+        if (ideaStagePill) {
+          ideaStagePill.className = `stage-pill stage-${payload.stage_class}`;
+          const dot = document.createElement("span");
+          dot.className = "stage-dot";
+          ideaStagePill.innerHTML = "";
+          ideaStagePill.appendChild(dot);
+          if (ideaStageLabel) {
+            ideaStageLabel.textContent = payload.stage;
+            ideaStagePill.appendChild(ideaStageLabel);
+          } else {
+            const label = document.createElement("span");
+            label.textContent = payload.stage;
+            ideaStagePill.appendChild(label);
+          }
+        }
+
+        if (timelineTrack && Array.isArray(payload.stage_timeline)) {
+          payload.stage_timeline.forEach((item) => {
+            const step = timelineTrack.querySelector(`[data-stage-key="${item.key}"]`);
+            if (!step) return;
+            step.classList.remove("timeline-step-completed", "timeline-step-active", "timeline-step-upcoming");
+            step.classList.add(`timeline-step-${item.state}`);
+          });
+        }
+
+        showActionFeedback("Progress stage updated.", "success");
+      } catch (error) {
+        console.error(error);
+        showActionFeedback("Unable to update stage right now. Please try again.");
+      } finally {
+        saveStageBtn.disabled = false;
       }
     });
   }

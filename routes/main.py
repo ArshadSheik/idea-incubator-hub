@@ -4,11 +4,23 @@ from urllib import error as urlerror
 from urllib import request as urlrequest
 from datetime import datetime, timedelta
 
-from flask import Blueprint, jsonify, redirect, render_template, request, url_for
+from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
-from models.models import Collaboration, Comment, Idea, User, Vote, db, Notification, Bookmark, Task, Tag
+from models.models import (
+    AIAnalysis,
+    Bookmark,
+    Collaboration,
+    Comment,
+    Idea,
+    Notification,
+    Tag,
+    Task,
+    User,
+    Vote,
+    db,
+)
 
 main_bp = Blueprint("main", __name__)
 
@@ -406,6 +418,7 @@ def _serialize_detail_idea(idea: Idea) -> dict:
         "votes": idea.vote_count,
         "user_voted": user_voted,
         "user_collaborating": user_collaborating,
+        "is_owner": actor is not None and actor.id == idea.user_id,
         "comments_total": idea.comment_count,
         "collaborators_total": idea.collaborator_count,
         "stage_timeline": _build_stage_timeline(stage_class),
@@ -1052,6 +1065,24 @@ def create_comment_reply(idea_id: int, comment_id: int):
     return jsonify({"ok": True, "reply": _serialize_comment(reply)}), 201
 
 
+@main_bp.route("/ideas/<int:idea_id>/delete", methods=["POST"])
+@login_required
+def delete_idea(idea_id: int):
+    """Delete an idea owned by the current user."""
+    idea = Idea.query.get_or_404(idea_id)
+    if idea.user_id != current_user.id:
+        abort(403)
+
+    # Keep deletes robust even when FK cascades are not configured on every table.
+    Bookmark.query.filter_by(idea_id=idea.id).delete(synchronize_session=False)
+    AIAnalysis.query.filter_by(idea_id=idea.id).delete(synchronize_session=False)
+    Notification.query.filter_by(link=f"/ideas/{idea.id}").delete(synchronize_session=False)
+    db.session.delete(idea)
+    db.session.commit()
+    flash("Idea deleted successfully.", "success")
+    return redirect(url_for("main.profile", username=current_user.username))
+
+
 @main_bp.route("/ideas/<int:idea_id>/ai-insights", methods=["POST"])
 @login_required
 def generate_idea_insights(idea_id: int):
@@ -1069,6 +1100,32 @@ def generate_idea_insights(idea_id: int):
         )
     except RuntimeError as exc:
         return jsonify({"ok": False, "error": str(exc)}), 502
+
+
+@main_bp.route("/ideas/<int:idea_id>/stage", methods=["POST"])
+@login_required
+def update_idea_stage(idea_id: int):
+    """Update idea stage. Only the idea owner can do this."""
+    idea = Idea.query.get_or_404(idea_id)
+    if idea.user_id != current_user.id:
+        abort(403)
+
+    payload = request.get_json(silent=True) or {}
+    stage = (payload.get("stage") or request.form.get("stage") or "").strip().lower()
+    if stage not in Idea.STAGES:
+        return jsonify({"ok": False, "error": "Invalid stage value"}), 400
+
+    idea.stage = stage
+    db.session.commit()
+    return jsonify(
+        {
+            "ok": True,
+            "idea_id": idea.id,
+            "stage": stage.capitalize(),
+            "stage_class": stage,
+            "stage_timeline": _build_stage_timeline(stage),
+        }
+    )
 
 
 @main_bp.route("/login")
@@ -1126,6 +1183,7 @@ def profile(username):
     )
     collab_count         = len(collaborations)
     total_votes_received = sum(i.vote_count for i in ideas)
+    bookmark_count       = Bookmark.query.filter_by(user_id=profile_user.id).count()
 
     # Check if the logged-in user is viewing their own profile
     is_own_profile = (
@@ -1135,9 +1193,10 @@ def profile(username):
     return render_template(
         "profile.html",
         profile_user=profile_user,
-        ideas=[_serialize_explore_idea(i) for i in ideas],
+        ideas=ideas,
         collaborations=collaborations,
         collab_count=collab_count,
+        bookmark_count=bookmark_count,
         total_votes_received=total_votes_received,
         is_own_profile=is_own_profile,
     )
