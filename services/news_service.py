@@ -30,7 +30,11 @@ def get_news_for_category(category: str, max_articles: int = 5) -> list:
     ).order_by(MarketTrend.fetched_at.desc()).first()
 
     if cached and not cached.is_stale():
-        return cached.data()[:max_articles]
+        cached_items = cached.data() or []
+        # If we cached an empty result (e.g. missing API key earlier),
+        # allow a refetch once credentials are available.
+        if cached_items:
+            return cached_items[:max_articles]
 
     articles = _fetch(category, max_articles)
 

@@ -44,6 +44,13 @@
   align-items: center;
   gap: 0.7rem;
 }
+.idea-author-row a.fw-bold {
+  color: var(--ink-900);
+  text-decoration: none;
+}
+.idea-author-row a.fw-bold:hover {
+  color: var(--brand-primary);
+}
 
 .idea-section {
   padding: 1.75rem 2rem;

@@ -42,8 +42,8 @@
 
     <div class="psc-idea-card__row">
       <div class="psc-idea-card__author">
-        <span class="avatar avatar-sm avatar-{{ idea.author.avatar_color }}">{{ idea.author.initials }}</span>
-        <span class="psc-idea-card__author-name">{{ idea.author.display_name }}</span>
+        <a href="{{ url_for('main.profile', username=idea.author.username) }}" class="avatar avatar-sm avatar-{{ idea.author.avatar_color }}">{{ idea.author.initials }}</a>
+        <a href="{{ url_for('main.profile', username=idea.author.username) }}" class="psc-idea-card__author-name">{{ idea.author.display_name }}</a>
       </div>
     </div>
 

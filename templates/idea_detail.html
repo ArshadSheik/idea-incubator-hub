@@ -24,11 +24,34 @@
         </div>
         <h1>{{ idea.title }}</h1>
         <div class="idea-author-row">
+          {% if idea.author.username %}
+          <a href="{{ url_for('main.profile', username=idea.author.username) }}" class="avatar {{ idea.author.avatar_class }}">{{ idea.author.initials }}</a>
+          {% else %}
           <span class="avatar {{ idea.author.avatar_class }}">{{ idea.author.initials }}</span>
+          {% endif %}
           <div>
+            {% if idea.author.username %}
+            <a href="{{ url_for('main.profile', username=idea.author.username) }}" class="fw-bold">{{ idea.author.name }}</a>
+            {% else %}
             <div class="fw-bold">{{ idea.author.name }}</div>
+            {% endif %}
             <div class="small text-muted-iih">Posted {{ idea.posted }} · {{ idea.views }}</div>
           </div>
+          {% if idea.author.username and idea.can_follow_author %}
+          <form method="post"
+                action="{{ url_for('main.profile_toggle_follow', username=idea.author.username) }}"
+                class="d-inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="hidden" name="next" value="{{ request.path }}">
+            <button type="submit" class="btn btn-sm-iih {% if idea.user_follows_author %}btn-outline-secondary{% else %}btn-brand{% endif %}">
+              {% if idea.user_follows_author %}
+                <i class="bi bi-person-dash"></i> Unfollow
+              {% else %}
+                <i class="bi bi-person-plus"></i> Follow
+              {% endif %}
+            </button>
+          </form>
+          {% endif %}
         </div>
       </div>
 

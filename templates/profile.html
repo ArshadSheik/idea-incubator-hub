@@ -25,20 +25,70 @@
         <p class="profile-username">@{{ profile_user.username }}</p>
         <p class="profile-bio">{{ profile_user.bio or "No bio yet." }}</p>
         <div class="profile-stats">
-          <span class="stat-pill"><i class="bi bi-lightbulb"></i> {{ profile_user.idea_count }} ideas</span>
-          <span class="stat-pill"><i class="bi bi-caret-up-fill"></i> {{ total_votes_received }} votes received</span>
-          <span class="stat-pill"><i class="bi bi-people"></i> {{ collab_count }} collaborations</span>
-          <span class="stat-pill"><i class="bi bi-calendar3"></i> Joined {{ profile_user.created_at.strftime('%b %Y') }}</span>
+          <button type="button" class="stat-pill profile-stat" data-stat="followers">
+            <i class="bi bi-people-fill"></i> {{ profile_user.followers_count }} followers
+          </button>
+          <button type="button" class="stat-pill profile-stat" data-stat="following">
+            <i class="bi bi-person-lines-fill"></i> {{ profile_user.following_count }} following
+          </button>
+          <span class="stat-pill">
+            <i class="bi bi-lightbulb"></i> {{ profile_user.idea_count }} ideas
+          </span>
+          <button type="button" class="stat-pill profile-stat" data-stat="votes" disabled>
+            <i class="bi bi-caret-up-fill"></i> {{ total_votes_received }} votes received
+          </button>
+          <span class="stat-pill">
+            <i class="bi bi-people"></i> {{ collab_count }} collaborations
+          </span>
+          <span class="stat-pill">
+            <i class="bi bi-calendar3"></i> Joined {{ profile_user.created_at.strftime('%b %Y') }}
+          </span>
         </div>
         {% if is_own_profile %}
           <a href="{{ url_for('main.edit_profile') }}" class="btn btn-ghost btn-sm mt-3">
             <i class="bi bi-pencil"></i> Edit profile
           </a>
+        {% else %}
+          <form method="post"
+                action="{{ url_for('main.profile_toggle_follow', username=profile_user.username) }}"
+                class="profile-follow-form mt-3">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm {% if viewer_follows_profile %}btn-outline-secondary{% else %}btn-brand{% endif %}">
+              {% if viewer_follows_profile %}
+                <i class="bi bi-person-dash"></i> Unfollow
+              {% else %}
+                <i class="bi bi-person-plus"></i> Follow
+              {% endif %}
+            </button>
+          </form>
         {% endif %}
       </div>
     </div>
   </div>
 </section>
+
+<!-- Followers / Following modal -->
+<div class="modal fade" id="followListModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="followListTitle">Followers</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div id="followListLoading" class="text-muted-iih small text-center py-3">
+          <span class="spinner-border spinner-border-sm me-2"></span> Loading...
+        </div>
+        <div id="followListEmpty" class="empty-state d-none">
+          <i class="bi bi-people"></i>
+          <p class="mb-0">No users yet.</p>
+        </div>
+        <div id="followListError" class="alert alert-danger d-none" role="alert"></div>
+        <div id="followListItems" class="follow-list"></div>
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- ═══════════ PROFILE TABS ═══════════ -->
 <section class="profile-body profile-body--tabs">

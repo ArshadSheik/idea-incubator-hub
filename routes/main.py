@@ -18,6 +18,7 @@ from models.models import (
     Tag,
     Task,
     User,
+    UserFollow,
     Vote,
     db,
 )
@@ -99,6 +100,7 @@ def _serialize_explore_idea(idea: Idea) -> dict:
         "stage": stage_class.capitalize(),
         "author": {
             "name": author.display_name if author else "Unknown user",
+            "username": author.username if author else None,
             "initials": author.initials if author else "NA",
             "avatar_class": _avatar_class_for_user(author) if author else "avatar-1",
         },
@@ -325,6 +327,12 @@ def _serialize_detail_idea(idea: Idea) -> dict:
             ).first()
             is not None
         )
+    can_follow_author = (
+        actor is not None and author is not None and actor.id != author.id
+    )
+    user_follows_author = (
+        actor.follows(author) if can_follow_author else False
+    )
 
     comments = (
         Comment.query.filter_by(idea_id=idea.id)
@@ -410,9 +418,12 @@ def _serialize_detail_idea(idea: Idea) -> dict:
         "stage": stage_class.capitalize(),
         "author": {
             "name": author.display_name if author else "Unknown user",
+            "username": author.username if author else None,
             "initials": author.initials if author else "NA",
             "avatar_class": _avatar_class_for_user(author) if author else "avatar-1",
         },
+        "can_follow_author": can_follow_author,
+        "user_follows_author": user_follows_author,
         "posted": _relative_time(idea.created_at),
         "views": f"{idea.views:,} views",
         "votes": idea.vote_count,
@@ -1189,6 +1200,9 @@ def profile(username):
     is_own_profile = (
         current_user.is_authenticated and current_user.id == profile_user.id
     )
+    viewer_follows_profile = (
+        not is_own_profile and current_user.follows(profile_user)
+    )
 
     return render_template(
         "profile.html",
@@ -1199,7 +1213,33 @@ def profile(username):
         bookmark_count=bookmark_count,
         total_votes_received=total_votes_received,
         is_own_profile=is_own_profile,
+        viewer_follows_profile=viewer_follows_profile,
     )
+
+
+@main_bp.route("/profile/<username>/follow", methods=["POST"])
+@login_required
+def profile_toggle_follow(username):
+    """Create or delete a follow edge (current user ↔ profile user)."""
+    target = User.query.filter_by(username=username).first_or_404()
+    next_url = (request.form.get("next") or request.args.get("next") or "").strip()
+    if not next_url.startswith("/"):
+        next_url = url_for("main.profile", username=username)
+
+    if target.id == current_user.id:
+        return redirect(next_url)
+
+    row = UserFollow.query.filter_by(
+        follower_id=current_user.id, followed_id=target.id
+    ).first()
+    if row:
+        db.session.delete(row)
+    else:
+        db.session.add(
+            UserFollow(follower_id=current_user.id, followed_id=target.id)
+        )
+    db.session.commit()
+    return redirect(next_url)
 
 @main_bp.route("/about")
 def about():
@@ -1303,6 +1343,42 @@ def profile_bookmarks():
         "ok": True,
         "bookmarks": [_serialize_explore_idea(idea) for idea in ideas]
     })
+
+def _serialize_follow_user(user: User) -> dict:
+    return {
+        "username": user.username,
+        "display_name": user.display_name,
+        "initials": user.initials,
+        "avatar_color": user.avatar_color,
+    }
+
+@main_bp.route("/api/profile/<username>/followers")
+@login_required
+def profile_followers(username):
+    profile_user = User.query.filter_by(username=username).first_or_404()
+    rows = (
+        UserFollow.query
+        .filter_by(followed_id=profile_user.id)
+        .order_by(UserFollow.created_at.desc())
+        .limit(50)
+        .all()
+    )
+    users = [r.follower for r in rows if r.follower]
+    return jsonify({"ok": True, "users": [_serialize_follow_user(u) for u in users]})
+
+@main_bp.route("/api/profile/<username>/following")
+@login_required
+def profile_following(username):
+    profile_user = User.query.filter_by(username=username).first_or_404()
+    rows = (
+        UserFollow.query
+        .filter_by(follower_id=profile_user.id)
+        .order_by(UserFollow.created_at.desc())
+        .limit(50)
+        .all()
+    )
+    users = [r.followed for r in rows if r.followed]
+    return jsonify({"ok": True, "users": [_serialize_follow_user(u) for u in users]})
 
 
 @main_bp.route("/api/ideas/<int:idea_id>/bookmark", methods=["POST"])
