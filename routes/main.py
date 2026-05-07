@@ -8,6 +8,8 @@ from flask import Blueprint, abort, flash, jsonify, redirect, render_template, r
 from flask_login import current_user, login_required
 from sqlalchemy import func
 
+from models.models import db, Idea, Tag, idea_tags, Vote, Comment
+
 from models.models import (
     AIAnalysis,
     Bookmark,
@@ -1613,3 +1615,44 @@ def edit_profile():
         return redirect(url_for("main.profile", username=current_user.username))
 
     return render_template("edit_profile.html", form=form)
+
+@main_bp.route("/api/trending-hashtags")
+def trending_hashtags():
+    from datetime import datetime, timedelta
+    from sqlalchemy import func
+
+    results = (
+        db.session.query(
+            Tag.name,
+            func.count(idea_tags.c.idea_id).label('total')
+        )
+        .join(idea_tags, Tag.id == idea_tags.c.tag_id)
+        .group_by(Tag.id)
+        .order_by(func.count(idea_tags.c.idea_id).desc())
+        .limit(15)
+        .all()
+    )
+
+    week_ago = datetime.utcnow() - timedelta(days=7)
+    recent = (
+        db.session.query(
+            Tag.name,
+            func.count(idea_tags.c.idea_id).label('recent')
+        )
+        .join(idea_tags, Tag.id == idea_tags.c.tag_id)
+        .join(Idea, Idea.id == idea_tags.c.idea_id)
+        .filter(Idea.created_at >= week_ago)
+        .group_by(Tag.id)
+        .all()
+    )
+    recent_map = {r.name: r.recent for r in recent}
+
+    data = [
+        {
+            'tag': row.name,
+            'total': row.total,
+            'recent': recent_map.get(row.name, 0),
+        }
+        for row in results
+    ]
+    return jsonify(data)
