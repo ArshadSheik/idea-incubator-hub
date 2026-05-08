@@ -959,6 +959,24 @@ def toggle_idea_collaboration(idea_id: int):
         collaborating = True
 
     db.session.commit()
+
+    # Return updated collaborator list so JS can re-render without a refresh
+    collaborators = (
+        Collaboration.query
+        .filter_by(idea_id=idea.id, status="accepted")
+        .join(User, Collaboration.user_id == User.id)
+        .all()
+    )
+    collab_data = [
+        {
+            "name": c.user.display_name,
+            "initials": c.user.initials,
+            "avatar_class": f"avatar-{c.user.avatar_color}",
+            "role": c.role,
+        }
+        for c in collaborators
+    ]
+
     return jsonify(
         {
             "ok": True,
@@ -966,6 +984,7 @@ def toggle_idea_collaboration(idea_id: int):
             "user_id": actor.id,
             "collaborating": collaborating,
             "collaborators_total": idea.collaborator_count,
+            "collaborators": collab_data,
         }
     )
 
