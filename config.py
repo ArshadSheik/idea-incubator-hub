@@ -15,6 +15,10 @@ class Config:
     # CSRF protection (Flask-WTF)
     WTF_CSRF_ENABLED = True
 
+    # Image-media/Files upload
+    UPLOAD_FOLDER      = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'static', 'uploads', 'ideas')
+    MAX_CONTENT_LENGTH = 10 * 1024 * 1024   # 10 MB global Flask request limit
+
     # mail configuration 
     MAIL_SERVER   = 'smtp.gmail.com'
     MAIL_PORT     = 587

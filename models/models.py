@@ -356,6 +356,55 @@ class Task(db.Model):
         return f'<Task {self.id}: {self.title} [{self.status}]>'
 
 # ─────────────────────────────────────────
+# IDEA MEDIA  (attached images / files)
+# ─────────────────────────────────────────
+class IdeaMedia(db.Model):
+    """
+    A file (image, PDF, etc.) attached to an idea.
+    Stored in static/uploads/ideas/<idea_id>/ with a UUID-based filename.
+    Max 3 files per idea, 8 MB per file.
+    """
+    __tablename__ = 'idea_media'
+
+    ALLOWED_EXTENSIONS = {'jpg', 'jpeg', 'png', 'gif', 'webp', 'pdf', 'pptx', 'docx'}
+    MAX_FILE_SIZE      = 8 * 1024 * 1024   # 8 MB
+    MAX_PER_IDEA       = 3
+
+    id                = db.Column(db.Integer, primary_key=True)
+    idea_id           = db.Column(db.Integer, db.ForeignKey('ideas.id'), nullable=False)
+    uploader_id       = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    original_filename = db.Column(db.String(255), nullable=False)
+    stored_filename   = db.Column(db.String(255), nullable=False)
+    mime_type         = db.Column(db.String(100), nullable=False)
+    file_size         = db.Column(db.Integer, nullable=False)
+    uploaded_at       = db.Column(db.DateTime, default=datetime.utcnow)
+
+    idea     = db.relationship('Idea', backref=db.backref('media', lazy='dynamic',
+                               cascade='all, delete-orphan'))
+    uploader = db.relationship('User')
+
+    @property
+    def is_image(self):
+        return self.mime_type.startswith('image/')
+
+    @property
+    def extension(self):
+        return self.original_filename.rsplit('.', 1)[-1].lower() if '.' in self.original_filename else ''
+
+    @property
+    def human_size(self):
+        size = self.file_size
+        if size < 1024:
+            return f"{size} B"
+        elif size < 1024 * 1024:
+            return f"{size // 1024} KB"
+        else:
+            return f"{size / (1024 * 1024):.1f} MB"
+
+    def __repr__(self):
+        return f'<IdeaMedia {self.id}: {self.original_filename} on idea={self.idea_id}>'
+
+# ─────────────────────────────────────────
 # NOTIFICATION
 # ─────────────────────────────────────────
 class Notification(db.Model):

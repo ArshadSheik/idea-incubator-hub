@@ -763,7 +763,6 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('shareWhatsapp').href =
         `https://wa.me/?text=${encText}%20${encoded}`;
 
-      // Add this once, outside buildShareLinks():
       document.getElementById('shareEmail')?.addEventListener('click', () => {
         const title   = document.querySelector('h1')?.textContent?.trim() || 'Check out this idea';
         const summary = document.querySelector('.idea-section p')?.textContent?.trim()?.slice(0, 120) || '';
@@ -844,5 +843,69 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   })();
 
+  // ── Author: upload attachment from idea detail page ──────────────
+  const ideaFileInput = document.getElementById('ideaFileInput');
+  if (ideaFileInput) {
+    ideaFileInput.addEventListener('change', async () => {
+      const ideaId = getIdeaId();
+      const files = Array.from(ideaFileInput.files);
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        try {
+          const res = await fetch(`/ideas/${ideaId}/media`, {
+            method: 'POST',
+            headers: { ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}) },
+            body: formData,
+          });
+          const data = await res.json();
+          if (data.ok) {
+            showActionFeedback(`"${data.original_filename}" uploaded.`, 'success');
+            setTimeout(() => location.reload(), 800);
+          } else {
+            showActionFeedback(data.error || 'Upload failed.', 'danger');
+          }
+        } catch {
+          showActionFeedback('Upload failed. Please try again.', 'danger');
+        }
+      }
+      ideaFileInput.value = '';
+    });
+  }
+
+  // ── Author: delete attachment ─────────────────────────────────────
+  document.addEventListener('click', async (e) => {
+    const btn = e.target.closest('.delete-media-btn');
+    if (!btn) return;
+    if (!confirm('Remove this attachment?')) return;
+    const ideaId  = btn.dataset.ideaId;
+    const mediaId = btn.dataset.mediaId;
+    try {
+      const res = await fetch(`/ideas/${ideaId}/media/${mediaId}`, {
+        method: 'DELETE',
+        headers: { ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}) },
+      });
+      const data = await res.json();
+      if (data.ok) {
+        btn.closest('.media-file-item, .media-thumb-wrapper')?.remove();
+        // Update the file count
+        const countEl = document.querySelector('.idea-media-section .text-muted.small');
+        if (countEl) {
+          const current = parseInt(countEl.textContent) - 1;
+          countEl.textContent = `${current}/3 files`;
+          // Show add button if below 3 files
+          const mediaSection = document.querySelector('.idea-media-section');
+          const remaining = current;
+          if (remaining < 3) {
+            const addBtn = mediaSection?.querySelector('label[for="ideaFileInput"]')?.closest('div');
+            if (addBtn) addBtn.style.display = '';
+          }
+        }
+        showActionFeedback('Attachment removed.', 'success');
+      }
+    } catch {
+      showActionFeedback('Could not remove attachment.', 'danger');
+    }
+  });
 
 });

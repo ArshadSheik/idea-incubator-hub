@@ -35,6 +35,7 @@ def create_app(config_name='default'):
 
     # ── Initialise extensions ──────────────────────────────────────
     db.init_app(app)
+    os.makedirs(os.path.join(app.static_folder, 'uploads', 'ideas'), exist_ok=True)
     migrate.init_app(app, db)       # enables `flask db init/migrate/upgrade`
     login_manager.init_app(app)
     csrf.init_app(app)
