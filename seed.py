@@ -11,7 +11,10 @@ import json
 from pathlib import Path
 
 from app import create_app
-from models.models import db, User, Idea, Vote, Comment, Tag, idea_tags, Bookmark, Notification
+from models.models import (
+    db, User, Idea, Vote, Comment, Tag, idea_tags,
+    Bookmark, Notification, Collaboration, Task, UserFollow, IdeaMedia
+)
 
 
 # Resolve seed_data/ relative to this file so the script works regardless
@@ -27,15 +30,16 @@ def load_json(filename):
 
 
 def wipe_existing_data():
-    """Delete in reverse FK order so SQLite doesn't complain."""
     print('Wiping existing data...')
-    # Clear the idea_tags join table first — it isn't auto-cleared
-    # when the parent Idea or Tag rows are deleted.
     db.session.execute(idea_tags.delete())
+    IdeaMedia.query.delete()
     Notification.query.delete()
     Bookmark.query.delete()
+    Task.query.delete()
+    Collaboration.query.delete()
     Comment.query.delete()
     Vote.query.delete()
+    UserFollow.query.delete()
     Idea.query.delete()
     Tag.query.delete()
     User.query.delete()
@@ -92,47 +96,122 @@ def create_votes_and_comments(users_by_username, ideas_created):
     """Sprinkle some votes and comments so the UI doesn't look empty."""
     print('Creating sample votes and comments...')
     users = list(users_by_username.values())
+    comments = [
+        'Strong direction. I would test this with a small pilot first.',
+        'Love this concept — what is the monetisation model?',
+        'Have you validated this with real users yet?',
+        'This solves a real pain point I have experienced myself.',
+        'Who is the primary target audience here?',
+        'Great execution on the pitch. Would love to collaborate.',
+    ]
     for i, idea in enumerate(ideas_created):
         for u in users[: (i % len(users)) + 2]:
             if u.id != idea.user_id:
                 db.session.add(Vote(user_id=u.id, idea_id=idea.id))
         commenters = [users[(i + 1) % len(users)], users[(i + 2) % len(users)]]
-        for c in commenters:
+        for j, c in enumerate(commenters):
             if c.id != idea.user_id:
                 db.session.add(Comment(
                     user_id=c.id,
                     idea_id=idea.id,
-                    body='Strong direction. I would test this with a small pilot first.',
+                    body=comments[(i + j) % len(comments)],
                 ))
     db.session.commit()
 
 def seed_bookmarks_and_notifications(users, ideas):
-    """Seed some bookmarks and notifications so profile/dashboard aren't empty."""
-    if not users or not ideas:
-        return
-
-    # First user bookmarks the first 3 ideas
-    for idea in ideas[:3]:
-        existing = Bookmark.query.filter_by(user_id=users[0].id, idea_id=idea.id).first()
-        if not existing:
-            db.session.add(Bookmark(user_id=users[0].id, idea_id=idea.id))
-
-    # Give first user some sample notifications
-    notifs = [
-        {"type": "vote",    "message": f"Someone upvoted '{ideas[0].title}'",       "link": f"/ideas/{ideas[0].id}"},
-        {"type": "comment", "message": f"New comment on '{ideas[0].title}'",         "link": f"/ideas/{ideas[0].id}"},
-        {"type": "collab",  "message": "Someone requested to join your idea team.",  "link": f"/ideas/{ideas[0].id}"},
-    ]
-    for n in notifs:
-        db.session.add(Notification(
-            user_id=users[0].id,
-            type=n["type"],
-            message=n["message"],
-            link=n["link"],
-        ))
-
+    """Seed bookmarks and notifications for each user."""
+    print('Creating bookmarks and notifications...')
+    for i, user in enumerate(users):
+        bookmarkable = [idea for idea in ideas if idea.user_id != user.id]
+        for idea in bookmarkable[i % max(len(bookmarkable), 1) : i % max(len(bookmarkable), 1) + 3]:
+            db.session.add(Bookmark(user_id=user.id, idea_id=idea.id))
+        for idea in ideas[:2]:
+            db.session.add(Notification(
+                user_id=user.id, type='vote',
+                message=f"Someone upvoted your idea '{idea.title}'",
+                link=f'/ideas/{idea.id}',
+            ))
+            db.session.add(Notification(
+                user_id=user.id, type='comment',
+                message=f"New comment on '{idea.title}'",
+                link=f'/ideas/{idea.id}',
+            ))
     db.session.commit()
-    print("  ✓ Bookmarks and notifications seeded")
+    print('  ✓ Bookmarks and notifications seeded.')
+
+def seed_collaborations(users, ideas):
+    """Give each idea 2 accepted collaborators (not the author)."""
+    print('Creating collaborations...')
+    count = 0
+    roles = ['contributor', 'reviewer', 'lead']
+    for i, idea in enumerate(ideas):
+        candidates = [u for u in users if u.id != idea.user_id]
+        for j, user in enumerate(candidates[:2]):
+            db.session.add(Collaboration(
+                user_id=user.id,
+                idea_id=idea.id,
+                status='accepted',
+                role=roles[j % len(roles)],
+            ))
+            count += 1
+    db.session.commit()
+    print(f'  ✓ {count} collaborations created.')
+
+
+def seed_tasks(users, ideas):
+    """Add 4 Kanban tasks per idea with a mix of statuses."""
+    print('Creating tasks...')
+    statuses   = ['todo', 'todo', 'in_progress', 'done']
+    priorities = ['high', 'medium', 'medium', 'low']
+    templates  = [
+        ('Define target users',    'Write 3 user personas with pain points.'),
+        ('Build MVP wireframes',    'Lo-fi sketches for the 3 core screens.'),
+        ('Set up GitHub repo',      'Create repo, branch protection, CI workflow.'),
+        ('Competitive analysis',    'Map out 5 existing solutions and their gaps.'),
+        ('Draft landing page copy', 'Hero headline, 3 feature bullets, CTA.'),
+        ('User interviews',         'Schedule and run 5 discovery calls.'),
+        ('Tech stack decision',     'Evaluate options and document the choice.'),
+        ('Pitch deck draft',        'Problem, solution, market size, team, ask.'),
+    ]
+    count = 0
+    for i, idea in enumerate(ideas):
+        collab_users = [u for u in users if u.id != idea.user_id]
+        for j in range(4):
+            title, desc = templates[(i * 4 + j) % len(templates)]
+            assignee = collab_users[j % len(collab_users)] if collab_users else None
+            db.session.add(Task(
+                idea_id=idea.id,
+                created_by=idea.user_id,
+                assigned_to=assignee.id if assignee else None,
+                title=title,
+                description=desc,
+                status=statuses[j],
+                priority=priorities[j],
+            ))
+            count += 1
+    db.session.commit()
+    print(f'  ✓ {count} tasks created.')
+
+
+def seed_follows(users):
+    """Create a realistic follow graph — adjacent users follow each other."""
+    print('Creating follows...')
+    count = 0
+    seen  = set()
+    for i, follower in enumerate(users):
+        for j, followed in enumerate(users):
+            if follower.id == followed.id:
+                continue
+            if abs(i - j) > 2:
+                continue
+            key = (follower.id, followed.id)
+            if key in seen:
+                continue
+            seen.add(key)
+            db.session.add(UserFollow(follower_id=follower.id, followed_id=followed.id))
+            count += 1
+    db.session.commit()
+    print(f'  ✓ {count} follow relationships created.')
 
 def seed():
     sample_users = load_json('users.json')
@@ -145,10 +224,14 @@ def seed():
         tags_by_name      = create_tags(sample_ideas)
         ideas_created     = create_ideas(sample_ideas, users_by_username, tags_by_name)
         create_votes_and_comments(users_by_username, ideas_created)
-        seed_bookmarks_and_notifications(list(users_by_username.values()), ideas_created)
+        all_users = list(users_by_username.values())
+        seed_collaborations(all_users, ideas_created)
+        seed_tasks(all_users, ideas_created)
+        seed_follows(all_users)
+        seed_bookmarks_and_notifications(all_users, ideas_created)
 
         print('\nSeed complete.')
-        print('Test login -> username: jamie  password: password123')
+        print('Test login: username=jamie  password=password123')
 
 
 if __name__ == '__main__':

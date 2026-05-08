@@ -90,6 +90,60 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ── Activity tab ──────────────────────────────────────────
+  const activityTab  = document.querySelector('[href="#tab-activity"]');
+  const activityFeed = document.getElementById('activityFeed');
+  let activityLoaded = false;
+
+  if (activityTab && activityFeed) {
+    activityTab.addEventListener('shown.bs.tab', () => {
+      if (activityLoaded) return;
+      activityLoaded = true;
+
+      fetch('/api/notifications')
+        .then(r => r.json())
+        .then(data => {
+          if (!data.ok || !data.notifications.length) {
+            activityFeed.innerHTML = `
+              <div class="empty-state">
+                <i class="bi bi-activity"></i>
+                <p>No recent activity yet — votes, comments, and collaborations will appear here.</p>
+              </div>`;
+            return;
+          }
+
+          const iconMap = {
+            vote:        'bi bi-caret-up-fill text-brand',
+            comment:     'bi bi-chat-dots-fill text-info',
+            collaboration: 'bi bi-people-fill text-success',
+            milestone:   'bi bi-stars text-warning',
+          };
+
+          activityFeed.innerHTML = `
+            <div class="activity-timeline">
+              ${data.notifications.map((n, idx) => `
+                <div class="activity-timeline__item ${!n.is_read ? 'is-unread' : ''}">
+                  <div class="activity-timeline__line ${idx === data.notifications.length - 1 ? 'is-last' : ''}"></div>
+                  <div class="activity-timeline__node">
+                    <i class="${iconMap[n.type] || 'bi bi-bell'}"></i>
+                  </div>
+                  <a href="${escapeHtml(n.link || '#')}" class="activity-timeline__card text-decoration-none">
+                    <p class="activity-timeline__msg">${escapeHtml(n.message)}</p>
+                    <span class="activity-timeline__time">
+                      <i class="bi bi-clock me-1"></i>${escapeHtml(n.created_at)}
+                    </span>
+                    ${!n.is_read ? '<span class="activity-timeline__badge">New</span>' : ''}
+                  </a>
+                </div>
+              `).join('')}
+            </div>`;
+        })
+        .catch(() => {
+          activityFeed.innerHTML = '<p class="text-center text-muted-iih py-4">Could not load activity.</p>';
+        });
+    });
+  }
+
   // Profile stat pills
   const statButtons = document.querySelectorAll('.profile-stat');
   if (statButtons.length) {

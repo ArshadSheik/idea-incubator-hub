@@ -179,11 +179,12 @@
           </div>
         </div>
 
-        <!-- Activity tab (populated via notifications once auth is live) -->
+        <!-- Activity tab -->
         <div class="tab-pane fade" id="tab-activity" role="tabpanel">
-          <div class="empty-state">
-            <i class="bi bi-activity"></i>
-            <p>Your recent activity will show here — votes, comments, and collaborations.</p>
+          <div id="activityFeed">
+            <p class="text-muted-iih text-center py-4" id="activityLoading">
+              <span class="spinner-border spinner-border-sm me-2"></span> Loading activity...
+            </p>
           </div>
         </div>
       {% endif %}
