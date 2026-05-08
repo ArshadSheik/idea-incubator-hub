@@ -16,6 +16,7 @@ from config import config
 from models.models import db, User
 import os
 
+
 migrate = Migrate()
 login_manager = LoginManager()
 csrf = CSRFProtect()
@@ -62,8 +63,10 @@ def create_app(config_name='default'):
     # ── Register blueprints ────────────────────────────────────────
     from routes.main import main_bp
     from routes.auth import auth_bp
+    from routes.messages import messages_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(auth_bp, url_prefix='/auth')
+    app.register_blueprint(messages_bp)
 
     return app

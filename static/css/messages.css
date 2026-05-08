@@ -1,0 +1,245 @@
+.messages-page {
+  padding: 2.5rem 0 4rem;
+}
+
+.messages-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.messages-header h1,
+.thread-user h1 {
+  margin: 0;
+  color: var(--ink-900);
+  letter-spacing: -0.03em;
+}
+
+.messages-card,
+.thread-shell {
+  background: var(--paper);
+  border: 1px solid var(--ink-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
+.conversation-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.conversation-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--ink-200);
+  transition: background var(--tr-fast);
+}
+
+.conversation-item:last-child {
+  border-bottom: none;
+}
+
+.conversation-item:hover {
+  background: var(--ink-100);
+  color: inherit;
+  text-decoration: none;
+}
+
+.conversation-main {
+  flex: 1;
+  min-width: 0;
+}
+
+.conversation-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.conversation-top strong {
+  color: var(--ink-900);
+}
+
+.conversation-top small {
+  color: var(--ink-500);
+  flex-shrink: 0;
+}
+
+.conversation-main p {
+  margin: 0;
+  color: var(--ink-600);
+  font-size: 0.9rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.unread-badge {
+  min-width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--brand-primary);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.messages-empty {
+  text-align: center;
+  padding: 3rem 1rem;
+}
+
+.messages-empty i {
+  font-size: 2rem;
+  color: var(--brand-primary);
+  margin-bottom: 0.8rem;
+}
+
+.messages-empty h3 {
+  color: var(--ink-900);
+  margin-bottom: 0.4rem;
+}
+
+.messages-empty p {
+  color: var(--ink-600);
+}
+
+.thread-shell {
+  overflow: hidden;
+}
+
+.thread-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--ink-200);
+}
+
+.back-link {
+  color: var(--ink-600);
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.back-link:hover {
+  color: var(--ink-900);
+}
+
+.thread-user {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  flex: 1;
+}
+
+.thread-user h1 {
+  font-size: 1.15rem;
+}
+
+.thread-user p {
+  margin: 0;
+  color: var(--ink-500);
+  font-size: 0.9rem;
+}
+
+.message-thread {
+  padding: 1.25rem;
+  min-height: 420px;
+  max-height: 560px;
+  overflow-y: auto;
+  background: linear-gradient(180deg, var(--ink-50), var(--paper));
+}
+
+.message-row {
+  display: flex;
+  margin-bottom: 0.85rem;
+}
+
+.message-row-in {
+  justify-content: flex-start;
+}
+
+.message-row-out {
+  justify-content: flex-end;
+}
+
+.message-bubble {
+  max-width: min(70%, 560px);
+  border-radius: 18px;
+  padding: 0.75rem 0.9rem;
+  box-shadow: 0 6px 16px rgba(19, 22, 40, 0.06);
+}
+
+.message-row-in .message-bubble {
+  background: var(--paper);
+  border: 1px solid var(--ink-200);
+  color: var(--ink-800);
+  border-bottom-left-radius: 6px;
+}
+
+.message-row-out .message-bubble {
+  background: var(--brand-primary);
+  color: white;
+  border-bottom-right-radius: 6px;
+}
+
+.message-bubble p {
+  margin: 0 0 0.25rem;
+  line-height: 1.45;
+}
+
+.message-bubble small {
+  display: block;
+  font-size: 0.72rem;
+  opacity: 0.72;
+}
+
+.message-form {
+  display: flex;
+  gap: 0.75rem;
+  padding: 1rem 1.25rem;
+  border-top: 1px solid var(--ink-200);
+  background: var(--paper);
+}
+
+.message-form textarea {
+  resize: none;
+}
+
+.message-form .btn {
+  align-self: flex-end;
+}
+
+.small-empty {
+  padding: 5rem 1rem;
+}
+
+@media (max-width: 767px) {
+  .thread-header {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .message-form {
+    flex-direction: column;
+  }
+
+  .message-form .btn {
+    align-self: stretch;
+  }
+
+  .message-bubble {
+    max-width: 86%;
+  }
+}
