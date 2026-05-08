@@ -753,6 +753,7 @@ def explore():
     category = (request.args.get("category") or "all").strip()
     stage = (request.args.get("stage") or "all").strip().lower()
     sort = (request.args.get("sort") or "trending").strip().lower()
+    tag_filter = (request.args.get("tag")      or "").strip().lower()
 
     if q:
         like_expr = f"%{q}%"
@@ -767,6 +768,14 @@ def explore():
 
     if stage and stage != "all":
         query = query.filter(Idea.stage == stage)
+
+    if tag_filter:
+        query = (
+            query
+            .join(idea_tags, Idea.id == idea_tags.c.idea_id)
+            .join(Tag, Tag.id == idea_tags.c.tag_id)
+            .filter(func.lower(Tag.name) == tag_filter)
+        )
 
     if sort == "newest":
         query = query.order_by(Idea.created_at.desc())
@@ -790,6 +799,7 @@ def explore():
             "category": category or "all",
             "stage": stage or "all",
             "sort": sort or "trending",
+            "tag": tag_filter or "",
         },
     )
 

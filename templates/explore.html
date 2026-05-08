@@ -79,6 +79,16 @@
       Showing <strong id="resultsCount">{{ ideas|length }}</strong> ideas
     </div>
 
+    {% if active_filters.tag %}
+    <div class="mb-3">
+      <span class="tag tag-brand">
+        #{{ active_filters.tag }}
+        <a href="{{ url_for('main.explore') }}" class="ms-1 text-decoration-none">×</a>
+      </span>
+      <span class="text-muted small ms-2">Filtered by tag</span>
+    </div>
+    {% endif %}
+
     <div class="row g-4" id="ideaGrid" {% if ideas|length == 0 %}style="display:none;"{% endif %}>
       {% for idea in ideas %}
       <div
