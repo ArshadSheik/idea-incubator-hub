@@ -48,6 +48,10 @@
         <a href="{{ url_for('main.edit_profile') }}" class="btn btn-ghost btn-sm mt-3">
           <i class="bi bi-pencil"></i> Edit profile
         </a>
+
+        <a href="{{ url_for('messages.inbox') }}" class="btn btn-outline-iih btn-sm">
+          <i class="bi bi-chat-dots"></i> Messages
+        </a>
         {% else %}
         <div class="d-flex gap-2 align-items-center mt-3 flex-wrap">
           <a href="{{ url_for('messages.thread', username=profile_user.username) }}" class="btn btn-brand btn-sm">
