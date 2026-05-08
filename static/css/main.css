@@ -435,6 +435,7 @@ textarea.form-control-iih { resize: vertical; min-height: 100px; }
   background: var(--ink-100);
   color: var(--ink-700);
   letter-spacing: 0.01em;
+  white-space: nowrap;
 }
 .tag-brand { background: var(--brand-primary-light); color: var(--brand-primary-dark); }
 .tag-violet { background: var(--brand-secondary-light); color: var(--brand-secondary); }

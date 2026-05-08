@@ -763,9 +763,12 @@ document.addEventListener("DOMContentLoaded", () => {
       document.getElementById('shareWhatsapp').href =
         `https://wa.me/?text=${encText}%20${encoded}`;
 
-      document.getElementById('shareEmail').addEventListener('click', () => {
-        window.location.href =
-          `mailto:?subject=${encTitle}&body=${encodeURIComponent(summary + '\n\n' + pageUrl)}`;
+      // Add this once, outside buildShareLinks():
+      document.getElementById('shareEmail')?.addEventListener('click', () => {
+        const title   = document.querySelector('h1')?.textContent?.trim() || 'Check out this idea';
+        const summary = document.querySelector('.idea-section p')?.textContent?.trim()?.slice(0, 120) || '';
+        const pageUrl = document.getElementById('shareLinkInput')?.value || window.location.href;
+        window.location.href = `mailto:?subject=${encodeURIComponent(title)}&body=${encodeURIComponent(summary + '\n\n' + pageUrl)}`;
       });
     }
 
