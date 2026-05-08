@@ -57,6 +57,9 @@
                 {% if current_user.is_authenticated %}
                 <li class="nav-item"><a class="nav-link" href="/dashboard" data-page="dashboard">Dashboard</a></li>
                 {% endif %}
+                {% if current_user.is_authenticated %}
+                <a class="nav-link" href="{{ url_for('messages.inbox') }}" data-page="messages">Messages</a>
+                {% endif %}
                 </ul>
                 <div class="d-flex align-items-center gap-3">
                 {% if current_user.is_authenticated %}
