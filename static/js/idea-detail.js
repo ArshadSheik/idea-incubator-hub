@@ -357,6 +357,8 @@ document.addEventListener("DOMContentLoaded", () => {
         if (!response.ok || !payload.ok) {
           throw new Error(payload.error || `Collaborate request failed: ${response.status}`);
         }
+
+        // Update button state
         collaborateBtn.classList.toggle("voted", payload.collaborating);
         const label = collaborateBtn.querySelector("span");
         if (label) {
@@ -364,6 +366,29 @@ document.addEventListener("DOMContentLoaded", () => {
             ? "Joined as collaborator"
             : "Join as collaborator";
         }
+
+        // Update sidebar count heading
+        const countEl = document.querySelector(".sidebar-card .collab-list")
+          ?.closest(".sidebar-card")
+          ?.querySelector(".text-muted-iih.small");
+        if (countEl) {
+          countEl.textContent = `(${payload.collaborators_total})`;
+        }
+
+        // Re-render collaborator list
+        const collabList = document.querySelector(".collab-list");
+        if (collabList && payload.collaborators) {
+          collabList.innerHTML = payload.collaborators
+            .map(
+              (m) => `
+            <div class="collab-item">
+              <span class="avatar avatar-sm ${m.avatar_class}">${m.initials}</span>
+              <div><strong>${m.name}</strong><span>${m.role}</span></div>
+            </div>`
+            )
+            .join("");
+        }
+
       } catch (error) {
         console.error(error);
         showActionFeedback("Unable to update collaboration right now. Please try again.");
