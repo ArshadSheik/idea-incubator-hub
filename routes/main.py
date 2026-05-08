@@ -390,6 +390,16 @@ def _serialize_detail_idea(idea: Idea) -> dict:
         .limit(3)
         .all()
     )
+    if not related_ideas:
+        related_ideas = (
+            Idea.query.filter(
+                Idea.privacy == "public",
+                Idea.id != idea.id,
+            )
+            .order_by(Idea.created_at.desc())
+            .limit(3)
+            .all()
+        )
 
     tags = [f"#{tag.name}" for tag in idea.tags]
 
