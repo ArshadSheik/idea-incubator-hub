@@ -60,6 +60,45 @@ document.addEventListener('DOMContentLoaded', () => {
     scrollReveal.forEach(el => io.observe(el));
   }
 
+  /* ─── Subtle 3D tilt for cards ─── */
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const initTiltEffects = (root = document) => {
+    if (prefersReducedMotion) return;
+    const tiltCards = root.querySelectorAll(
+      '.card-iih, .psc-idea-card__panel, .psc-collab-card, .sidebar-card, .idea-header-card, .idea-section'
+    );
+    tiltCards.forEach((card) => {
+      if (card.dataset.tiltBound === '1') return;
+      card.dataset.tiltBound = '1';
+      card.classList.add('fx-tilt-ready');
+      let rafId = null;
+      const onMove = (e) => {
+        const rect = card.getBoundingClientRect();
+        const px = (e.clientX - rect.left) / rect.width;
+        const py = (e.clientY - rect.top) / rect.height;
+        const area = rect.width * rect.height;
+        // Scale tilt by card size: large surfaces tilt less.
+        const sizeScale = Math.max(0.08, Math.min(1, 110000 / Math.max(area, 1)));
+        const rotateY = (px - 0.5) * (10 * sizeScale);
+        const rotateX = (0.5 - py) * (8 * sizeScale);
+        const lift = 0.6 + (2.2 * sizeScale);
+        const zoom = 1 + (0.004 * sizeScale);
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          card.style.transform = `perspective(950px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) translateY(-${lift.toFixed(2)}px) scale(${zoom.toFixed(3)})`;
+        });
+      };
+      const onLeave = () => {
+        if (rafId) cancelAnimationFrame(rafId);
+        card.style.transform = '';
+      };
+      card.addEventListener('mousemove', onMove);
+      card.addEventListener('mouseleave', onLeave);
+    });
+  };
+  window.initTiltEffects = initTiltEffects;
+  initTiltEffects(document);
+
   /* ─── Toast helper ─── */
   window.showToast = function(message, type = 'success') {
     let container = document.getElementById('toast-container');

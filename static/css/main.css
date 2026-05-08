@@ -349,8 +349,11 @@ a:hover { color: var(--brand-primary-dark); }
 .btn-brand:hover {
   background: var(--brand-primary-dark);
   color: white;
-  transform: translateY(-1px);
+  transform: translateY(-2px) scale(1.02);
   box-shadow: var(--shadow-brand);
+}
+.btn-brand:active {
+  transform: translateY(1px) scale(0.99);
 }
 .btn-outline-iih {
   background: var(--paper);
@@ -835,6 +838,18 @@ textarea.form-control-iih { resize: vertical; min-height: 100px; }
   box-shadow: var(--shadow-card);
   overflow: hidden;
   transition: transform var(--tr-base), box-shadow var(--tr-base), border-color var(--tr-base);
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.fx-tilt-ready {
+  transition: transform 120ms ease-out, box-shadow 180ms ease-out, border-color 180ms ease-out !important;
+}
+.fx-tilt-ready:hover {
+  box-shadow:
+    0 12px 28px rgba(11, 11, 18, 0.14),
+    0 28px 56px rgba(91, 63, 255, 0.16),
+    0 0 0 1px rgba(91, 63, 255, 0.18);
+  border-color: rgba(91, 63, 255, 0.35) !important;
 }
 .card-iih:hover {
   transform: translateY(-2px);
@@ -1063,6 +1078,14 @@ textarea.form-control-iih { resize: vertical; min-height: 100px; }
   70% { box-shadow: 0 0 0 14px rgba(255, 90, 31, 0); }
   100% { box-shadow: 0 0 0 0 rgba(255, 90, 31, 0); }
 }
+@keyframes holoDrift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.45; }
+  50% { transform: translate3d(0, -10px, 0) scale(1.02); opacity: 0.7; }
+}
+@keyframes pulseDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.25); opacity: 0.65; }
+}
 
 .fade-up { animation: fadeUp 0.6s ease-out both; }
 .fade-in { animation: fadeIn 0.6s ease-out both; }
@@ -1092,8 +1115,43 @@ body::before {
   mix-blend-mode: multiply;
   background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.4 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
 }
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    radial-gradient(420px 260px at 12% 18%, rgba(91, 63, 255, 0.16), transparent 68%),
+    radial-gradient(520px 300px at 85% 12%, rgba(255, 90, 31, 0.14), transparent 70%),
+    radial-gradient(360px 220px at 52% 92%, rgba(0, 217, 163, 0.1), transparent 72%);
+  filter: saturate(118%);
+  animation: holoDrift 7s ease-in-out infinite;
+}
 /* Keep grain above backgrounds but under content */
 main, nav, footer, section, .auth-split { position: relative; z-index: 2; }
+
+/* Stage / timeline micro-interaction */
+.stage-dot,
+.timeline-step-active .timeline-dot {
+  animation: pulseDot 1.9s ease-in-out infinite;
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .btn-brand,
+  .card-iih,
+  .fade-up,
+  .fade-in {
+    transition: none !important;
+    animation: none !important;
+  }
+  body::after,
+  .stage-dot,
+  .timeline-step-active .timeline-dot {
+    animation: none !important;
+  }
+}
 
 /* ─── Responsive ─── */
 @media (max-width: 768px) {
