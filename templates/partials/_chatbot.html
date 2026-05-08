@@ -1,0 +1,36 @@
+{% if current_user.is_authenticated %}
+<div id="chatbotWidget" class="chatbot-widget" aria-label="Idea assistant">
+
+  <button id="chatbotToggle" class="chatbot-toggle" aria-label="Open idea assistant">
+    <i class="bi bi-chat-dots-fill" id="chatbotOpenIcon"></i>
+    <i class="bi bi-x-lg d-none"   id="chatbotCloseIcon"></i>
+  </button>
+
+  <div class="chatbot-drawer d-none" id="chatbotDrawer"
+       role="dialog" aria-label="Idea assistant chat">
+
+    <div class="chatbot-header">
+      <span><i class="bi bi-lightbulb me-2"></i>Idea Assistant</span>
+      <button class="chatbot-close-btn" id="chatbotCloseBtn" aria-label="Close">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="chatbot-messages" id="chatbotMessages">
+      <div class="chat-bubble bot-bubble">
+        👋 Hi! I'm your Idea Incubator assistant. Ask me about validating ideas,
+        platform features, or startup advice.
+      </div>
+    </div>
+
+    <div class="chatbot-input-row">
+      <input type="text" id="chatbotInput" class="chatbot-input"
+             placeholder="Ask anything about ideas…" maxlength="400" autocomplete="off">
+      <button id="chatbotSend" class="chatbot-send-btn" aria-label="Send">
+        <i class="bi bi-send-fill"></i>
+      </button>
+    </div>
+
+  </div>
+</div>
+{% endif %}

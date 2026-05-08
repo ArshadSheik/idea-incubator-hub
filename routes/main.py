@@ -1766,3 +1766,70 @@ def trending_hashtags():
         for row in results
     ]
     return jsonify(data)
+
+@main_bp.route("/api/chat", methods=["POST"])
+@login_required
+def chat_api():
+    """Floating chatbot endpoint. Calls DeepSeek API."""
+    import json as _json
+    data         = request.get_json(silent=True) or {}
+    messages     = data.get("messages", [])
+    idea_context = data.get("context", {})
+
+    idea_hint = ""
+    if idea_context.get("idea_id"):
+        idea = Idea.query.get(idea_context["idea_id"])
+        if idea:
+            idea_hint = (
+                f"\n\nThe user is currently viewing the idea: '{idea.title}' "
+                f"(category: {idea.category}, stage: {idea.stage}). "
+                f"Use this context to give relevant advice when appropriate."
+            )
+
+    system_prompt = (
+        "You are the Idea Incubator Hub assistant. "
+        "You help startup founders and innovators validate ideas, "
+        "understand community feedback, and make the most of the platform. "
+        "Keep responses concise (2-4 sentences) and actionable. "
+        "If asked about something unrelated to startups or ideas, "
+        "gently redirect to idea-related topics."
+        + idea_hint
+    )
+
+    api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
+    if not api_key:
+        return jsonify({"reply": (
+            "Hi! I'm the Idea Incubator assistant. I can help you validate startup ideas, "
+            "understand platform features, and improve your pitches."
+        )})
+
+    try:
+        import urllib.request as _urlreq
+        payload = _json.dumps({
+            "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
+            "max_tokens": 300,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                *messages[-10:],
+            ],
+            "temperature": 0.5,
+        }).encode()
+
+        req = _urlreq.Request(
+            os.getenv("DEEPSEEK_API_URL", "https://api.deepseek.com/v1/chat/completions"),
+            data=payload,
+            headers={
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {api_key}",
+            },
+            method="POST",
+        )
+        with _urlreq.urlopen(req, timeout=15) as resp:
+            body = _json.loads(resp.read())
+        reply = body["choices"][0]["message"]["content"].strip()
+        return jsonify({"reply": reply})
+
+    except Exception as e:
+        current_app.logger.error(f"Chat API error: {e}")
+        return jsonify({"reply": "Sorry, I had trouble responding. Please try again."}), 500
+    
