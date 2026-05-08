@@ -1,5 +1,6 @@
 import json
 import os
+import uuid
 from urllib import error as urlerror
 from urllib import request as urlrequest
 from datetime import datetime, timedelta
@@ -7,8 +8,8 @@ from datetime import datetime, timedelta
 from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import func
-
-from models.models import db, Idea, Tag, idea_tags, Vote, Comment
+from werkzeug.utils import secure_filename
+from flask import current_app
 
 from models.models import (
     AIAnalysis,
@@ -16,6 +17,7 @@ from models.models import (
     Collaboration,
     Comment,
     Idea,
+    IdeaMedia,
     Notification,
     Tag,
     Task,
@@ -23,6 +25,7 @@ from models.models import (
     UserFollow,
     Vote,
     db,
+    idea_tags,
 )
 
 main_bp = Blueprint("main", __name__)
@@ -426,6 +429,7 @@ def _serialize_detail_idea(idea: Idea) -> dict:
         },
         "can_follow_author": can_follow_author,
         "user_follows_author": user_follows_author,
+        "emoji": idea.emoji or "💡",
         "posted": _relative_time(idea.created_at),
         "views": f"{idea.views:,} views",
         "votes": idea.vote_count,
@@ -903,7 +907,7 @@ def dashboard():
 def idea_detail(idea_id: int):
     idea = Idea.query.get_or_404(idea_id)
     idea.increment_views()
-    return render_template("idea_detail.html", idea=_serialize_detail_idea(idea))
+    return render_template("idea_detail.html", idea=_serialize_detail_idea(idea), idea_media=idea.media.all())
 
 
 @main_bp.route("/ideas/<int:idea_id>/vote", methods=["POST"])
@@ -1463,6 +1467,83 @@ def collaboration_board(idea_id: int):
         team=team_members,
     )
 
+def _allowed_file(filename: str) -> bool:
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in IdeaMedia.ALLOWED_EXTENSIONS
+
+
+@main_bp.route("/ideas/<int:idea_id>/media", methods=["POST"])
+@login_required
+def upload_idea_media(idea_id: int):
+    """AJAX: upload a file attachment to an idea. Author only."""
+    idea = Idea.query.get_or_404(idea_id)
+
+    if idea.user_id != current_user.id:
+        return jsonify({"ok": False, "error": "Only the idea author can upload files."}), 403
+
+    if idea.media.count() >= IdeaMedia.MAX_PER_IDEA:
+        return jsonify({"ok": False, "error": f"Maximum {IdeaMedia.MAX_PER_IDEA} files per idea."}), 400
+
+    file = request.files.get("file")
+    if not file or file.filename == "":
+        return jsonify({"ok": False, "error": "No file selected."}), 400
+
+    if not _allowed_file(file.filename):
+        return jsonify({"ok": False, "error": "File type not allowed. Accepted: jpg, png, gif, webp, pdf, pptx, docx."}), 400
+
+    file_data = file.read()
+    if len(file_data) > IdeaMedia.MAX_FILE_SIZE:
+        return jsonify({"ok": False, "error": "File too large. Maximum 8 MB per file."}), 400
+
+    original_name = secure_filename(file.filename)
+    ext = original_name.rsplit('.', 1)[-1].lower()
+    stored_name = f"{uuid.uuid4().hex}.{ext}"
+
+    idea_upload_dir = os.path.join(
+        current_app.static_folder, 'uploads', 'ideas', str(idea_id)
+    )
+    os.makedirs(idea_upload_dir, exist_ok=True)
+    with open(os.path.join(idea_upload_dir, stored_name), 'wb') as f:
+        f.write(file_data)
+
+    media = IdeaMedia(
+        idea_id=idea.id,
+        uploader_id=current_user.id,
+        original_filename=original_name,
+        stored_filename=stored_name,
+        mime_type=file.mimetype or 'application/octet-stream',
+        file_size=len(file_data),
+    )
+    db.session.add(media)
+    db.session.commit()
+
+    return jsonify({
+        "ok": True,
+        "media_id": media.id,
+        "original_filename": media.original_filename,
+        "is_image": media.is_image,
+        "human_size": media.human_size,
+        "url": url_for('static', filename=f'uploads/ideas/{idea_id}/{stored_name}'),
+    })
+
+
+@main_bp.route("/ideas/<int:idea_id>/media/<int:media_id>", methods=["DELETE"])
+@login_required
+def delete_idea_media(idea_id: int, media_id: int):
+    """AJAX: delete an attachment. Author only."""
+    media = IdeaMedia.query.filter_by(id=media_id, idea_id=idea_id).first_or_404()
+
+    if Idea.query.get_or_404(idea_id).user_id != current_user.id:
+        return jsonify({"ok": False, "error": "Permission denied."}), 403
+
+    file_path = os.path.join(
+        current_app.static_folder, 'uploads', 'ideas', str(idea_id), media.stored_filename
+    )
+    if os.path.exists(file_path):
+        os.remove(file_path)
+
+    db.session.delete(media)
+    db.session.commit()
+    return jsonify({"ok": True, "media_id": media_id})
 
 @main_bp.route("/api/ideas/<int:idea_id>/tasks", methods=["POST"])
 @login_required

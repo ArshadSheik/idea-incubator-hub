@@ -120,6 +120,79 @@
         </div>
       </div>
 
+      {% if idea_media %}
+      <div class="idea-media-section mt-4">
+        <h3 class="section-title">Attachments</h3>
+
+        {% set images = idea_media | selectattr('is_image') | list %}
+        {% set files  = idea_media | rejectattr('is_image') | list %}
+
+        {% if images %}
+        <div class="media-gallery d-flex flex-wrap gap-3 mb-3">
+          {% for m in images %}
+          <div class="media-thumb-wrapper">
+            <a href="{{ url_for('static', filename='uploads/ideas/' ~ idea.id ~ '/' ~ m.stored_filename) }}"
+              target="_blank" title="{{ m.original_filename }}">
+              <img src="{{ url_for('static', filename='uploads/ideas/' ~ idea.id ~ '/' ~ m.stored_filename) }}"
+                  alt="{{ m.original_filename }}" class="media-thumb">
+            </a>
+            {% if idea.is_owner %}
+            <button class="delete-media-btn media-thumb-delete"
+                    data-media-id="{{ m.id }}" data-idea-id="{{ idea.id }}"
+                    title="Remove image">
+              <i class="bi bi-trash"></i>
+            </button>
+            {% endif %}
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if files %}
+        <ul class="media-file-list list-unstyled mb-0">
+          {% for m in files %}
+          <li class="media-file-item d-flex align-items-center gap-2 py-2">
+            <i class="bi bi-file-earmark-text text-muted fs-5"></i>
+            <a href="{{ url_for('static', filename='uploads/ideas/' ~ idea.id ~ '/' ~ m.stored_filename) }}"
+              download="{{ m.original_filename }}" class="text-decoration-none">
+              {{ m.original_filename }}
+            </a>
+            <span class="text-muted small">{{ m.human_size }}</span>
+            {% if idea.is_owner %}
+            <button class="btn btn-link btn-sm text-danger p-0 ms-auto delete-media-btn"
+                    data-media-id="{{ m.id }}" data-idea-id="{{ idea.id }}" title="Remove">
+              <i class="bi bi-trash"></i>
+            </button>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+
+        {% if idea.is_owner and idea_media|length < 3 %}
+        <div class="mt-3">
+          <label class="btn btn-ghost btn-sm" for="ideaFileInput">
+            <i class="bi bi-paperclip"></i> Add attachment
+          </label>
+          <input type="file" id="ideaFileInput" class="d-none"
+                accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.pptx,.docx">
+          <span class="text-muted small ms-2">{{ idea_media|length }}/3 files</span>
+        </div>
+        {% endif %}
+      </div>
+
+      {% elif idea.is_owner %}
+      <div class="idea-media-section mt-4">
+        <div class="upload-drop-zone-inline">
+          <i class="bi bi-paperclip"></i>
+          <label for="ideaFileInput" class="btn btn-ghost btn-sm ms-2">Add attachments</label>
+          <input type="file" id="ideaFileInput" class="d-none"
+                accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.pptx,.docx">
+          <span class="text-muted small">Images, PDFs, docs — up to 3 files</span>
+        </div>
+      </div>
+      {% endif %}
+
       <div class="vote-bar">
         <button class="vote-btn {% if idea.user_voted %}voted{% endif %}" id="upvoteBtn">
           <i class="bi bi-caret-up-fill"></i>

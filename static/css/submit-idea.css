@@ -28,6 +28,41 @@
   max-width: 680px;
 }
 
+.upload-drop-zone {
+  border: 2px dashed var(--border-color);
+  border-radius: 12px;
+  padding: 2rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+.upload-drop-zone.drag-over {
+  border-color: var(--brand-color);
+  background: var(--brand-bg-soft);
+}
+.file-preview-chip {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.75rem;
+  background: var(--surface-color);
+  border: 1px solid var(--border-color);
+  border-radius: 999px;
+  font-size: 0.85rem;
+}
+.file-preview-chip .remove-file {
+  cursor: pointer;
+  opacity: 0.5;
+  line-height: 1;
+}
+.file-preview-chip .remove-file:hover { opacity: 1; }
+.file-preview-chip img {
+  width: 28px;
+  height: 28px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
 /* Step indicator */
 .step-indicator {
   display: flex;
