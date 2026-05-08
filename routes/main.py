@@ -1768,10 +1768,8 @@ def trending_hashtags():
     return jsonify(data)
 
 @main_bp.route("/api/chat", methods=["POST"])
-@login_required
 def chat_api():
     """Floating chatbot endpoint. Calls DeepSeek API."""
-    import json as _json
     data         = request.get_json(silent=True) or {}
     messages     = data.get("messages", [])
     idea_context = data.get("context", {})
@@ -1786,14 +1784,17 @@ def chat_api():
                 f"Use this context to give relevant advice when appropriate."
             )
 
+    user_context = ""
+    if current_user.is_authenticated:
+        user_context = f"\n\nThe user is logged in as {current_user.display_name}."
+    else:
+        user_context = "\n\nThe user is not logged in. If they ask about personal data, ideas, or profile — encourage them to sign up by clicking 'Get started' in the top navigation bar. Do not mention URL paths."
+        
     system_prompt = (
         "You are the Idea Incubator Hub assistant. "
-        "You help startup founders and innovators validate ideas, "
-        "understand community feedback, and make the most of the platform. "
-        "Keep responses concise (2-4 sentences) and actionable. "
-        "If asked about something unrelated to startups or ideas, "
-        "gently redirect to idea-related topics."
-        + idea_hint
+        "You help startup founders validate ideas and understand the platform. "
+        "Keep responses concise (2-4 sentences) and actionable."
+        + idea_hint + user_context
     )
 
     api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
@@ -1805,7 +1806,7 @@ def chat_api():
 
     try:
         import urllib.request as _urlreq
-        payload = _json.dumps({
+        payload = json.dumps({
             "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
             "max_tokens": 300,
             "messages": [
@@ -1825,7 +1826,7 @@ def chat_api():
             method="POST",
         )
         with _urlreq.urlopen(req, timeout=15) as resp:
-            body = _json.loads(resp.read())
+            body = json.loads(resp.read())
         reply = body["choices"][0]["message"]["content"].strip()
         return jsonify({"reply": reply})
 

@@ -1,76 +1,139 @@
 /**
- * chatbot.js
- * Floating Idea Incubator assistant widget.
- * Conversation history is kept in memory only — clears on page reload.
+ * chatbot.js — Idea Incubator two-screen assistant
+ * Home screen → Chat screen, Wonderchat-inspired.
  */
 document.addEventListener('DOMContentLoaded', () => {
-  const toggle    = document.getElementById('chatbotToggle');
-  const drawer    = document.getElementById('chatbotDrawer');
-  const openIcon  = document.getElementById('chatbotOpenIcon');
-  const closeIcon = document.getElementById('chatbotCloseIcon');
-  const closeBtn  = document.getElementById('chatbotCloseBtn');
-  const input     = document.getElementById('chatbotInput');
-  const sendBtn   = document.getElementById('chatbotSend');
-  const messages  = document.getElementById('chatbotMessages');
+  const toggle     = document.getElementById('cbToggle');
+  const panel      = document.getElementById('cbPanel');
+  const homeScreen = document.getElementById('cbHome');
+  const chatScreen = document.getElementById('cbChat');
+  const closeHome  = document.getElementById('cbCloseHome');
+  const closeChat  = document.getElementById('cbCloseChat');
+  const backBtn    = document.getElementById('cbBack');
+  const startBtn   = document.getElementById('cbStartChat');
+  const messages   = document.getElementById('cbMessages');
+  const input      = document.getElementById('cbInput');
+  const sendBtn    = document.getElementById('cbSend');
 
-  if (!toggle || !drawer) return;
+  if (!toggle || !panel) return;
 
-  const history = [];
-
-  // Pass idea_id as context if on an idea detail page
+  const history     = [];
   const ideaMatch   = window.location.pathname.match(/\/ideas\/(\d+)/);
   const ideaContext = ideaMatch ? { idea_id: parseInt(ideaMatch[1]) } : {};
+  const csrfToken   = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
 
-  const csrfToken = document.querySelector('meta[name="csrf-token"]')
-    ?.getAttribute('content');
+  // ── Panel open / close ──────────────────────────────
+  function openPanel() {
+    panel.classList.remove('d-none');
+    toggle.classList.add('d-none');
+    loadHomeStats();
+  }
 
-  function openDrawer() {
-    drawer.classList.remove('d-none');
-    openIcon.classList.add('d-none');
-    closeIcon.classList.remove('d-none');
+  function closePanel() {
+    panel.classList.add('d-none');
+    toggle.classList.remove('d-none');
+  }
+
+  toggle.addEventListener('click', openPanel);
+  closeHome.addEventListener('click', closePanel);
+  closeChat.addEventListener('click', closePanel);
+
+  // ── Screen switching ────────────────────────────────
+  function showChat() {
+    homeScreen.classList.add('d-none');
+    chatScreen.classList.remove('d-none');
     input.focus();
   }
 
-  function closeDrawer() {
-    drawer.classList.add('d-none');
-    openIcon.classList.remove('d-none');
-    closeIcon.classList.add('d-none');
+  function showHome() {
+    chatScreen.classList.add('d-none');
+    homeScreen.classList.remove('d-none');
   }
 
-  toggle.addEventListener('click', () =>
-    drawer.classList.contains('d-none') ? openDrawer() : closeDrawer()
-  );
-  closeBtn.addEventListener('click', closeDrawer);
+  startBtn.addEventListener('click', showChat);
+  backBtn.addEventListener('click', showHome);
 
-  function appendBubble(text, role) {
-    const el = document.createElement('div');
-    el.className = `chat-bubble ${role === 'user' ? 'user-bubble' : 'bot-bubble'}`;
-    el.textContent = text;
-    messages.appendChild(el);
+  // ── Action cards on home screen ─────────────────────
+  document.querySelectorAll('.cb-action-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const msg = card.dataset.msg;
+      showChat();
+      sendMessage(msg);
+    });
+  });
+
+  // ── Load live stats for home screen ─────────────────
+  let statsLoaded = false;
+  function loadHomeStats() {
+    if (statsLoaded || !window.cbIsAuthenticated) return;
+    statsLoaded = true;
+
+    // Fetch idea count from dashboard stats
+    fetch('/api/stats')
+      .then(r => r.json())
+      .then(data => {
+        // Show platform stats instead of personal (simpler, no extra endpoint)
+        const ideasEl = document.querySelector('#cbStatIdeas span');
+        if (ideasEl) ideasEl.textContent = data.ideas || '—';
+      })
+      .catch(() => {});
+
+    // Fetch unread notification count
+    fetch('/api/notifications')
+      .then(r => r.json())
+      .then(data => {
+        const notifsEl = document.querySelector('#cbStatNotifs span');
+        if (notifsEl) notifsEl.textContent = data.unread_count ?? '—';
+      })
+      .catch(() => {});
+  }
+
+  // ── Message helpers ─────────────────────────────────
+  function appendMessage(text, role) {
+    const wrap = document.createElement('div');
+    wrap.className = `cb-msg ${role === 'user' ? 'cb-msg--user' : 'cb-msg--bot'}`;
+
+    if (role === 'bot') {
+      wrap.innerHTML = `
+        <div class="cb-msg-avatar"><i class="bi bi-lightbulb-fill"></i></div>
+        <div class="cb-msg-bubble"></div>`;
+      wrap.querySelector('.cb-msg-bubble').textContent = text;
+    } else {
+      wrap.innerHTML = `<div class="cb-msg-bubble"></div>`;
+      wrap.querySelector('.cb-msg-bubble').textContent = text;
+    }
+
+    messages.appendChild(wrap);
     messages.scrollTop = messages.scrollHeight;
-    return el;
   }
 
   function showTyping() {
     const el = document.createElement('div');
-    el.className = 'chat-typing';
-    el.id = 'typingIndicator';
-    el.textContent = 'Thinking…';
+    el.className = 'cb-msg cb-msg--bot';
+    el.id = 'cbTyping';
+    el.innerHTML = `
+      <div class="cb-msg-avatar"><i class="bi bi-lightbulb-fill"></i></div>
+      <div class="cb-typing-bubble">
+        <span class="cb-tdot"></span>
+        <span class="cb-tdot"></span>
+        <span class="cb-tdot"></span>
+      </div>`;
     messages.appendChild(el);
     messages.scrollTop = messages.scrollHeight;
   }
 
   function removeTyping() {
-    document.getElementById('typingIndicator')?.remove();
+    document.getElementById('cbTyping')?.remove();
   }
 
-  async function sendMessage() {
-    const text = input.value.trim();
+  // ── Send message ────────────────────────────────────
+  async function sendMessage(text) {
+    text = (text || input.value).trim();
     if (!text) return;
 
     input.value = '';
     sendBtn.disabled = true;
-    appendBubble(text, 'user');
+    appendMessage(text, 'user');
     history.push({ role: 'user', content: text });
     showTyping();
 
@@ -87,17 +150,17 @@ document.addEventListener('DOMContentLoaded', () => {
       removeTyping();
       const reply = data.reply || 'Sorry, something went wrong.';
       history.push({ role: 'assistant', content: reply });
-      appendBubble(reply, 'assistant');
+      appendMessage(reply, 'bot');
     } catch {
       removeTyping();
-      appendBubble("Sorry, I couldn't connect. Please try again.", 'assistant');
+      appendMessage("Sorry, I couldn't connect. Please try again.", 'bot');
     } finally {
       sendBtn.disabled = false;
       input.focus();
     }
   }
 
-  sendBtn.addEventListener('click', sendMessage);
+  sendBtn.addEventListener('click', () => sendMessage());
   input.addEventListener('keydown', (e) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
   });
