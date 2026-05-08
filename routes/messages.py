@@ -3,7 +3,7 @@ from flask_login import current_user, login_required
 from sqlalchemy import and_, or_
 
 from forms import MessageForm
-from models.models import DirectMessage, User, db
+from models.models import DirectMessage, User, db, Notification
 
 messages_bp = Blueprint("messages", __name__, url_prefix="/messages")
 
@@ -82,16 +82,23 @@ def thread(username):
 
     if form.validate_on_submit():
         body = form.body.data.strip()
-
+        
         message = DirectMessage(
-            sender_id=current_user.id,
-            recipient_id=other_user.id,
-            body=body,
+        sender_id=current_user.id,
+        recipient_id=other_user.id,
+        body=body,
         )
-
         db.session.add(message)
+        
+        notification = Notification(
+        user_id=other_user.id,
+        type="message",
+        message=f"{current_user.display_name} sent you a new message.",
+        link=url_for("messages.thread", username=current_user.username),
+        )
+        db.session.add(notification)
+        
         db.session.commit()
-
         return redirect(url_for("messages.thread", username=other_user.username))
 
     DirectMessage.query.filter_by(
