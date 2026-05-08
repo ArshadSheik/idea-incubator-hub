@@ -23,24 +23,27 @@
           <span class="stage-pill stage-{{ idea.stage_class }}" id="ideaStagePill"><span class="stage-dot"></span><span id="ideaStageLabel">{{ idea.stage }}</span></span>
         </div>
         <h1>{{ idea.title }}</h1>
-        <div class="idea-author-row">
+        <div class="idea-author-row identity-bar">
           {% if idea.author.username %}
-          <a href="{{ url_for('main.profile', username=idea.author.username) }}" class="avatar {{ idea.author.avatar_class }}">{{ idea.author.initials }}</a>
+          <a href="{{ url_for('main.profile', username=idea.author.username) }}" class="avatar {{ idea.author.avatar_class }} identity-bar__avatar">{{ idea.author.initials }}</a>
           {% else %}
-          <span class="avatar {{ idea.author.avatar_class }}">{{ idea.author.initials }}</span>
+          <span class="avatar {{ idea.author.avatar_class }} identity-bar__avatar">{{ idea.author.initials }}</span>
           {% endif %}
-          <div>
+          <div class="identity-bar__meta">
             {% if idea.author.username %}
-            <a href="{{ url_for('main.profile', username=idea.author.username) }}" class="fw-bold">{{ idea.author.name }}</a>
+            <a href="{{ url_for('main.profile', username=idea.author.username) }}" class="fw-bold identity-bar__name">{{ idea.author.name }}</a>
             {% else %}
-            <div class="fw-bold">{{ idea.author.name }}</div>
+            <div class="fw-bold identity-bar__name">{{ idea.author.name }}</div>
             {% endif %}
-            <div class="small text-muted-iih">Posted {{ idea.posted }} · {{ idea.views }}</div>
+            <div class="small text-muted-iih identity-bar__sub">
+              <span class="identity-badge"><i class="bi bi-person-badge"></i> Creator</span>
+              <span>Posted {{ idea.posted }} · {{ idea.views }}</span>
+            </div>
           </div>
           {% if idea.author.username and idea.can_follow_author %}
           <form method="post"
                 action="{{ url_for('main.profile_toggle_follow', username=idea.author.username) }}"
-                class="d-inline">
+                class="d-inline ms-auto">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <input type="hidden" name="next" value="{{ request.path }}">
             <button type="submit" class="btn btn-sm-iih {% if idea.user_follows_author %}btn-outline-secondary{% else %}btn-brand{% endif %}">
@@ -57,7 +60,7 @@
 
       <div class="idea-section">
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
-          <h2 class="section-heading mb-0">Progress timeline</h2>
+          <h2 class="section-heading section-heading--anchor mb-0"><i class="bi bi-signpost-2"></i><span>Progress timeline</span></h2>
           {% if idea.is_owner %}
           <div class="d-flex align-items-center gap-2">
             <select id="stageSelect" class="form-select form-select-sm">
@@ -80,17 +83,17 @@
       </div>
 
       <div class="idea-section">
-        <h2 class="section-heading">The idea</h2>
+        <h2 class="section-heading section-heading--anchor"><i class="bi bi-lightbulb"></i><span>The idea</span></h2>
         <p>{{ idea.sections.idea }}</p>
       </div>
 
       <div class="idea-section">
-        <h2 class="section-heading">The problem</h2>
+        <h2 class="section-heading section-heading--anchor"><i class="bi bi-exclamation-octagon"></i><span>The problem</span></h2>
         <p>{{ idea.sections.problem }}</p>
       </div>
 
       <div class="idea-section">
-        <h2 class="section-heading">The solution</h2>
+        <h2 class="section-heading section-heading--anchor"><i class="bi bi-magic"></i><span>The solution</span></h2>
         <p>{{ idea.sections.solution_intro }}</p>
         <ul>
           {% for point in idea.sections.solution_points %}
@@ -100,7 +103,7 @@
       </div>
 
       <div class="idea-section">
-        <h2 class="section-heading">AI insights</h2>
+        <h2 class="section-heading section-heading--anchor"><i class="bi bi-stars"></i><span>AI insights</span></h2>
         <p class="text-muted-iih">Generate a quick AI-style summary and next-step suggestions for this idea.</p>
         <button class="btn btn-outline-iih btn-sm-iih" id="aiInsightsBtn">
           <i class="bi bi-stars"></i> Generate insights
@@ -221,7 +224,7 @@
       <div id="actionFeedback" class="alert d-none mt-3 mb-0" role="alert"></div>
 
       <div class="idea-section">
-        <h2 class="section-heading">Discussion <span class="text-muted-iih small">({{ idea.comments_total }})</span></h2>
+        <h2 class="section-heading section-heading--anchor"><i class="bi bi-chat-dots"></i><span>Discussion</span> <span class="text-muted-iih small">({{ idea.comments_total }})</span></h2>
         <form class="comment-composer" id="commentForm">
           <span class="avatar {{ idea.author.avatar_class }}">{{ idea.author.initials }}</span>
           <div class="flex-grow-1">

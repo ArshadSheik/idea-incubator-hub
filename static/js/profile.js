@@ -83,6 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
           bookmarksGrid.innerHTML = `<div class="profile-cards-grid">${data.bookmarks.map(bookmarkCardHtml).join('')}</div>`;
           bookmarksGrid.querySelectorAll('[data-scroll-reveal]').forEach((el) => el.classList.add('fade-up'));
+          if (window.initTiltEffects) {
+            window.initTiltEffects(bookmarksGrid);
+          }
         })
         .catch(() => {
           bookmarksGrid.innerHTML = '<div class="col-12"><p class="text-center text-muted-iih py-4">Could not load bookmarks.</p></div>';
