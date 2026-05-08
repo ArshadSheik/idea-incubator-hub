@@ -7,7 +7,7 @@ All forms use Flask-WTF for CSRF protection automatically.
 from flask_wtf import FlaskForm
 from wtforms import (
     StringField, TextAreaField, SelectField,
-    PasswordField, BooleanField, HiddenField
+    PasswordField, BooleanField, HiddenField, SubmitField
 )
 from wtforms.validators import (
     DataRequired, Length, Email, EqualTo, Optional, ValidationError
@@ -126,3 +126,17 @@ class TaskForm(FlaskForm):
         if team_members:
             choices += [(m.id, m.display_name) for m in team_members]
         self.assigned_to.choices = choices
+
+# ─────────────────────────────────────────
+# MESSAGE FORMS (for messaging system between users)
+# ─────────────────────────────────────────
+
+class MessageForm(FlaskForm):
+    body = TextAreaField(
+        "Message",
+        validators=[
+            DataRequired(message="Message cannot be empty."),
+            Length(max=1000, message="Message must be 1000 characters or less."),
+        ],
+    )
+    submit = SubmitField("Send")

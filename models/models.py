@@ -522,3 +522,25 @@ class MarketTrend(db.Model):
 
     def __repr__(self):
         return f'<MarketTrend {self.category}/{self.source} fetched={self.fetched_at}>'
+    
+# ─────────────────────────────────────────
+# DIRECT MESSAGE  (user-to-user messages)
+# ─────────────────────────────────────────
+class DirectMessage(db.Model):
+    __tablename__ = "direct_messages"
+
+    id = db.Column(db.Integer, primary_key=True)
+
+    sender_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+    recipient_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
+
+    body = db.Column(db.Text, nullable=False)
+    is_read = db.Column(db.Boolean, default=False, nullable=False)
+
+    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+
+    sender = db.relationship("User", foreign_keys=[sender_id], lazy="joined")
+    recipient = db.relationship("User", foreign_keys=[recipient_id], lazy="joined")
+
+    def __repr__(self):
+        return f"<DirectMessage {self.sender_id} -> {self.recipient_id}>"

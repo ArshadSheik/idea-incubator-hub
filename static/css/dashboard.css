@@ -404,6 +404,13 @@
 
 .chart-card       { padding: 1.25rem; }
 
+.dashboard-card {
+  background: var(--paper);
+  border: 1px solid var(--ink-200);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+}
+
 .chart-wrapper-sm { position: relative; height: 200px; }
 
 /* ─── Smart coach card ─── */
