@@ -1,0 +1,147 @@
+<div id="chatbotWidget" class="cb-widget" aria-label="Idea assistant">
+
+  <button id="cbToggle" class="cb-toggle" aria-label="Open assistant">
+    <span class="cb-toggle-icon"><i class="bi bi-stars"></i></span>
+    <span class="cb-online-dot"></span>
+  </button>
+
+  <div class="cb-panel d-none" id="cbPanel">
+
+    <!-- HOME SCREEN -->
+    <div id="cbHome" class="cb-screen">
+      <div class="cb-home-header">
+        <div class="cb-home-brand">
+          <div class="cb-home-avatar"><i class="bi bi-lightbulb-fill"></i></div>
+          <div>
+            <div class="cb-home-title">Idea Assistant</div>
+            <div class="cb-home-sub"><span class="cb-dot-green"></span> Always online</div>
+          </div>
+        </div>
+        <button class="cb-x-btn" id="cbCloseHome" aria-label="Close">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <div class="cb-home-body">
+        {% if current_user.is_authenticated %}
+          <div class="cb-home-greeting">Hi {{ current_user.first_name or current_user.username }} 👋</div>
+          <div class="cb-home-tagline">How can I help you today?</div>
+          <div class="cb-home-stats">
+            <div class="cb-stat-pill" id="cbStatIdeas">
+              <i class="bi bi-lightbulb"></i> <span>—</span> ideas
+            </div>
+            <div class="cb-stat-pill" id="cbStatNotifs">
+              <i class="bi bi-bell"></i> <span>—</span> notifications
+            </div>
+          </div>
+        {% else %}
+          <div class="cb-home-greeting">Hi there 👋</div>
+          <div class="cb-home-tagline">Explore startup ideas and see what the community is building.</div>
+        {% endif %}
+
+        <div class="cb-action-cards">
+          {% if current_user.is_authenticated %}
+          <button class="cb-action-card" data-msg="How do I validate my startup idea?">
+            <div class="cb-action-icon">💡</div>
+            <div>
+              <div class="cb-action-title">Validate my idea</div>
+              <div class="cb-action-desc">Get a validation framework</div>
+            </div>
+            <i class="bi bi-arrow-right ms-auto"></i>
+          </button>
+          <button class="cb-action-card" data-msg="What makes a great pitch summary?">
+            <div class="cb-action-icon">✍️</div>
+            <div>
+              <div class="cb-action-title">Write a pitch</div>
+              <div class="cb-action-desc">Craft a compelling summary</div>
+            </div>
+            <i class="bi bi-arrow-right ms-auto"></i>
+          </button>
+          <button class="cb-action-card" data-msg="How do I find the right collaborators?">
+            <div class="cb-action-icon">🤝</div>
+            <div>
+              <div class="cb-action-title">Find collaborators</div>
+              <div class="cb-action-desc">Build your dream team</div>
+            </div>
+            <i class="bi bi-arrow-right ms-auto"></i>
+          </button>
+          {% else %}
+          <button class="cb-action-card" data-msg="What is Idea Incubator Hub and how does it work?">
+            <div class="cb-action-icon">🌱</div>
+            <div>
+              <div class="cb-action-title">What is this platform?</div>
+              <div class="cb-action-desc">Discover what we're about</div>
+            </div>
+            <i class="bi bi-arrow-right ms-auto"></i>
+          </button>
+          <button class="cb-action-card" data-msg="What kind of startup ideas are trending on the platform right now?">
+            <div class="cb-action-icon">🔥</div>
+            <div>
+              <div class="cb-action-title">See what's trending</div>
+              <div class="cb-action-desc">Explore popular ideas</div>
+            </div>
+            <i class="bi bi-arrow-right ms-auto"></i>
+          </button>
+          <button class="cb-action-card" data-msg="Why should I join Idea Incubator Hub? What are the benefits?">
+            <div class="cb-action-icon">⭐</div>
+            <div>
+              <div class="cb-action-title">Why join us?</div>
+              <div class="cb-action-desc">See the benefits</div>
+            </div>
+            <i class="bi bi-arrow-right ms-auto"></i>
+          </button>
+          {% endif %}
+        </div>
+
+        <button class="cb-start-btn" id="cbStartChat">
+          <i class="bi bi-chat-dots-fill me-2"></i> Send a message
+        </button>
+      </div>
+    </div>
+
+    <!-- CHAT SCREEN -->
+    <div id="cbChat" class="cb-screen d-none">
+      <div class="cb-chat-header">
+        <button class="cb-back-btn" id="cbBack" aria-label="Back">
+          <i class="bi bi-arrow-left"></i>
+        </button>
+        <div class="cb-chat-header-info">
+          <div class="cb-chat-avatar"><i class="bi bi-lightbulb-fill"></i></div>
+          <div>
+            <div class="cb-chat-name">Idea Assistant</div>
+            <div class="cb-chat-status"><span class="cb-dot-green"></span> AI • Always online</div>
+          </div>
+        </div>
+        <button class="cb-x-btn" id="cbCloseChat" aria-label="Close">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+
+      <div class="cb-messages" id="cbMessages">
+        <div class="cb-msg cb-msg--bot">
+          <div class="cb-msg-avatar"><i class="bi bi-lightbulb-fill"></i></div>
+          <div class="cb-msg-bubble">
+            {% if current_user.is_authenticated %}
+              Hi {{ current_user.first_name or current_user.username }}! Ask me anything about startup ideas, validation, or the platform. 🚀
+            {% else %}
+              Hi! I can tell you about the platform, what's trending, and how our community works. 🌱
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="cb-input-row">
+        <input type="text" id="cbInput" class="cb-input"
+               placeholder="Start a new message…" maxlength="400" autocomplete="off">
+        <button id="cbSend" class="cb-send-btn" aria-label="Send">
+          <i class="bi bi-send-fill"></i>
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  window.cbIsAuthenticated = {{ 'true' if current_user.is_authenticated else 'false' }};
+</script>
