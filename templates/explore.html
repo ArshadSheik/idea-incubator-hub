@@ -76,7 +76,8 @@
 
   <div class="explore-locked-shell {% if not current_user.is_authenticated %}is-locked{% endif %}">
     <div class="results-count mb-3">
-      Showing <strong id="resultsCount">{{ ideas|length }}</strong> ideas
+      Showing <strong id="resultsCount">{{ ideas|length }}</strong>
+      {{ 'idea' if ideas|length == 1 else 'ideas' }}
     </div>
 
     {% if active_filters.tag %}
@@ -92,7 +93,7 @@
     <div class="row g-4" id="ideaGrid" {% if ideas|length == 0 %}style="display:none;"{% endif %}>
       {% for idea in ideas %}
       <div
-        class="col-md-6 col-lg-4 idea-item"
+        class="col-md-6 {% if ideas|length == 1 %}col-lg-6{% else %}col-lg-4{% endif %} idea-item"
         data-category="{{ idea.category }}"
         data-stage="{{ idea.stage_class|default('validation') }}"
         data-title="{{ idea.title|lower }}"
