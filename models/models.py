@@ -17,7 +17,7 @@ Tables:
   - Market Trend (cached external API data)
 """
 
-from datetime import datetime
+from datetime import datetime, timezone
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -316,9 +316,10 @@ class Collaboration(db.Model):
     id         = db.Column(db.Integer, primary_key=True)
     user_id    = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     idea_id    = db.Column(db.Integer, db.ForeignKey('ideas.id'), nullable=False)
-    status     = db.Column(db.String(10), default='accepted')  # auto-accept for now
+    status     = db.Column(db.String(10), default='pending')  # requires owner approval
     role       = db.Column(db.String(20), default='contributor')
-    joined_at  = db.Column(db.DateTime, default=datetime.utcnow)
+    message    = db.Column(db.String(200), nullable=True) # optional request message
+    joined_at  = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def __repr__(self):
         return f'<Collaboration user={self.user_id} idea={self.idea_id} role={self.role}>'
