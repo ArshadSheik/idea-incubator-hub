@@ -358,34 +358,36 @@ document.addEventListener("DOMContentLoaded", () => {
           throw new Error(payload.error || `Collaborate request failed: ${response.status}`);
         }
 
-        // Update button state
-        collaborateBtn.classList.toggle("voted", payload.collaborating);
+        // Update button based on new state
         const label = collaborateBtn.querySelector("span");
-        if (label) {
-          label.textContent = payload.collaborating
-            ? "Joined as collaborator"
-            : "Join as collaborator";
+        collaborateBtn.classList.remove("voted", "pending");
+
+        if (payload.state === "pending") {
+          collaborateBtn.classList.add("pending");
+          if (label) label.textContent = "Request sent…";
+          showActionFeedback("Request sent! The idea owner will review it.", "success");
+        } else if (payload.state === "accepted") {
+          collaborateBtn.classList.add("voted");
+          if (label) label.textContent = "Joined ✓";
+        } else {
+          // withdrawn
+          if (label) label.textContent = "Join as collaborator";
+          showActionFeedback("Request withdrawn.", "info");
         }
 
-        // Update sidebar count heading
-        const countEl = document.querySelector(".sidebar-card .collab-list")
-          ?.closest(".sidebar-card")
-          ?.querySelector(".text-muted-iih.small");
-        if (countEl) {
-          countEl.textContent = `(${payload.collaborators_total})`;
-        }
+        // Update sidebar count and list
+        const collabCard = document.querySelector(".collab-list")?.closest(".sidebar-card");
+        const countEl = collabCard?.querySelector(".text-muted-iih.small");
+        if (countEl) countEl.textContent = `(${payload.collaborators_total})`;
 
-        // Re-render collaborator list
         const collabList = document.querySelector(".collab-list");
         if (collabList && payload.collaborators) {
           collabList.innerHTML = payload.collaborators
-            .map(
-              (m) => `
-            <div class="collab-item">
-              <span class="avatar avatar-sm ${m.avatar_class}">${m.initials}</span>
-              <div><strong>${m.name}</strong><span>${m.role}</span></div>
-            </div>`
-            )
+            .map(m => `
+              <div class="collab-item">
+                <span class="avatar avatar-sm ${m.avatar_class}">${m.initials}</span>
+                <div><strong>${m.name}</strong><span>${m.role}</span></div>
+              </div>`)
             .join("");
         }
 

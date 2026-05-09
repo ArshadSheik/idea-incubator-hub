@@ -118,4 +118,59 @@ document.addEventListener('DOMContentLoaded', () => {
       if (body && count) count.textContent = body.querySelectorAll('.task-card').length;
     });
   }
+
+  // ── Accept / Decline collaboration requests (owner only) ──
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')
+    ?.getAttribute('content');
+
+  document.addEventListener('click', async (e) => {
+    const acceptBtn  = e.target.closest('.accept-collab-btn');
+    const declineBtn = e.target.closest('.decline-collab-btn');
+    const btn = acceptBtn || declineBtn;
+    if (!btn) return;
+
+    const collabId = btn.dataset.collabId;
+    const ideaId   = btn.dataset.ideaId;
+    const action   = acceptBtn ? 'accept' : 'decline';
+
+    btn.disabled = true;
+
+    try {
+      const res = await fetch(`/ideas/${ideaId}/collaborate/${collabId}/${action}`, {
+        method: 'POST',
+        headers: { ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}) },
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Request failed');
+
+      // Remove the request card from DOM
+      document.getElementById(`collabReq-${collabId}`)?.remove();
+
+      // If accepted, add to team list if it exists on the page
+      if (acceptBtn && data.user_name) {
+        const teamList = document.querySelector('.team-members-list');
+        if (teamList) {
+          const el = document.createElement('div');
+          el.className = 'team-member';
+          el.innerHTML = `
+            <span class="avatar avatar-sm ${data.avatar_class}">${data.user_initials}</span>
+            <span>${data.user_name}</span>
+            <span class="tag tag-blue">${data.role}</span>`;
+          teamList.appendChild(el);
+        }
+      }
+
+      // Hide section if no more requests
+      const remaining = document.querySelectorAll('[id^="collabReq-"]').length;
+      if (remaining === 0) {
+        document.querySelector('.collab-requests-section')?.remove();
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert('Something went wrong. Please try again.');
+      btn.disabled = false;
+    }
+  });
+
 });
