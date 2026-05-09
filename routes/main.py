@@ -99,6 +99,7 @@ def _serialize_explore_idea(idea: Idea) -> dict:
         "id": idea.id,
         "title": idea.title,
         "summary": idea.summary,
+        "emoji": idea.emoji or "💡",
         "category": idea.category,
         "tag_class": CATEGORY_TAG_CLASS.get(idea.category, "tag-brand"),
         "stage_class": stage_class,
