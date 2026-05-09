@@ -47,6 +47,46 @@
       </button>
     </div>
 
+    {% if is_owner and pending_requests %}
+    <div class="collab-requests-section mb-4">
+      <h3 class="section-heading">
+        <i class="bi bi-person-plus me-2"></i>
+        Pending requests
+        <span class="tag tag-yellow ms-2">{{ pending_requests|length }}</span>
+      </h3>
+      <div class="collab-requests-list">
+        {% for req in pending_requests %}
+        <div class="collab-request-card" id="collabReq-{{ req.id }}">
+          <div class="d-flex align-items-center gap-3">
+            <span class="avatar {{ req.user.initials | lower }} avatar-{{ req.user.avatar_color }}">
+              {{ req.user.initials }}
+            </span>
+            <div>
+              <div class="fw-semibold">{{ req.user.display_name }}</div>
+              <div class="text-muted-iih small">@{{ req.user.username }}</div>
+              {% if req.message %}
+              <div class="collab-request-msg mt-1">"{{ req.message }}"</div>
+              {% endif %}
+            </div>
+          </div>
+          <div class="d-flex gap-2 ms-auto">
+            <button class="btn btn-brand btn-sm-iih accept-collab-btn"
+                    data-collab-id="{{ req.id }}"
+                    data-idea-id="{{ idea.id }}">
+              <i class="bi bi-check-lg"></i> Accept
+            </button>
+            <button class="btn btn-outline-iih btn-sm-iih decline-collab-btn"
+                    data-collab-id="{{ req.id }}"
+                    data-idea-id="{{ idea.id }}">
+              <i class="bi bi-x-lg"></i> Decline
+            </button>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endif %}
+
     <div class="kanban-board" id="kanbanBoard">
       {% for col_status, col_label in [('todo','To Do'), ('in_progress','In Progress'), ('done','Done')] %}
         <div class="kanban-col" data-status="{{ col_status }}" id="col-{{ col_status }}">
