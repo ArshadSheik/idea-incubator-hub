@@ -85,7 +85,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const getVotes = (item) => {
       const voteStrong = item.querySelector('.meta-item strong');
-      return voteStrong ? parseInt(voteStrong.textContent.replace(/,/g, ''), 10) : 0;
+      if (voteStrong)
+        return parseInt(voteStrong.textContent.replace(/,/g, ''), 10) || 0;
+      const dv = item.dataset.votes;
+      if (dv != null && dv !== '')
+        return parseInt(String(dv).replace(/,/g, ''), 10) || 0;
+      return 0;
     };
 
     const getDate = (item) => {

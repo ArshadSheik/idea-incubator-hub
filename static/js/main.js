@@ -65,7 +65,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const initTiltEffects = (root = document) => {
     if (prefersReducedMotion) return;
     const tiltCards = root.querySelectorAll(
-      '.card-iih, .psc-idea-card__panel, .psc-collab-card'
+      '.card-iih:not(.explore-idea-card), .psc-idea-card__panel, .psc-collab-card'
     );
     tiltCards.forEach((card) => {
       if (card.dataset.tiltBound === '1') return;
