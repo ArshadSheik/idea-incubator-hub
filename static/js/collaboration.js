@@ -118,4 +118,71 @@ document.addEventListener('DOMContentLoaded', () => {
       if (body && count) count.textContent = body.querySelectorAll('.task-card').length;
     });
   }
+
+  // ── Accept / Decline collaboration requests (owner only) ──
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')
+    ?.getAttribute('content');
+
+  document.addEventListener('click', async (e) => {
+    const acceptBtn  = e.target.closest('.accept-collab-btn');
+    const declineBtn = e.target.closest('.decline-collab-btn');
+    const btn = acceptBtn || declineBtn;
+    if (!btn) return;
+
+    const collabId = btn.dataset.collabId;
+    const ideaId   = btn.dataset.ideaId;
+    const action   = acceptBtn ? 'accept' : 'decline';
+
+    btn.disabled = true;
+
+    try {
+      const res = await fetch(`/ideas/${ideaId}/collaborate/${collabId}/${action}`, {
+        method: 'POST',
+        headers: { ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}) },
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Request failed');
+
+      // Remove the request card from DOM
+      document.getElementById(`collabReq-${collabId}`)?.remove();
+
+      // If accepted, add to team list if it exists on the page
+      if (acceptBtn && data.user_name) {
+      // Add to team list in sidebar
+      const teamList = document.querySelector('.team-list');
+      if (teamList) {
+        const li = document.createElement('li');
+        li.className = 'team-member';
+        li.innerHTML = `
+          <div class="avatar avatar-${data.avatar_class.replace('avatar-','')} avatar-sm">
+            ${data.user_initials}
+          </div>
+          <span class="team-member-name">${data.user_name}</span>`;
+        // Remove "no team members" placeholder if present
+        const placeholder = teamList.querySelector('.text-muted-iih');
+        if (placeholder) placeholder.closest('li')?.remove();
+        teamList.appendChild(li);
+      }
+
+      // Update team count in sidebar heading
+      const teamHeading = document.querySelector('.sidebar-heading');
+      if (teamHeading) {
+        const currentCount = document.querySelectorAll('.team-member').length;
+        teamHeading.textContent = `Team (${currentCount})`;
+      }
+    }
+
+      // Hide section if no more requests
+      const remaining = document.querySelectorAll('[id^="collabReq-"]').length;
+      if (remaining === 0) {
+        document.querySelector('.collab-requests-section')?.remove();
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert('Something went wrong. Please try again.');
+      btn.disabled = false;
+    }
+  });
+
 });

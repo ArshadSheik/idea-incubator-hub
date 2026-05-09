@@ -207,10 +207,21 @@
           <span id="bookmarkLabel">Bookmark</span>
         </button>
         <button class="vote-btn-secondary" id="shareBtn"><i class="bi bi-share"></i> <span>Share</span></button>
-        <button class="vote-btn-secondary ms-auto {% if idea.user_collaborating %}voted{% endif %}" id="collaborateBtn">
+        {% if not idea.is_owner %}
+        <button class="vote-btn-secondary ms-auto
+          {% if idea.user_collaborating %}voted
+          {% elif idea.user_collab_pending %}pending
+          {% endif %}" id="collaborateBtn">
           <i class="bi bi-people"></i>
-          <span>{% if idea.user_collaborating %}Joined as collaborator{% else %}Join as collaborator{% endif %}</span>
+          {% if idea.user_collaborating %}
+            <span>Joined ✓</span>
+          {% elif idea.user_collab_pending %}
+            <span>Request sent…</span>
+          {% else %}
+            <span>Join as collaborator</span>
+          {% endif %}
         </button>
+        {% endif %}
         {% if idea.is_owner %}
         <form method="post" action="{{ url_for('main.delete_idea', idea_id=idea.id) }}" class="d-inline ms-2" onsubmit="return confirm('Delete this idea permanently? This action cannot be undone.')">
           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
