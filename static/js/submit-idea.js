@@ -9,8 +9,36 @@ document.addEventListener('DOMContentLoaded', () => {
   const dot2    = document.getElementById('dot2');
   const nextBtn = document.getElementById('nextStep1');
   const prevBtn = document.getElementById('prevStep2');
+  const visualPanel = document.getElementById('submitVisualPanel');
+  const formEl      = document.getElementById('submitIdeaForm');
+
+  function syncSubmitVisual(step) {
+    if (!visualPanel) return;
+    visualPanel.dataset.activeStep = String(step);
+    const numEl   = document.getElementById('visualStepNum');
+    const slugEl  = document.getElementById('visualStepSlug');
+    const headEl  = document.getElementById('visualHeadline');
+    const blurEl  = document.getElementById('visualBlurb');
+    if (!numEl || !slugEl || !headEl || !blurEl) return;
+
+    if (step === 2) {
+      numEl.textContent = '2';
+      slugEl.textContent = 'Build';
+      headEl.textContent = 'Tell the full story';
+      blurEl.textContent =
+        'Pitch the problem and solution — tags, emoji, attachments polish how it reaches collaborators.';
+      return;
+    }
+    numEl.textContent = '1';
+    slugEl.textContent = 'Spark';
+    headEl.textContent = 'Name the spark';
+    blurEl.textContent =
+      'Title, hook, category — shape how your idea lands in the feed.';
+  }
 
   if (!step1 || !step2) return;
+
+  syncSubmitVisual(step1.classList.contains('active') ? 1 : step2.classList.contains('active') ? 2 : 1);
 
   // ── Step 1 → Step 2 ──────────────────────────────────────────
   nextBtn.addEventListener('click', () => {
@@ -48,6 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
       step2.classList.add('active');
       dot1.classList.remove('active');
       dot2.classList.add('active');
+      syncSubmitVisual(2);
       window.scrollTo({ top: 0, behavior: 'smooth' });
     }
   });
@@ -58,19 +87,22 @@ document.addEventListener('DOMContentLoaded', () => {
     step1.classList.add('active');
     dot2.classList.remove('active');
     dot1.classList.add('active');
+    syncSubmitVisual(1);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   });
 
   // ── Step 2 validation on submit ──────────────────────────────
-  document.getElementById('submitIdeaForm').addEventListener('submit', (e) => {
-    const desc = document.querySelector('[name="description"]');
-    if (!desc.value.trim() || desc.value.trim().length < 20) {
-      e.preventDefault();
-      desc.classList.add('is-invalid');
-    } else {
-      desc.classList.remove('is-invalid');
-    }
-  });
+  if (formEl) {
+    formEl.addEventListener('submit', (e) => {
+      const desc = document.querySelector('[name="description"]');
+      if (!desc.value.trim() || desc.value.trim().length < 20) {
+        e.preventDefault();
+        desc.classList.add('is-invalid');
+      } else {
+        desc.classList.remove('is-invalid');
+      }
+    });
+  }
 
   // ── Character counter for summary ────────────────────────────
   const summary = document.querySelector('[name="summary"]');
@@ -142,5 +174,27 @@ document.addEventListener('DOMContentLoaded', () => {
     remove.addEventListener('click', () => { pendingFiles.splice(index, 1); chip.remove(); });
     chip.append(name, remove);
     previewList.appendChild(chip);
+  }
+
+  // ── Decorative panel tilt (mouse only, respects reduced-motion) ─
+  const visualCard = document.querySelector('.submit-visual-card');
+  const mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const figuresWrap = visualCard ? visualCard.querySelector('.submit-visual-card__figures') : null;
+
+  if (visualCard && figuresWrap && !mqReduce.matches) {
+    let raf = 0;
+    visualCard.addEventListener('mousemove', (ev) => {
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        const r = visualCard.getBoundingClientRect();
+        const px = (ev.clientX - r.left) / r.width - 0.5;
+        const py = (ev.clientY - r.top) / r.height - 0.5;
+        figuresWrap.style.transform =
+          `perspective(920px) rotateX(${(-py * 8).toFixed(2)}deg) rotateY(${(px * 10).toFixed(2)}deg)`;
+      });
+    });
+    visualCard.addEventListener('mouseleave', () => {
+      figuresWrap.style.transform = '';
+    });
   }
 });
