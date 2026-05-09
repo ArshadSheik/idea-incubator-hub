@@ -324,14 +324,14 @@ def _serialize_detail_idea(idea: Idea) -> dict:
         user_voted = (
             Vote.query.filter_by(user_id=actor.id, idea_id=idea.id).first() is not None
         )
-        user_collaborating = (
-            Collaboration.query.filter_by(
-                user_id=actor.id,
-                idea_id=idea.id,
-                status="accepted",
-            ).first()
-            is not None
-        )
+        
+        collab_record = Collaboration.query.filter_by(
+            user_id=actor.id,
+            idea_id=idea.id,
+        ).first()
+        user_collaborating = collab_record.status == "accepted" if collab_record else False
+        user_collab_pending = collab_record.status == "pending" if collab_record else False
+
     can_follow_author = (
         actor is not None and author is not None and actor.id != author.id
     )
@@ -445,6 +445,7 @@ def _serialize_detail_idea(idea: Idea) -> dict:
         "votes": idea.vote_count,
         "user_voted": user_voted,
         "user_collaborating": user_collaborating,
+        "user_collab_pending": user_collab_pending,
         "is_owner": actor is not None and actor.id == idea.user_id,
         "comments_total": idea.comment_count,
         "collaborators_total": idea.collaborator_count,
@@ -956,42 +957,15 @@ def toggle_idea_vote(idea_id: int):
         }
     )
 
-
-@main_bp.route("/ideas/<int:idea_id>/collaborate", methods=["POST"])
-@login_required
-def toggle_idea_collaboration(idea_id: int):
-    idea = Idea.query.get_or_404(idea_id)
-    actor = current_user
-
-    existing = Collaboration.query.filter_by(
-        user_id=actor.id,
-        idea_id=idea.id,
-        status="accepted",
-    ).first()
-    if existing:
-        db.session.delete(existing)
-        collaborating = False
-    else:
-        db.session.add(
-            Collaboration(
-                user_id=actor.id,
-                idea_id=idea.id,
-                role="contributor",
-                status="accepted",
-            )
-        )
-        collaborating = True
-
-    db.session.commit()
-
-    # Return updated collaborator list so JS can re-render without a refresh
+def _get_collab_data(idea: Idea) -> list[dict]:
+    """Return serialised accepted collaborators for an idea."""
     collaborators = (
         Collaboration.query
         .filter_by(idea_id=idea.id, status="accepted")
         .join(User, Collaboration.user_id == User.id)
         .all()
     )
-    collab_data = [
+    return [
         {
             "name": c.user.display_name,
             "initials": c.user.initials,
@@ -1001,16 +975,123 @@ def toggle_idea_collaboration(idea_id: int):
         for c in collaborators
     ]
 
-    return jsonify(
-        {
+
+@main_bp.route("/ideas/<int:idea_id>/collaborate", methods=["POST"])
+@login_required
+def toggle_idea_collaboration(idea_id: int):
+    idea  = Idea.query.get_or_404(idea_id)
+    actor = current_user
+
+    # Owner cannot request to collaborate on their own idea
+    if idea.user_id == actor.id:
+        return jsonify({"ok": False, "error": "You own this idea."}), 400
+
+    existing = Collaboration.query.filter_by(
+        user_id=actor.id,
+        idea_id=idea.id,
+    ).first()
+
+    if existing:
+        # Withdraw pending request or leave if accepted
+        db.session.delete(existing)
+        db.session.commit()
+        return jsonify({
             "ok": True,
-            "idea_id": idea.id,
-            "user_id": actor.id,
-            "collaborating": collaborating,
+            "state": "none",
             "collaborators_total": idea.collaborator_count,
-            "collaborators": collab_data,
-        }
-    )
+            "collaborators": _get_collab_data(idea),
+        })
+
+    # Create a new pending request
+    payload = request.get_json(silent=True) or {}
+    message = (payload.get("message") or "").strip()[:200]
+
+    db.session.add(Collaboration(
+        user_id=actor.id,
+        idea_id=idea.id,
+        role="contributor",
+        status="pending",
+        message=message or None,
+    ))
+    db.session.commit()
+
+    # Notify the idea owner
+    db.session.add(Notification(
+        user_id=idea.user_id,
+        type="collaboration",
+        message=f"{actor.display_name} wants to collaborate on '{idea.title}'",
+        link=f"/ideas/{idea.id}/board",
+    ))
+    db.session.commit()
+
+    return jsonify({
+        "ok": True,
+        "state": "pending",
+        "collaborators_total": idea.collaborator_count,
+        "collaborators": _get_collab_data(idea),
+    })
+
+@main_bp.route("/ideas/<int:idea_id>/collaborate/<int:collab_id>/accept", methods=["POST"])
+@login_required
+def accept_collaboration(idea_id: int, collab_id: int):
+    """Idea owner accepts a pending collaboration request."""
+    idea  = Idea.query.get_or_404(idea_id)
+    if idea.user_id != current_user.id:
+        return jsonify({"ok": False, "error": "Only the idea owner can accept requests."}), 403
+
+    collab = Collaboration.query.filter_by(
+        id=collab_id, idea_id=idea_id, status="pending"
+    ).first_or_404()
+
+    collab.status = "accepted"
+    db.session.commit()
+
+    # Notify the requester
+    db.session.add(Notification(
+        user_id=collab.user_id,
+        type="collaboration",
+        message=f"Your request to collaborate on '{idea.title}' was accepted!",
+        link=f"/ideas/{idea.id}/board",
+    ))
+    db.session.commit()
+
+    return jsonify({
+        "ok": True,
+        "collab_id": collab.id,
+        "user_name": collab.user.display_name,
+        "user_initials": collab.user.initials,
+        "avatar_class": f"avatar-{collab.user.avatar_color}",
+        "role": collab.role,
+        "collaborators_total": idea.collaborator_count,
+    })
+
+
+@main_bp.route("/ideas/<int:idea_id>/collaborate/<int:collab_id>/decline", methods=["POST"])
+@login_required
+def decline_collaboration(idea_id: int, collab_id: int):
+    """Idea owner declines a pending collaboration request."""
+    idea = Idea.query.get_or_404(idea_id)
+    if idea.user_id != current_user.id:
+        return jsonify({"ok": False, "error": "Only the idea owner can decline requests."}), 403
+
+    collab = Collaboration.query.filter_by(
+        id=collab_id, idea_id=idea_id, status="pending"
+    ).first_or_404()
+
+    requester_id = collab.user_id
+    db.session.delete(collab)
+    db.session.commit()
+
+    # Notify the requester
+    db.session.add(Notification(
+        user_id=requester_id,
+        type="collaboration",
+        message=f"Your request to collaborate on '{idea.title}' was declined.",
+        link=f"/ideas/{idea.id}",
+    ))
+    db.session.commit()
+
+    return jsonify({"ok": True, "collab_id": collab_id})
 
 
 @main_bp.route("/ideas/<int:idea_id>/comments", methods=["POST"])
@@ -1460,21 +1541,27 @@ def bookmark_status(idea_id: int):
 @main_bp.route("/ideas/<int:idea_id>/board")
 @login_required
 def collaboration_board(idea_id: int):
-    """Kanban board for an idea's collaboration team."""
-    idea = Idea.query.get_or_404(idea_id)
+    idea  = Idea.query.get_or_404(idea_id)
     tasks = Task.query.filter_by(idea_id=idea_id).order_by(Task.created_at.asc()).all()
-    team = (
-        Collaboration.query
-        .filter_by(idea_id=idea_id, status='accepted')
-        .all()
-    )
+    team  = Collaboration.query.filter_by(idea_id=idea_id, status='accepted').all()
     team_members = [c.user for c in team if c.user]
+
+    # Pending requests — only visible to idea owner
+    pending_requests = []
+    if current_user.id == idea.user_id:
+        pending_requests = (
+            Collaboration.query
+            .filter_by(idea_id=idea_id, status='pending')
+            .all()
+        )
 
     return render_template(
         "collaboration.html",
         idea=idea,
         tasks=tasks,
         team=team_members,
+        pending_requests=pending_requests,
+        is_owner=(current_user.id == idea.user_id),
     )
 
 def _allowed_file(filename: str) -> bool:
