@@ -148,17 +148,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // If accepted, add to team list if it exists on the page
       if (acceptBtn && data.user_name) {
-        const teamList = document.querySelector('.team-members-list');
-        if (teamList) {
-          const el = document.createElement('div');
-          el.className = 'team-member';
-          el.innerHTML = `
-            <span class="avatar avatar-sm ${data.avatar_class}">${data.user_initials}</span>
-            <span>${data.user_name}</span>
-            <span class="tag tag-blue">${data.role}</span>`;
-          teamList.appendChild(el);
-        }
+      // Add to team list in sidebar
+      const teamList = document.querySelector('.team-list');
+      if (teamList) {
+        const li = document.createElement('li');
+        li.className = 'team-member';
+        li.innerHTML = `
+          <div class="avatar avatar-${data.avatar_class.replace('avatar-','')} avatar-sm">
+            ${data.user_initials}
+          </div>
+          <span class="team-member-name">${data.user_name}</span>`;
+        // Remove "no team members" placeholder if present
+        const placeholder = teamList.querySelector('.text-muted-iih');
+        if (placeholder) placeholder.closest('li')?.remove();
+        teamList.appendChild(li);
       }
+
+      // Update team count in sidebar heading
+      const teamHeading = document.querySelector('.sidebar-heading');
+      if (teamHeading) {
+        const currentCount = document.querySelectorAll('.team-member').length;
+        teamHeading.textContent = `Team (${currentCount})`;
+      }
+    }
 
       // Hide section if no more requests
       const remaining = document.querySelectorAll('[id^="collabReq-"]').length;

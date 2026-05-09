@@ -159,7 +159,7 @@ def seed_collaborations(users, ideas):
 
 
 def seed_tasks(users, ideas):
-    """Add 4 Kanban tasks per idea with a mix of statuses."""
+    """Add 4 Kanban tasks per idea, assigned only to actual collaborators."""
     print('Creating tasks...')
     statuses   = ['todo', 'todo', 'in_progress', 'done']
     priorities = ['high', 'medium', 'medium', 'low']
@@ -175,14 +175,23 @@ def seed_tasks(users, ideas):
     ]
     count = 0
     for i, idea in enumerate(ideas):
-        collab_users = [u for u in users if u.id != idea.user_id]
+        # Only assign to accepted collaborators of this idea
+        collab_user_ids = [
+            c.user_id for c in
+            Collaboration.query.filter_by(idea_id=idea.id, status='accepted').all()
+        ]
+        assignable = [u for u in users if u.id in collab_user_ids]
+        # Fall back to idea author only if no collaborators
+        if not assignable:
+            assignable = [u for u in users if u.id == idea.user_id]
+
         for j in range(4):
             title, desc = templates[(i * 4 + j) % len(templates)]
-            assignee = collab_users[j % len(collab_users)] if collab_users else None
+            assignee = assignable[j % len(assignable)]
             db.session.add(Task(
                 idea_id=idea.id,
                 created_by=idea.user_id,
-                assigned_to=assignee.id if assignee else None,
+                assigned_to=assignee.id,
                 title=title,
                 description=desc,
                 status=statuses[j],
