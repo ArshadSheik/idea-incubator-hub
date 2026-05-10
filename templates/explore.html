@@ -11,10 +11,15 @@
 {% if current_next.endswith('?') %}
   {% set current_next = request.path %}
 {% endif %}
+<div class="explore-surface">
 <section class="explore-header">
-  <div class="container-iih">
-    <h1 class="fade-up {% if not current_user.is_authenticated %}explore-guest-blur{% endif %}">Explore ideas</h1>
-    <p class="fade-up stagger-1 {% if not current_user.is_authenticated %}explore-guest-blur{% endif %}">Browse ideas from the community. Vote on the ones you love, comment with your take.</p>
+  <div class="explore-header__deco" aria-hidden="true"></div>
+  <div class="container-iih explore-header__inner">
+    <p class="explore-eyebrow fade-up {% if not current_user.is_authenticated %}explore-guest-blur{% endif %}">
+      <i class="bi bi-compass"></i> Community feed
+    </p>
+    <h1 class="explore-title fade-up {% if not current_user.is_authenticated %}explore-guest-blur{% endif %}">Explore ideas</h1>
+    <p class="explore-lead fade-up stagger-1 {% if not current_user.is_authenticated %}explore-guest-blur{% endif %}">Browse ideas from the community. Vote on the ones you love, comment with your take.</p>
     <div class="explore-header-toolbar fade-up stagger-2">
       <div class="explore-header-search-col {% if not current_user.is_authenticated %}explore-guest-blur{% endif %}">
         <div class="explore-search-bar">
@@ -32,7 +37,7 @@
   </div>
 </section>
 
-<section class="container-iih mt-4 mb-5">
+<section class="container-iih explore-main mt-4 mb-5">
   <div class="filter-shell {% if not current_user.is_authenticated %}is-locked{% endif %}">
     <div class="filter-bar">
       <div class="filter-group">
@@ -75,7 +80,8 @@
   </div>
 
   <div class="explore-locked-shell {% if not current_user.is_authenticated %}is-locked{% endif %}">
-    <div class="results-count mb-3">
+    <div class="results-count explore-results-strip mb-3">
+      <span class="explore-results-dot" aria-hidden="true"></span>
       Showing <strong id="resultsCount">{{ ideas|length }}</strong>
       {{ 'idea' if ideas|length == 1 else 'ideas' }}
     </div>
@@ -90,24 +96,29 @@
     </div>
     {% endif %}
 
-    <div class="row g-4" id="ideaGrid" {% if ideas|length == 0 %}style="display:none;"{% endif %}>
+    <div class="row g-4 explore-grid" id="ideaGrid" {% if ideas|length == 0 %}style="display:none;"{% endif %}>
       {% for idea in ideas %}
       <div
-        class="col-md-6 {% if ideas|length == 1 %}col-lg-6{% else %}col-lg-4{% endif %} idea-item"
+        class="col-md-6 {% if ideas|length == 1 %}col-lg-6{% else %}col-lg-4{% endif %} idea-item explore-grid__cell"
+        style="--explore-i: {{ loop.index0 }};"
+        data-tag-class="{{ idea.tag_class }}"
         data-category="{{ idea.category }}"
         data-stage="{{ idea.stage_class|default('validation') }}"
         data-title="{{ idea.title|lower }}"
       >
-        <a href="/ideas/{{ idea.id }}" class="text-decoration-none">
-          <div class="idea-card card-iih h-100">
+        <a href="{{ url_for('main.idea_detail', idea_id=idea.id) }}" class="explore-card-link text-decoration-none">
+          <div class="idea-card card-iih explore-idea-card h-100">
             <div class="card-body-iih">
-              <div class="d-flex justify-content-between align-items-start mb-2">
+              <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
                 <span class="tag {{ idea.tag_class }}">{{ idea.category }}</span>
                 <span class="stage-pill stage-{{ idea.stage_class|default('validation') }}">
                   <span class="stage-dot"></span>{{ idea.stage|default("Validation") }}
                 </span>
               </div>
-              <h3 class="idea-card-title">{{ idea.title }}</h3>
+              <h3 class="idea-card-title explore-card-title">
+                <span class="explore-card-emoji" aria-hidden="true">{{ idea.emoji|default('💡') }}</span>
+                {{ idea.title }}
+              </h3>
               <p class="idea-card-desc">{{ idea.summary }}</p>
               <div class="idea-card-meta">
                 <div class="meta-item"><i class="bi bi-caret-up-fill text-brand"></i><strong>{{ idea.votes }}</strong></div>
@@ -117,8 +128,8 @@
               <hr class="divider">
               <div class="d-flex align-items-center gap-2">
                 <span class="avatar avatar-sm {{ idea.author.avatar_class }}">{{ idea.author.initials }}</span>
-                <div>
-                  <div class="small fw-semibold">{{ idea.author.name }}</div>
+                <div class="min-w-0">
+                  <div class="small fw-semibold text-truncate">{{ idea.author.name }}</div>
                   <div class="small text-muted-iih">{{ idea.posted }}</div>
                 </div>
               </div>
@@ -130,11 +141,11 @@
     </div>
 
     {% if ideas|length == 0 %}
-    <div id="emptyState" class="empty-state" style="display:block;">
+    <div id="emptyState" class="empty-state explore-empty" style="display:block;">
     {% else %}
-    <div id="emptyState" class="empty-state" style="display:none;">
+    <div id="emptyState" class="empty-state explore-empty" style="display:none;">
     {% endif %}
-      <div class="empty-icon"><i class="bi bi-search"></i></div>
+      <div class="empty-icon explore-empty__icon"><i class="bi bi-stars"></i></div>
       <h3>No ideas match your filters</h3>
       <p>Try different keywords or clear your filters.</p>
       <button class="btn btn-brand" onclick="document.getElementById('resetFilters').click()">
@@ -143,6 +154,7 @@
     </div>
   </div>
 </section>
+</div>
 {% endblock %}
 
 {% block extra_js %}
