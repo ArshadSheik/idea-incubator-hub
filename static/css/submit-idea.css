@@ -113,7 +113,8 @@
   box-shadow:
     0 24px 50px rgba(15, 23, 42, 0.45),
     0 0 0 1px rgba(165, 180, 252, 0.15) inset;
-  overflow: hidden;
+  /* Let the thought-bubble cluster sit slightly past the edge (head zone) without clipping */
+  overflow: visible;
 }
 
 .submit-visual-card__orbit {
@@ -130,93 +131,172 @@
   position: relative;
   display: flex;
   align-items: flex-end;
-  justify-content: space-between;
-  gap: 1rem;
-  min-height: 11rem;
-  margin-bottom: 1.25rem;
+  justify-content: center;
+  gap: 0;
+  min-height: 14.5rem;
+  margin: -0.35rem 0 0.85rem;
   transform-style: preserve-3d;
   transition: transform 0.4s ease;
 }
 
-/* Animated “bulb” */
-.submit-idea-bulb {
+/* unDraw “Thought process” — chin/hand + speech bubbles; static/img */
+.submit-undraw-illustration {
   position: relative;
-  width: 5rem;
-  height: 7rem;
-  margin-left: 0.35rem;
+  z-index: 1;
+  width: 100%;
+  max-width: 29rem;
+  margin: 0 auto;
   transform-style: preserve-3d;
-  animation: submitBulbBob 7s ease-in-out infinite;
+  animation: submitThinkBob 8s ease-in-out infinite;
 }
 
-.submit-idea-bulb__glow {
+/* Thought bubble: pinned to card top-left (empty corner); stem down-right toward temple — no flowchart overlap */
+.submit-floating-thought {
   position: absolute;
-  inset: -30% -20% -35% -20%;
-  background: radial-gradient(circle at 40% 20%, rgba(253, 224, 71, 0.55), transparent 58%);
-  filter: blur(10px);
-  animation: submitGlowPulse 5s ease-in-out infinite alternate;
+  z-index: 5;
+  left: clamp(0.1rem, 0.9vw, 0.55rem);
+  top: clamp(0.25rem, 1.1vw, 0.75rem);
+  width: 7.5rem;
+  height: 6.5rem;
+  pointer-events: none;
 }
 
-.submit-idea-bulb__body {
+.submit-floating-thought__glow {
   position: absolute;
-  left: 50%;
-  translate: -50% 0;
-  width: 3.85rem;
-  height: 4.85rem;
-  border-radius: 50% 50% 52% 52% / 58% 58% 42% 42%;
-  background: linear-gradient(165deg, #fef08a 8%, #facc15 45%, #ca8a04 100%);
+  left: 38%;
+  top: 22%;
+  width: 150%;
+  height: 145%;
+  translate: -50% -50%;
+  background: radial-gradient(
+    circle at 50% 50%,
+    rgba(129, 140, 248, 0.45),
+    rgba(253, 224, 71, 0.12) 42%,
+    transparent 62%
+  );
+  filter: blur(14px);
+  animation: submitThoughtGlowCycle 3.4s ease-in-out infinite;
+}
+
+.submit-floating-thought__cloud {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 3.9rem;
+  height: 2.5rem;
+  border-radius: 52% 48% 50% 50% / 54% 52% 48% 46%;
+  background: rgba(255, 255, 255, 0.11);
+  border: 2px solid rgba(255, 255, 255, 0.42);
   box-shadow:
-    inset 0 -8px 18px rgba(180, 83, 9, 0.45),
-    0 10px 24px rgba(202, 138, 4, 0.45);
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    0 8px 22px rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform-origin: 82% 88%;
+  animation: submitThoughtPopCloud 3.4s cubic-bezier(0.33, 1, 0.48, 1) infinite both;
 }
 
-.submit-idea-bulb__base {
-  position: absolute;
-  bottom: 0;
-  left: 50%;
-  translate: -50% 0;
-  width: 2.85rem;
-  height: 1.95rem;
-  border-radius: 6px;
-  background: linear-gradient(180deg, #94a3b8 0%, #64748b 100%);
-  box-shadow: 0 4px 0 #334155;
-}
-
-/* Pseudo-3D stack */
-.submit-stack-3d {
+.submit-floating-thought__ellipsis {
   position: relative;
-  width: 8.75rem;
-  height: 6.75rem;
-  flex-shrink: 0;
-  margin-right: 0.35rem;
-  transform-style: preserve-3d;
-  transform: perspective(760px) rotateX(12deg) rotateY(-18deg);
-  animation: submitStackYaw 22s linear infinite;
+  z-index: 1;
+  font-size: 1.65rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow:
+    0 0 16px rgba(129, 140, 248, 0.55),
+    0 2px 10px rgba(15, 23, 42, 0.4);
 }
 
-.submit-stack-3d__layer {
+.submit-floating-thought__dot {
   position: absolute;
-  inset: 0 auto auto 0;
-  width: 7rem;
-  height: 6rem;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.42);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 2px 10px rgba(15, 23, 42, 0.3),
+    0 0 12px rgba(129, 140, 248, 0.22);
+  transform-origin: 50% 50%;
+  opacity: 0;
 }
 
-.submit-stack-3d__layer:nth-child(1) {
-  background: linear-gradient(135deg, rgba(167, 139, 250, 0.9), rgba(99, 102, 241, 0.75));
-  transform: translate3d(18px, 18px, 0);
+/* Chain: dot3 largest by cloud → dot1 smallest nearest head (sizes decrease toward portrait) */
+.submit-floating-thought__dot--1 {
+  width: 0.36rem;
+  height: 0.36rem;
+  left: 5.62rem;
+  top: 4.92rem;
+  animation: submitThoughtPopDot1 3.4s cubic-bezier(0.33, 1, 0.48, 1) infinite both;
 }
 
-.submit-stack-3d__layer:nth-child(2) {
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.55), rgba(14, 165, 233, 0.45));
-  transform: translate3d(42px, 40px, 24px);
-  opacity: 0.92;
+.submit-floating-thought__dot--2 {
+  width: 0.54rem;
+  height: 0.54rem;
+  left: 4.52rem;
+  top: 3.62rem;
+  animation: submitThoughtPopDot2 3.4s cubic-bezier(0.33, 1, 0.48, 1) infinite both;
 }
 
-.submit-stack-3d__layer:nth-child(3) {
-  background: linear-gradient(135deg, rgba(249, 115, 22, 0.45), rgba(234, 88, 12, 0.35));
-  transform: translate3d(62px, 58px, 48px);
-  opacity: 0.88;
+.submit-floating-thought__dot--3 {
+  width: 0.78rem;
+  height: 0.78rem;
+  left: 3.2rem;
+  top: 2.38rem;
+  animation: submitThoughtPopDot3 3.4s cubic-bezier(0.33, 1, 0.48, 1) infinite both;
+}
+
+@media (max-width: 420px) {
+  .submit-floating-thought {
+    width: 6.35rem;
+    height: 5.55rem;
+    left: 0.05rem;
+    top: 0.15rem;
+  }
+
+  .submit-floating-thought__cloud {
+    width: 3.35rem;
+    height: 2.2rem;
+  }
+
+  .submit-floating-thought__dot--3 {
+    left: 2.65rem;
+    top: 2.05rem;
+  }
+
+  .submit-floating-thought__dot--2 {
+    left: 3.72rem;
+    top: 3.12rem;
+  }
+
+  .submit-floating-thought__dot--1 {
+    left: 4.65rem;
+    top: 4.22rem;
+  }
+}
+
+.submit-undraw-illustration__img {
+  display: block;
+  width: 100%;
+  height: auto;
+  max-height: 17rem;
+  object-fit: contain;
+  object-position: 48% 40%;
+  pointer-events: none;
+  user-select: none;
+  filter:
+    drop-shadow(0 18px 36px rgba(15, 23, 42, 0.4))
+    saturate(1.08);
+}
+
+@media (max-width: 400px) {
+  .submit-undraw-illustration__img {
+    max-height: 13.5rem;
+    object-position: 48% 30%;
+  }
 }
 
 .submit-visual-card__text {
@@ -294,19 +374,116 @@
   to   { opacity: 1;   transform: scale(1.05) translate(6px, -4px); }
 }
 
-@keyframes submitBulbBob {
+@keyframes submitThinkBob {
   0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-10px); }
+  50%      { transform: translateY(-6px); }
 }
 
-@keyframes submitGlowPulse {
-  from { opacity: 0.55; transform: scale(1); }
-  to   { opacity: 0.95; transform: scale(1.08); }
+/* One “冒泡” cycle (~3.4s): tiny → … → main cloud → dissolve → repeat from tiny */
+@keyframes submitThoughtPopDot1 {
+  0%,
+  2% {
+    opacity: 0;
+    transform: translate(6px, 5px) scale(0);
+  }
+  9% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  10%,
+  76% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  84%,
+  100% {
+    opacity: 0;
+    transform: translate(-5px, -8px) scale(0.88);
+  }
 }
 
-@keyframes submitStackYaw {
-  from { transform: perspective(760px) rotateX(12deg) rotateY(-18deg); }
-  to   { transform: perspective(760px) rotateX(12deg) rotateY(342deg); }
+@keyframes submitThoughtPopDot2 {
+  0%,
+  15% {
+    opacity: 0;
+    transform: translate(8px, 6px) scale(0);
+  }
+  22% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  24%,
+  76% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  84%,
+  100% {
+    opacity: 0;
+    transform: translate(-6px, -9px) scale(0.88);
+  }
+}
+
+@keyframes submitThoughtPopDot3 {
+  0%,
+  29% {
+    opacity: 0;
+    transform: translate(10px, 7px) scale(0);
+  }
+  36% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  38%,
+  76% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  84%,
+  100% {
+    opacity: 0;
+    transform: translate(-8px, -10px) scale(0.88);
+  }
+}
+
+@keyframes submitThoughtPopCloud {
+  0%,
+  40% {
+    opacity: 0;
+    transform: translate(14px, 12px) scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  52%,
+  76% {
+    opacity: 1;
+    transform: translate(0, -1px) scale(1);
+  }
+  84%,
+  100% {
+    opacity: 0;
+    transform: translate(-4px, -10px) scale(0.92);
+  }
+}
+
+@keyframes submitThoughtGlowCycle {
+  0%,
+  35% {
+    opacity: 0.38;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  52%,
+  72% {
+    opacity: 0.92;
+    transform: translate(-50%, -52%) scale(1.06);
+  }
+  82%,
+  100% {
+    opacity: 0.42;
+    transform: translate(-50%, -48%) scale(0.94);
+  }
 }
 
 @keyframes submitFloatA {
@@ -321,15 +498,35 @@
 
 @media (prefers-reduced-motion: reduce) {
   .submit-visual-card__orbit,
-  .submit-idea-bulb,
-  .submit-idea-bulb__glow,
-  .submit-stack-3d,
+  .submit-undraw-illustration,
+  .submit-floating-thought__glow,
+  .submit-floating-thought__cloud,
+  .submit-floating-thought__ellipsis,
+  .submit-floating-thought__dot,
   .submit-visual-card__particles::before,
   .submit-visual-card__particles::after {
     animation: none !important;
   }
-  .submit-stack-3d {
-    transform: perspective(760px) rotateX(12deg) rotateY(-18deg);
+
+  .submit-floating-thought__ellipsis {
+    opacity: 0.92;
+    letter-spacing: 0.12em;
+    transform: none;
+  }
+
+  .submit-floating-thought__dot {
+    opacity: 0.92;
+    transform: none;
+  }
+
+  .submit-floating-thought__cloud {
+    opacity: 1;
+    transform: none;
+  }
+
+  .submit-floating-thought__glow {
+    opacity: 0.55;
+    transform: translate(-50%, -50%);
   }
 }
 
