@@ -113,16 +113,22 @@
       <aside class="submit-split__visual" id="submitVisualPanel" data-active-step="1" aria-hidden="true">
         <div class="submit-visual-card">
           <div class="submit-visual-card__orbit" aria-hidden="true"></div>
-          <div class="submit-visual-card__figures" aria-hidden="true">
-            <div class="submit-idea-bulb">
-              <span class="submit-idea-bulb__glow"></span>
-              <span class="submit-idea-bulb__body"></span>
-              <span class="submit-idea-bulb__base"></span>
+          {# Main cloud anchors card top-left; stem runs down‑right toward the temple (sizes shrink toward head) #}
+          <div class="submit-floating-thought" aria-hidden="true">
+            <span class="submit-floating-thought__glow"></span>
+            <span class="submit-floating-thought__dot submit-floating-thought__dot--1"></span>
+            <span class="submit-floating-thought__dot submit-floating-thought__dot--2"></span>
+            <span class="submit-floating-thought__dot submit-floating-thought__dot--3"></span>
+            <div class="submit-floating-thought__cloud">
+              <span class="submit-floating-thought__ellipsis">⋯</span>
             </div>
-            <div class="submit-stack-3d">
-              <div class="submit-stack-3d__layer"></div>
-              <div class="submit-stack-3d__layer"></div>
-              <div class="submit-stack-3d__layer"></div>
+          </div>
+          {# unDraw illustration "Thought process" — MIT license, https://undraw.co — accent #818cf8 #}
+          <div class="submit-visual-card__figures" aria-hidden="true">
+            <div class="submit-undraw-illustration">
+              <img class="submit-undraw-illustration__img"
+                   src="{{ url_for('static', filename='img/submit-undraw-in-thought.svg') }}"
+                   width="800" height="600" loading="lazy" decoding="async" alt="">
             </div>
           </div>
           <div class="submit-visual-card__text">
