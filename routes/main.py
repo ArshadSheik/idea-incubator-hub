@@ -1379,9 +1379,9 @@ def about():
     }
     team_members = [
         {"name": "Arshad Sheik",  "role": "Main Page & Architecture", "initials": "AS", "color": 1},
-        {"name": "Dong Bo", "role": "Auth & Login",             "initials": "DB", "color": 2},
-        {"name": "Cong Yuan", "role": "Explore Page",             "initials": "CY", "color": 3},
-        {"name": "Yitian Kong", "role": "Dashboard",                "initials": "YK", "color": 4},
+        {"name": "Dong Bo", "role": "Explore Page & Idea",             "initials": "DB", "color": 2},
+        {"name": "Cong Yuan", "role": "Auth & Login",             "initials": "CY", "color": 3},
+        {"name": "Yitian Kong", "role": "Dashboard & Messages",                "initials": "YK", "color": 4},
         {"name": "Members", "role": "Collaboration Board",      "initials": "MS", "color": 5},
     ]
     return render_template(

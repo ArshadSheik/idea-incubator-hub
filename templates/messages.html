@@ -1,0 +1,181 @@
+{% extends "base.html" %}
+{% block title %}Messages — Idea Incubator Hub{% endblock %}
+{% block page_name %}messages{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/messages.css') }}">
+{% endblock %}
+
+{% block content %}
+<section class="messages-shell">
+  <aside class="messages-sidebar">
+    <div class="messages-sidebar-top">
+      <h1>Messages</h1>
+      <a href="{{ url_for('messages.inbox') }}#people-search" class="btn btn-brand btn-sm">
+        <i class="bi bi-pencil-square"></i> New
+      </a>
+    </div>
+
+    <form method="GET" action="{{ url_for('messages.inbox') }}" class="messages-search-form">
+      <div class="messages-search">
+        <i class="bi bi-search"></i>
+        <input
+          id="people-search"
+          type="text"
+          name="q"
+          value="{{ search_query }}"
+          placeholder="Search people..."
+        >
+      </div>
+    </form>
+
+    {% if search_query %}
+      <div class="messages-section-label">Search results</div>
+      <div class="conversation-list">
+        {% if search_results %}
+          {% for user in search_results %}
+            <a href="{{ url_for('messages.inbox', username=user.username) }}" class="conversation-item {% if selected_user and selected_user.id == user.id %}active{% endif %}">
+              <span class="avatar avatar-{{ user.avatar_color }}">{{ user.initials }}</span>
+              <div class="conversation-main">
+                <strong>{{ user.display_name }}</strong>
+                <p>@{{ user.username }}</p>
+              </div>
+              {% if current_user.follows(user) %}
+                <span class="conversation-pill ok">Can message</span>
+              {% else %}
+                <span class="conversation-pill muted">Follow to message</span>
+              {% endif %}
+            </a>
+          {% endfor %}
+        {% else %}
+          <div class="messages-empty-mini">
+            No users found.
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+
+    <div class="messages-section-label">Conversations</div>
+
+    <div class="conversation-list">
+      {% if conversations %}
+        {% for item in conversations %}
+          <a href="{{ url_for('messages.inbox', username=item.user.username) }}" class="conversation-item {% if selected_user and selected_user.id == item.user.id %}active{% endif %}">
+            <span class="avatar avatar-{{ item.user.avatar_color }}">{{ item.user.initials }}</span>
+
+            <div class="conversation-main">
+              <div class="conversation-top">
+                <strong>{{ item.user.display_name }}</strong>
+                <small>{{ item.latest_message.created_at.strftime('%b %d') }}</small>
+              </div>
+              <p>
+                {% if item.latest_message.sender_id == current_user.id %}
+                  You:
+                {% endif %}
+                {{ item.latest_message.body }}
+              </p>
+            </div>
+
+            {% if item.unread_count > 0 %}
+              <span class="unread-badge">{{ item.unread_count }}</span>
+            {% endif %}
+          </a>
+        {% endfor %}
+      {% else %}
+        <div class="messages-empty-mini">
+          <i class="bi bi-chat-dots"></i>
+          <p>No conversations yet.<br>Start one below!</p>
+        </div>
+      {% endif %}
+    </div>
+  </aside>
+
+  <main class="messages-main">
+    {% if selected_user %}
+      <div class="thread-header">
+        <div class="thread-user">
+          <span class="avatar avatar-{{ selected_user.avatar_color }}">{{ selected_user.initials }}</span>
+          <div>
+            <h2>{{ selected_user.display_name }}</h2>
+            <p>@{{ selected_user.username }}</p>
+          </div>
+        </div>
+
+        <a href="{{ url_for('main.profile', username=selected_user.username) }}" class="btn btn-outline-iih btn-sm">
+          View profile
+        </a>
+      </div>
+
+      <div class="message-thread">
+        {% if thread_messages %}
+          {% for message in thread_messages %}
+            <div class="message-row {% if message.sender_id == current_user.id %}message-row-out{% else %}message-row-in{% endif %}">
+              <div class="message-bubble">
+                <p>{{ message.body }}</p>
+                <small>{{ message.created_at.strftime('%b %d, %H:%M') }}</small>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <div class="thread-empty">
+            <i class="bi bi-chat-left-text"></i>
+            <p>No messages yet. Start the conversation.</p>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if can_message %}
+        <form method="POST" class="message-form">
+          {{ form.hidden_tag() }}
+          {{ form.body(class="form-control-iih", rows="2", placeholder="Write a message...") }}
+          <button type="submit" class="btn btn-brand">
+            <i class="bi bi-send"></i> Send
+          </button>
+        </form>
+      {% else %}
+        <div class="message-lock-state">
+          <div class="lock-card">
+            <div class="lock-icon-wrap">
+              <div class="blob blob-1"></div>
+              <div class="blob blob-2"></div>
+              <div class="blob blob-3"></div>
+              <div class="lock-icon">
+                <i class="bi bi-lock-fill"></i>
+              </div>
+            </div>
+
+            <h3>Follow to message</h3>
+            <p>
+              You need to follow <strong>{{ selected_user.display_name }}</strong>
+              before sending a direct message.
+            </p>
+
+            <form method="post" action="{{ url_for('main.profile_toggle_follow', username=selected_user.username) }}">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="btn btn-brand">
+                <i class="bi bi-person-plus"></i> Follow {{ selected_user.display_name }}
+              </button>
+            </form>
+          </div>
+        </div>
+      {% endif %}
+
+    {% else %}
+      <div class="messages-empty-state">
+        <div class="hero-illustration">
+          <div class="hero-bubble">
+            <i class="bi bi-chat-heart-fill"></i>
+          </div>
+          <span class="float-dot dot-1"></span>
+          <span class="float-dot dot-2"></span>
+          <span class="float-dot dot-3"></span>
+          <span class="float-dot dot-4"></span>
+        </div>
+
+        <h2>Select a conversation</h2>
+        <p>Choose someone from the left, or start a new chat.</p>
+      </div>
+    {% endif %}
+  </main>
+</section>
+{% endblock %}
