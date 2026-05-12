@@ -40,7 +40,7 @@
                 <strong>{{ user.display_name }}</strong>
                 <p>@{{ user.username }}</p>
               </div>
-              {% if current_user.is_following(user) %}
+              {% if current_user.follows(user) %}
                 <span class="conversation-pill ok">Can message</span>
               {% else %}
                 <span class="conversation-pill muted">Follow to message</span>

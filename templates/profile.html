@@ -54,7 +54,7 @@
         </a>
         {% else %}
         <div class="d-flex gap-2 align-items-center mt-3 flex-wrap">
-          <a href="{{ url_for('messages.thread', username=profile_user.username) }}" class="btn btn-brand btn-sm">
+          <a href="{{ url_for('messages.inbox', username=profile_user.username) }}" class="btn btn-brand btn-sm">
             <i class="bi bi-chat-dots"></i> Message
           </a>
 
