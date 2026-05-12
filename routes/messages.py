@@ -108,8 +108,7 @@ def inbox(username):
             flash("You cannot message yourself.", "info")
             return redirect(url_for("messages.inbox"))
 
-        # 如果你们项目里已经有 is_following，用那个更好
-        can_message = current_user.is_following(selected_user)
+        can_message = current_user.follows(selected_user)
 
         thread_messages = (
             DirectMessage.query
@@ -129,14 +128,12 @@ def inbox(username):
             .all()
         )
 
-        # 打开 thread 时，把对方发来的私信标记已读
         DirectMessage.query.filter_by(
             sender_id=selected_user.id,
             recipient_id=current_user.id,
             is_read=False,
         ).update({"is_read": True})
 
-        # 同时把对应 message 通知标记已读
         Notification.query.filter_by(
             user_id=current_user.id,
             type="message",
@@ -146,13 +143,12 @@ def inbox(username):
 
         db.session.commit()
 
-    # 发送 message
     if request.method == "POST":
         if not selected_user:
             flash("Please select a user first.", "warning")
             return redirect(url_for("messages.inbox"))
 
-        if not current_user.is_following(selected_user):
+        if not current_user.follows(selected_user):
             flash("Follow this user to send messages.", "warning")
             return redirect(url_for("messages.inbox", username=selected_user.username))
 
