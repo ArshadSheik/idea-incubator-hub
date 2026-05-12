@@ -1,16 +1,14 @@
-from flask import Blueprint, flash, redirect, render_template, url_for
+from flask import Blueprint, flash, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import and_, or_
 
 from forms import MessageForm
-from models.models import DirectMessage, User, db, Notification
+from models.models import DirectMessage, Notification, User, db
 
 messages_bp = Blueprint("messages", __name__, url_prefix="/messages")
 
 
-@messages_bp.route("/")
-@login_required
-def inbox():
+def _build_conversations():
     messages = (
         DirectMessage.query
         .filter(
@@ -66,70 +64,127 @@ def inbox():
             }
         )
 
-    return render_template("messages_inbox.html", conversations=conversations)
+    return conversations
 
 
-@messages_bp.route("/<username>", methods=["GET", "POST"])
-@login_required
-def thread(username):
-    other_user = User.query.filter_by(username=username).first_or_404()
+def _search_people(query):
+    if not query:
+        return []
 
-    if other_user.id == current_user.id:
-        flash("You cannot message yourself.", "info")
-        return redirect(url_for("messages.inbox"))
-
-    form = MessageForm()
-
-    if form.validate_on_submit():
-        body = form.body.data.strip()
-        
-        message = DirectMessage(
-        sender_id=current_user.id,
-        recipient_id=other_user.id,
-        body=body,
-        )
-        db.session.add(message)
-        
-        notification = Notification(
-        user_id=other_user.id,
-        type="message",
-        message=f"{current_user.display_name} sent you a new message.",
-        link=url_for("messages.thread", username=current_user.username),
-        )
-        db.session.add(notification)
-        
-        db.session.commit()
-        return redirect(url_for("messages.thread", username=other_user.username))
-
-    DirectMessage.query.filter_by(
-        sender_id=other_user.id,
-        recipient_id=current_user.id,
-        is_read=False,
-    ).update({"is_read": True})
-
-    db.session.commit()
-
-    thread_messages = (
-        DirectMessage.query
+    q = f"%{query}%"
+    return (
+        User.query
         .filter(
+            User.id != current_user.id,
             or_(
-                and_(
-                    DirectMessage.sender_id == current_user.id,
-                    DirectMessage.recipient_id == other_user.id,
-                ),
-                and_(
-                    DirectMessage.sender_id == other_user.id,
-                    DirectMessage.recipient_id == current_user.id,
-                ),
+                User.username.ilike(q),
+                User.first_name.ilike(q),
+                User.last_name.ilike(q),
             )
         )
-        .order_by(DirectMessage.created_at.asc())
+        .limit(8)
         .all()
     )
 
+
+@messages_bp.route("/", defaults={"username": None}, methods=["GET"])
+@messages_bp.route("/<username>", methods=["GET", "POST"])
+@login_required
+def inbox(username):
+    form = MessageForm()
+    search_query = request.args.get("q", "").strip()
+
+    conversations = _build_conversations()
+    search_results = _search_people(search_query)
+
+    selected_user = None
+    thread_messages = []
+    can_message = False
+
+    if username:
+        selected_user = User.query.filter_by(username=username).first_or_404()
+
+        if selected_user.id == current_user.id:
+            flash("You cannot message yourself.", "info")
+            return redirect(url_for("messages.inbox"))
+
+        # 如果你们项目里已经有 is_following，用那个更好
+        can_message = current_user.is_following(selected_user)
+
+        thread_messages = (
+            DirectMessage.query
+            .filter(
+                or_(
+                    and_(
+                        DirectMessage.sender_id == current_user.id,
+                        DirectMessage.recipient_id == selected_user.id,
+                    ),
+                    and_(
+                        DirectMessage.sender_id == selected_user.id,
+                        DirectMessage.recipient_id == current_user.id,
+                    ),
+                )
+            )
+            .order_by(DirectMessage.created_at.asc())
+            .all()
+        )
+
+        # 打开 thread 时，把对方发来的私信标记已读
+        DirectMessage.query.filter_by(
+            sender_id=selected_user.id,
+            recipient_id=current_user.id,
+            is_read=False,
+        ).update({"is_read": True})
+
+        # 同时把对应 message 通知标记已读
+        Notification.query.filter_by(
+            user_id=current_user.id,
+            type="message",
+            link=url_for("messages.inbox", username=selected_user.username),
+            is_read=False,
+        ).update({"is_read": True}, synchronize_session=False)
+
+        db.session.commit()
+
+    # 发送 message
+    if request.method == "POST":
+        if not selected_user:
+            flash("Please select a user first.", "warning")
+            return redirect(url_for("messages.inbox"))
+
+        if not current_user.is_following(selected_user):
+            flash("Follow this user to send messages.", "warning")
+            return redirect(url_for("messages.inbox", username=selected_user.username))
+
+        if form.validate_on_submit():
+            body = form.body.data.strip()
+
+            message = DirectMessage(
+                sender_id=current_user.id,
+                recipient_id=selected_user.id,
+                body=body,
+            )
+            db.session.add(message)
+
+            notification = Notification(
+                user_id=selected_user.id,
+                type="message",
+                message=f"{current_user.display_name} sent you a new message.",
+                link=url_for("messages.inbox", username=current_user.username),
+            )
+            db.session.add(notification)
+
+            db.session.commit()
+
+            return redirect(url_for("messages.inbox", username=selected_user.username))
+
     return render_template(
-        "messages_thread.html",
-        other_user=other_user,
-        messages=thread_messages,
+        "messages.html",
+        conversations=conversations,
+        search_results=search_results,
+        search_query=search_query,
+        selected_user=selected_user,
+        thread_messages=thread_messages,
+        can_message=can_message,
         form=form,
     )
