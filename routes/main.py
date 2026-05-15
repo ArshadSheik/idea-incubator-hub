@@ -747,6 +747,9 @@ def index():
     total_ideas    = Idea.query.filter_by(privacy='public').count()
     total_users    = User.query.count()
     total_comments = Comment.query.count()
+    total_votes    = Vote.query.count()
+    total_collabs  = Collaboration.query.count()
+    launched_count = Idea.query.filter_by(stage='launched', privacy='public').count()
 
     return render_template(
         "index.html",
@@ -754,6 +757,9 @@ def index():
         total_ideas=total_ideas,
         total_users=total_users,
         total_comments=total_comments,
+        total_votes=total_votes,
+        total_collabs=total_collabs,
+        launched_count=launched_count,
     )
 
 

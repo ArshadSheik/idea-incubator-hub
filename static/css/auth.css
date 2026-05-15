@@ -376,6 +376,12 @@
   animation-delay: 1.5s;
 } */
 
+/* ─── Dark mode overrides ─── */
+[data-theme="dark"] .auth-body { background: var(--paper); }
+[data-theme="dark"] .auth-form-side { background: rgba(16,16,28,0.98); }
+[data-theme="dark"] .social-btn:hover { background: rgba(255,255,255,0.06) !important; }
+[data-theme="dark"] .strength-bar { background: rgba(255,255,255,0.10); }
+
 /* ─── Responsive ─── */
 @media (max-width: 991px) {
   .auth-split { grid-template-columns: 1fr; }

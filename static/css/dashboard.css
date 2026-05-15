@@ -535,6 +535,48 @@
   border-color: var(--ink-200);
 }
 
+/* ─── Dark mode overrides ─── */
+[data-theme="dark"] .stat-card,
+[data-theme="dark"] .dash-section,
+[data-theme="dark"] .sidebar-card,
+[data-theme="dark"] .dashboard-card,
+[data-theme="dark"] .my-idea-card {
+  background: rgba(16,16,28,0.90);
+  border-color: rgba(255,255,255,0.07);
+}
+[data-theme="dark"] .my-idea-card:hover {
+  background: rgba(255,255,255,0.04);
+  border-color: var(--brand-primary);
+}
+[data-theme="dark"] .dash-tabs { background: rgba(255,255,255,0.06); }
+[data-theme="dark"] .dash-tab { color: var(--ink-500); }
+[data-theme="dark"] .dash-tab.active {
+  background: rgba(255,255,255,0.08);
+  color: var(--ink-900);
+}
+[data-theme="dark"] .dash-tab span { background: rgba(255,255,255,0.10); color: var(--ink-600); }
+[data-theme="dark"] .quick-action:hover { background: rgba(255,255,255,0.05); }
+[data-theme="dark"] .bg-yellow-light { background: rgba(255,214,58,0.15); }
+/* Digest card sub-text — always on a dark card, visible in both modes */
+.digest-sub-text { color: rgba(255,255,255,0.60); }
+
+[data-theme="dark"] .digest-card {
+  background: linear-gradient(135deg, #0E0E1C 0%, #1a1040 100%);
+  border: 1px solid rgba(255,255,255,0.07);
+}
+[data-theme="dark"] .smart-coach-card {
+  background:
+    radial-gradient(circle at top right, rgba(255,90,31,0.18), transparent 32%),
+    rgba(16,16,28,0.90);
+  border-color: rgba(255,90,31,0.22);
+}
+[data-theme="dark"] .smart-coach-api-box {
+  background: rgba(255,90,31,0.10);
+  border-color: rgba(255,90,31,0.20);
+}
+[data-theme="dark"] .activity-feed::before { background: rgba(255,255,255,0.08); }
+[data-theme="dark"] .activity-icon { border-color: var(--paper); }
+
 @media (max-width: 767px) {
   .dashboard-hero { padding: 1.75rem 0 1rem; }
   .dash-section { padding: 1.25rem; }

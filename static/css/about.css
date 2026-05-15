@@ -278,6 +278,27 @@
   margin-bottom: 1.4rem;
 }
 
+/* ─── Dark mode overrides ─── */
+[data-theme="dark"] .about-hero {
+  background:
+    radial-gradient(circle at top right, rgba(255,90,31,0.14), transparent 30%),
+    var(--paper);
+}
+[data-theme="dark"] .about-ai-card,
+[data-theme="dark"] .about-stat-card,
+[data-theme="dark"] .about-feature-card,
+[data-theme="dark"] .about-smart-card,
+[data-theme="dark"] .about-feature-list,
+[data-theme="dark"] .team-card {
+  background: rgba(16,16,28,0.90);
+  border-color: rgba(255,255,255,0.07);
+}
+[data-theme="dark"] .about-cta {
+  background:
+    radial-gradient(circle at top right, rgba(255,90,31,0.18), transparent 30%),
+    #0a0a14;
+}
+
 @media (max-width: 900px) {
   .about-hero-grid,
   .about-smart-grid {
