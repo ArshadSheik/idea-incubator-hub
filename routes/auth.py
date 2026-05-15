@@ -4,7 +4,7 @@ from urllib.parse import urljoin, urlparse
 from flask_dance.contrib.google import google
 from flask import Blueprint, flash, redirect, render_template, request, url_for,current_app
 from flask_login import current_user, login_required, login_user, logout_user
-from flask_mail import Mail, Message
+from flask_mail import Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from werkzeug.security import generate_password_hash
 
@@ -134,6 +134,50 @@ def verify_reset_token(token: str, max_age: int = 3600):
         return None
     return email
 
+
+def _mail_sender():
+    return current_app.config.get('MAIL_DEFAULT_SENDER') or current_app.config.get('MAIL_USERNAME')
+
+
+def _mail_configured():
+    return bool(
+        current_app.config.get('MAIL_USERNAME')
+        and current_app.config.get('MAIL_PASSWORD')
+        and _mail_sender()
+    )
+
+
+def _send_password_reset_email(user: User, reset_url: str) -> None:
+    from app import mail
+
+    body = f"""Hi {user.first_name},
+
+You requested a password reset. Click the link below to set a new password:
+
+{reset_url}
+
+This link expires in 1 hour. If you didn't request this, you can safely ignore this email.
+
+— Idea Incubator Hub
+"""
+    if not _mail_configured():
+        if current_app.debug:
+            current_app.logger.info('MAIL not configured (dev skips email; user redirected to reset form).')
+        else:
+            current_app.logger.error(
+                'Password reset requested but mail is not configured (set MAIL_USERNAME and MAIL_PASSWORD).'
+            )
+        return
+
+    msg = Message(
+        subject='Reset your Idea Incubator password',
+        recipients=[user.email],
+        sender=_mail_sender(),
+        body=body,
+    )
+    mail.send(msg)
+
+
 # ─────────────────────────────────────────
 # Step 1：input email , send reset mail
 # ─────────────────────────────────────────
@@ -148,26 +192,17 @@ def forgot_password():
 
         if user:
             token = generate_reset_token(user.email)
+            # Local dev without SMTP: go straight to the reset form (no terminal copy-paste)
+            if current_app.debug and not _mail_configured():
+                return redirect(url_for("auth.reset_password", token=token))
             reset_url = url_for("auth.reset_password", token=token, _external=True)
+            _send_password_reset_email(user, reset_url)
+            flash("If that email is registered, you'll receive a reset link shortly.")
+        elif current_app.debug:
+            flash("No account with that email. Use the address you registered with.")
+        else:
+            flash("If that email is registered, you'll receive a reset link shortly.")
 
-            from app import mail
-            msg = Message(
-                subject="Reset your Idea Incubator password",
-                recipients=[user.email],
-            )
-            msg.body = f"""Hi {user.first_name},
-
-You requested a password reset. Click the link below to set a new password:
-
-{reset_url}
-
-This link expires in 1 hour. If you didn't request this, you can safely ignore this email.
-
-— Idea Incubator Hub
-"""
-            mail.send(msg)
-
-        flash("If that email is registered, you'll receive a reset link shortly.")
         return redirect(url_for("auth.forgot_password"))
 
     return render_template("forgot_password.html")
