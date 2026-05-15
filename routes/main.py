@@ -1005,6 +1005,7 @@ def toggle_idea_collaboration(idea_id: int):
         return jsonify({
             "ok": True,
             "state": "none",
+            "collaborating": False,
             "collaborators_total": idea.collaborator_count,
             "collaborators": _get_collab_data(idea),
         })
@@ -1034,6 +1035,7 @@ def toggle_idea_collaboration(idea_id: int):
     return jsonify({
         "ok": True,
         "state": "pending",
+        "collaborating": True,
         "collaborators_total": idea.collaborator_count,
         "collaborators": _get_collab_data(idea),
     })

@@ -32,7 +32,7 @@ Built for **CITS3403 / CITS5505 — Agile Web Development** at the University of
 
 #### 1. Clone the repo
 ```bash
-git clone https://github.com/<your-org>/idea-incubator-hub.git
+git clone https://github.com/ArshadSheik/idea-incubator-hub.git
 cd idea-incubator-hub
 ```
 
@@ -42,7 +42,11 @@ pip install -r requirements.txt
 ```
 
 #### 3. Create your `.env` file
-Add `SECRET_KEY`, `DATABASE_URL`, `FLASK_APP`, and `FLASK_ENV` in the project root. Generate a secret key with:
+Copy the provided template and fill in your values:
+```bash
+cp .env.example .env
+```
+Then open `.env` and set at minimum `SECRET_KEY` (generate one with the command below) and confirm the other defaults suit your setup:
 ```bash
 python -c "import secrets; print(secrets.token_hex(32))"
 ```
@@ -77,10 +81,26 @@ The app is available at **http://127.0.0.1:5000**. Log in as `jamie` / `password
 
 ## How to run the tests
 
-Tests are added incrementally as features land. To run whatever is currently in `tests/`:
+### Unit tests (no browser required)
 ```bash
-python -m pytest tests/ -v
+python -m pytest tests/test_models.py tests/test_routes.py -v
 ```
+
+### Selenium end-to-end tests
+These drive a real headless Chrome browser. `webdriver-manager` downloads ChromeDriver automatically — no manual install needed.
+
+```bash
+# Terminal 1 — start the app on port 5001
+python run.py
+
+# Terminal 2 — run Selenium tests
+python -m pytest tests/test_selenium.py -v
+```
+
+> If you just want a quick sanity check without the browser tests:
+> ```bash
+> python -m pytest tests/test_models.py tests/test_routes.py -v
+> ```
 
 ---
 
