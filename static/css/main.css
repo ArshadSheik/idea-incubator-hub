@@ -342,12 +342,12 @@ a:hover { color: var(--brand-primary-dark); }
   box-shadow: var(--shadow-md);
 }
 .btn-brand {
-  background: var(--brand-primary);
+  background: linear-gradient(135deg, #FF5A1F 0%, #FF4D8F 100%);
   color: white;
-  border-color: var(--brand-primary);
+  border-color: transparent;
 }
 .btn-brand:hover {
-  background: var(--brand-primary-dark);
+  background: linear-gradient(135deg, #e04a12 0%, #e63d7a 100%);
   color: white;
   transform: translateY(-2px) scale(1.02);
   box-shadow: var(--shadow-brand);
@@ -356,13 +356,13 @@ a:hover { color: var(--brand-primary-dark); }
   transform: translateY(1px) scale(0.99);
 }
 .btn-outline-iih {
-  background: var(--paper);
+  background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%);
   color: var(--ink-800);
-  border-color: var(--ink-200);
+  border-color: rgba(91,63,255,0.20);
 }
 .btn-outline-iih:hover {
-  background: var(--ink-50);
-  border-color: var(--ink-300);
+  background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);
+  border-color: rgba(91,63,255,0.35);
   color: var(--ink-900);
 }
 .btn-ghost {
