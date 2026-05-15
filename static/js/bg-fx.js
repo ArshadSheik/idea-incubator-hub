@@ -78,12 +78,7 @@
       this.r  = tier === 1 ? 4.5 : tier === 2 ? 2.2 : 1.1;
       this.c  = tier === 1 ? C.orange : tier === 2 ? C.violet
                            : (Math.random() < 0.5 ? C.mint : C.blue);
-      /* hub pulse state */
-      this.pulseR     = 0;
-      this.pulseAlpha = 0;
-      this.pulseNext  = 240 + Math.floor(Math.random() * 300);
-      /* flare when a packet arrives */
-      this.flare      = 0;
+      /* (pulse/flare removed — smooth glow only) */
     }
 
     update () {
@@ -101,48 +96,15 @@
       if (this.x > W - m) this.vx -= 0.025;
       if (this.y < m)     this.vy += 0.025;
       if (this.y > H - m) this.vy -= 0.025;
-      /* hub pulse countdown */
-      if (this.tier === 1) {
-        this.pulseNext--;
-        if (this.pulseNext <= 0) {
-          this.pulseR     = 0;
-          this.pulseAlpha = 1;
-          this.pulseNext  = 300 + Math.floor(Math.random() * 360);
-        }
-        if (this.pulseAlpha > 0) {
-          this.pulseR     += 1.2;
-          this.pulseAlpha *= 0.975;
-          if (this.pulseAlpha < 0.01) { this.pulseAlpha = 0; this.pulseR = 0; }
-        }
-      }
-      if (this.flare > 0) this.flare *= 0.88;
     }
 
     draw (alpha, dark) {
       const { r, g, b } = this.c;
 
-      /* hub pulse ring */
-      if (this.tier === 1 && this.pulseAlpha > 0.01) {
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.pulseR, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(${r},${g},${b},${this.pulseAlpha * alpha * 0.55})`;
-        ctx.lineWidth   = 1.4;
-        ctx.stroke();
-        /* second ring slightly behind */
-        if (this.pulseR > 14) {
-          ctx.beginPath();
-          ctx.arc(this.x, this.y, this.pulseR - 14, 0, Math.PI * 2);
-          ctx.strokeStyle = `rgba(${r},${g},${b},${this.pulseAlpha * alpha * 0.25})`;
-          ctx.lineWidth   = 0.7;
-          ctx.stroke();
-        }
-      }
-
-      /* glow halo — bigger on hub / when flaring */
-      const glowMult = 1 + this.flare * 2.5;
-      const gr       = this.r * (this.tier === 1 ? 9 : this.tier === 2 ? 7 : 5) * glowMult;
-      const grd      = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, gr);
-      const coreA    = alpha * (this.tier === 1 ? 0.55 : 0.38) * glowMult;
+      /* smooth glow halo */
+      const gr  = this.r * (this.tier === 1 ? 9 : this.tier === 2 ? 7 : 5);
+      const grd = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, gr);
+      const coreA = alpha * (this.tier === 1 ? 0.55 : 0.38);
       grd.addColorStop(0, `rgba(${r},${g},${b},${Math.min(1, coreA)})`);
       grd.addColorStop(1, `rgba(${r},${g},${b},0)`);
       ctx.beginPath();
@@ -152,7 +114,7 @@
 
       /* sharp core dot */
       ctx.beginPath();
-      ctx.arc(this.x, this.y, this.r * glowMult, 0, Math.PI * 2);
+      ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(${r},${g},${b},${Math.min(1, alpha)})`;
       ctx.fill();
     }
@@ -184,7 +146,7 @@
       this.trail.push({ x: p.x, y: p.y });
       if (this.trail.length > 16) this.trail.shift();
       this.t += this.speed;
-      if (this.done) this.b.flare = 1.0;   // flare the destination
+      // arrival — no flare
     }
 
     draw (alpha) {
