@@ -478,6 +478,54 @@
 .wiki-readmore { font-size: 0.75rem; color: var(--brand-600, #4f46e5); text-decoration: none; display: block; margin-top: 0.5rem; }
 .wiki-readmore:hover { text-decoration: underline; }
 
+/* ─── Dark mode overrides ─── */
+[data-theme="dark"] .idea-header-card,
+[data-theme="dark"] .idea-section,
+[data-theme="dark"] .vote-bar,
+[data-theme="dark"] .related-idea-item,
+[data-theme="dark"] .timeline-step {
+  background: rgba(16,16,28,0.90);
+  border-color: rgba(255,255,255,0.07);
+}
+[data-theme="dark"] .identity-bar {
+  background:
+    radial-gradient(120% 120% at 0% 0%, rgba(91,63,255,0.18), transparent 50%),
+    radial-gradient(120% 120% at 100% 100%, rgba(0,217,163,0.12), transparent 58%),
+    rgba(16,16,28,0.90);
+  border-color: rgba(255,255,255,0.10);
+}
+[data-theme="dark"] .comment-composer {
+  background: rgba(255,255,255,0.04);
+  border-color: rgba(255,255,255,0.08);
+}
+[data-theme="dark"] .comment-action:hover { background: rgba(255,255,255,0.06); }
+[data-theme="dark"] .vote-btn-secondary.pending { background: rgba(251,191,36,0.10); }
+[data-theme="dark"] .score-bar { background: rgba(255,255,255,0.10); }
+[data-theme="dark"] .timeline-step-active {
+  background: rgba(255,90,31,0.10);
+  border-color: rgba(255,90,31,0.30);
+}
+[data-theme="dark"] .share-modal {
+  background: rgba(20,20,36,0.98);
+  color: var(--ink-900);
+}
+[data-theme="dark"] .share-preview,
+[data-theme="dark"] .share-link-input {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.10);
+  color: var(--ink-800);
+}
+[data-theme="dark"] .share-platform-btn {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.10);
+  color: var(--ink-800);
+}
+[data-theme="dark"] .hashtag-hot {
+  background: rgba(251,191,36,0.15);
+  color: #fbbf24;
+}
+[data-theme="dark"] .hashtag-bar-track { background: rgba(255,255,255,0.10); }
+
 @media (max-width: 767px) {
   .idea-header-card,
   .idea-section { padding: 1.25rem; }

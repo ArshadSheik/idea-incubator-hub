@@ -256,7 +256,7 @@
             <span class="digest-icon">🔥</span>
             <h4 class="sidebar-title mb-0">This week's digest</h4>
           </div>
-          <p class="small mb-3" style="color: var(--ink-300);">Top 3 trending ideas the community is obsessed with.</p>
+          <p class="small mb-3 digest-sub-text">Top 3 trending ideas the community is obsessed with.</p>
           {% for idea in weekly_digest %}
           <a href="{{ url_for('main.idea_detail', idea_id=idea.id) }}" class="digest-item">
             <span class="digest-rank">{{ loop.index }}</span>

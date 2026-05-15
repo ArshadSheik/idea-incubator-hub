@@ -4,6 +4,33 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/messages.css') }}">
+<style>
+/* Live search results panel */
+#live-search-panel { display: none; }
+#live-search-panel.active { display: block; }
+
+.live-search-spinner {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  color: var(--ink-500);
+  font-size: 0.88rem;
+}
+
+.live-search-empty {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  color: var(--ink-500);
+  font-size: 0.88rem;
+}
+
+.live-search-hit .conversation-pill { pointer-events: none; }
+
+/* Highlight the search input ring */
+.messages-search.has-query {
+  border-color: var(--brand-primary);
+  box-shadow: 0 0 0 3px rgba(255,90,31,0.12), 0 8px 22px rgba(16,24,40,0.05);
+}
+</style>
 {% endblock %}
 
 {% block content %}
@@ -29,32 +56,13 @@
       </div>
     </form>
 
-    {% if search_query %}
+    <!-- Live search results (JS-populated, hidden when no query) -->
+    <div id="live-search-panel">
       <div class="messages-section-label">Search results</div>
-      <div class="conversation-list">
-        {% if search_results %}
-          {% for user in search_results %}
-            <a href="{{ url_for('messages.inbox', username=user.username) }}" class="conversation-item {% if selected_user and selected_user.id == user.id %}active{% endif %}">
-              <span class="avatar avatar-{{ user.avatar_color }}">{{ user.initials }}</span>
-              <div class="conversation-main">
-                <strong>{{ user.display_name }}</strong>
-                <p>@{{ user.username }}</p>
-              </div>
-              {% if current_user.follows(user) %}
-                <span class="conversation-pill ok">Can message</span>
-              {% else %}
-                <span class="conversation-pill muted">Follow to message</span>
-              {% endif %}
-            </a>
-          {% endfor %}
-        {% else %}
-          <div class="messages-empty-mini">
-            No users found.
-          </div>
-        {% endif %}
-      </div>
-    {% endif %}
+      <div class="conversation-list" id="live-search-list"></div>
+    </div>
 
+    <div id="conversations-section">
     <div class="messages-section-label">Conversations</div>
 
     <div class="conversation-list">
@@ -88,9 +96,19 @@
         </div>
       {% endif %}
     </div>
+    </div><!-- /conversations-section -->
   </aside>
 
   <main class="messages-main">
+    <!-- Animated aurora background layer -->
+    <div class="msg-aurora" aria-hidden="true">
+      <div class="msg-aurora-blob mab-1"></div>
+      <div class="msg-aurora-blob mab-2"></div>
+      <div class="msg-aurora-blob mab-3"></div>
+    </div>
+    <!-- Particle network overlay canvas -->
+    <canvas id="msgCanvas" aria-hidden="true"></canvas>
+
     {% if selected_user %}
       <div class="thread-header">
         <div class="thread-user">
@@ -162,20 +180,152 @@
 
     {% else %}
       <div class="messages-empty-state">
-        <div class="hero-illustration">
-          <div class="hero-bubble">
+        <!-- Orbital scene -->
+        <div class="empty-orbit-scene">
+          <div class="empty-aura"></div>
+
+          <!-- Outer ring -->
+          <div class="empty-ring-2">
+            <span class="empty-orb orb-2a"></span>
+            <span class="empty-orb orb-2b"></span>
+            <span class="empty-orb orb-2c"></span>
+          </div>
+
+          <!-- Inner ring -->
+          <div class="empty-ring-1">
+            <span class="empty-orb orb-1a"></span>
+            <span class="empty-orb orb-1b"></span>
+          </div>
+
+          <!-- Central hub -->
+          <div class="empty-core">
             <i class="bi bi-chat-heart-fill"></i>
           </div>
-          <span class="float-dot dot-1"></span>
-          <span class="float-dot dot-2"></span>
-          <span class="float-dot dot-3"></span>
-          <span class="float-dot dot-4"></span>
+
+          <!-- Floating mini bubbles -->
+          <div class="empty-float ef-1"><i class="bi bi-chat-text-fill"></i></div>
+          <div class="empty-float ef-2"><i class="bi bi-send-fill"></i></div>
+          <div class="empty-float ef-3"><i class="bi bi-emoji-smile-fill"></i></div>
+          <div class="empty-float ef-4"><i class="bi bi-chat-dots-fill"></i></div>
         </div>
 
-        <h2>Select a conversation</h2>
-        <p>Choose someone from the left, or start a new chat.</p>
+        <h2 class="empty-heading">Select a conversation</h2>
+        <p class="empty-sub">Choose someone from the left, or start a new chat with someone you follow.</p>
+        <a href="{{ url_for('messages.inbox') }}#people-search" class="btn btn-brand empty-cta-btn">
+          <i class="bi bi-pencil-square"></i> Start a chat
+        </a>
       </div>
     {% endif %}
   </main>
 </section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+(function () {
+  var searchInput    = document.getElementById('people-search');
+  var livePanel      = document.getElementById('live-search-panel');
+  var liveList       = document.getElementById('live-search-list');
+  var convoSection   = document.getElementById('conversations-section');
+  var searchWrap     = searchInput ? searchInput.closest('.messages-search') : null;
+  var debounceTimer  = null;
+  var SEARCH_URL     = '{{ url_for("messages.search_users") }}';
+
+  /* ── Avatar colour map (matches server-side palette) ── */
+  var AVATAR_COLORS = {
+    blue:'#3B82F6', violet:'#7C3AED', orange:'#F97316', green:'#10B981',
+    pink:'#EC4899', red:'#EF4444', teal:'#14B8A6', yellow:'#F59E0B',
+    indigo:'#6366F1', sky:'#0EA5E9', lime:'#84CC16', rose:'#F43F5E'
+  };
+
+  function avatarStyle(color) {
+    var bg = AVATAR_COLORS[color] || '#6366F1';
+    return 'background:' + bg + ';';
+  }
+
+  /* ── Render one search result as a conversation-item ── */
+  function renderUser(u) {
+    var pillHtml = u.can_message
+      ? '<span class="conversation-pill ok">Can message</span>'
+      : '<span class="conversation-pill muted">Follow first</span>';
+
+    return '<a href="/messages/' + u.username + '" class="conversation-item live-search-hit">'
+      + '<span class="avatar" style="' + avatarStyle(u.avatar_color) + 'color:#fff;width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:.85rem;flex-shrink:0;">'
+      + u.initials + '</span>'
+      + '<div class="conversation-main">'
+      + '<strong>' + u.display_name + '</strong>'
+      + '<p>@' + u.username + '</p>'
+      + '</div>'
+      + pillHtml
+      + '</a>';
+  }
+
+  /* ── Run the live search ── */
+  function doSearch(q) {
+    if (!q) {
+      livePanel.classList.remove('active');
+      convoSection.style.display = '';
+      if (searchWrap) searchWrap.classList.remove('has-query');
+      return;
+    }
+
+    if (searchWrap) searchWrap.classList.add('has-query');
+    livePanel.classList.add('active');
+    convoSection.style.display = 'none';
+    liveList.innerHTML = '<div class="live-search-spinner"><i class="bi bi-arrow-repeat"></i> Searching…</div>';
+
+    fetch(SEARCH_URL + '?q=' + encodeURIComponent(q))
+      .then(function (r) { return r.json(); })
+      .then(function (users) {
+        if (users.length === 0) {
+          liveList.innerHTML = '<div class="live-search-empty">No people found for "<strong>' + q + '</strong>"</div>';
+        } else {
+          liveList.innerHTML = users.map(renderUser).join('');
+        }
+      })
+      .catch(function () {
+        liveList.innerHTML = '<div class="live-search-empty">Search failed — try again.</div>';
+      });
+  }
+
+  /* ── Debounced input handler ── */
+  if (searchInput) {
+    searchInput.addEventListener('input', function () {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(function () {
+        doSearch(searchInput.value.trim());
+      }, 280);
+    });
+
+    /* Clear live search on Escape */
+    searchInput.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        searchInput.value = '';
+        doSearch('');
+        searchInput.blur();
+      }
+    });
+  }
+
+  /* ── "New" + "Start a chat" buttons — focus search ── */
+  function focusSearch(e) {
+    if (!searchInput) return;
+    e.preventDefault();
+    var sidebar = document.querySelector('.messages-sidebar');
+    if (sidebar) sidebar.scrollTo({ top: 0, behavior: 'smooth' });
+    setTimeout(function () { searchInput.focus(); searchInput.select(); }, 180);
+    if (searchWrap) {
+      searchWrap.classList.remove('search-highlight');
+      void searchWrap.offsetWidth;
+      searchWrap.classList.add('search-highlight');
+      setTimeout(function () { searchWrap.classList.remove('search-highlight'); }, 1400);
+    }
+  }
+
+  document.querySelectorAll('a[href*="#people-search"]').forEach(function (btn) {
+    btn.addEventListener('click', focusSearch);
+  });
+})();
+</script>
+<script src="{{ url_for('static', filename='js/msg-fx.js') }}" defer></script>
 {% endblock %}

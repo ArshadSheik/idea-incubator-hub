@@ -697,6 +697,52 @@ a.psc-idea-card__author-name:hover {
   min-height: 120px;
 }
 
+/* ─── Dark mode overrides ─── */
+[data-theme="dark"] .profile-hero {
+  background: linear-gradient(135deg, rgba(91,63,255,0.12) 0%, var(--paper) 100%);
+  border-bottom-color: rgba(255,255,255,0.07);
+}
+[data-theme="dark"] .stat-pill {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.10);
+}
+[data-theme="dark"] .follow-item {
+  background: rgba(16,16,28,0.90);
+  border-color: rgba(255,255,255,0.07);
+}
+[data-theme="dark"] .activity-item,
+[data-theme="dark"] .activity-timeline__card {
+  background: rgba(16,16,28,0.90);
+  border-color: rgba(255,255,255,0.07);
+}
+[data-theme="dark"] .activity-timeline__node {
+  background: rgba(16,16,28,0.90);
+  border-color: rgba(255,255,255,0.12);
+}
+[data-theme="dark"] .activity-timeline__line { background: linear-gradient(to bottom, rgba(255,255,255,0.10), transparent); }
+[data-theme="dark"] .activity-timeline__card::before {
+  background: rgba(16,16,28,0.90);
+  border-color: rgba(255,255,255,0.07);
+}
+[data-theme="dark"] .profile-body--tabs {
+  background:
+    radial-gradient(ellipse 80% 50% at 100% -20%, rgba(91,63,255,0.18), transparent),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(255,90,31,0.12), transparent),
+    var(--paper);
+}
+[data-theme="dark"] .psc-idea-card__panel {
+  background: linear-gradient(155deg, rgba(20,20,36,0.95) 0%, rgba(16,16,28,0.90) 100%);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.3), 0 12px 32px rgba(0,0,0,0.4);
+}
+[data-theme="dark"] .psc-idea-card__footer { border-top-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .psc-collab-card {
+  background: linear-gradient(145deg, rgba(20,20,36,0.95) 0%, rgba(16,16,28,0.90) 100%);
+  border-color: rgba(255,255,255,0.08);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35);
+}
+[data-theme="dark"] .tab-count { background: rgba(255,255,255,0.08); }
+
 @media (max-width: 576px) {
   .psc-collab-card {
     flex-direction: column;

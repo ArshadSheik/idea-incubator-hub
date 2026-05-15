@@ -1,4 +1,4 @@
-from flask import Blueprint, flash, redirect, render_template, request, url_for
+from flask import Blueprint, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
 from sqlalchemy import and_, or_
 
@@ -85,6 +85,24 @@ def _search_people(query):
         .limit(8)
         .all()
     )
+
+
+@messages_bp.route("/search-users")
+@login_required
+def search_users():
+    """Live-search endpoint — returns JSON for as-you-type people search."""
+    q = request.args.get("q", "").strip()
+    users = _search_people(q) if q else []
+    return jsonify([
+        {
+            "username":     u.username,
+            "display_name": u.display_name,
+            "initials":     u.initials,
+            "avatar_color": u.avatar_color,
+            "can_message":  current_user.follows(u),
+        }
+        for u in users
+    ])
 
 
 @messages_bp.route("/", defaults={"username": None}, methods=["GET"])

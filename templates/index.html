@@ -13,6 +13,14 @@
     <div class="hero-bg-grid"></div>
     <div class="hero-bg-blob hero-bg-blob-1"></div>
     <div class="hero-bg-blob hero-bg-blob-2"></div>
+    <div class="hero-bg-blob hero-bg-blob-3"></div>
+    <div class="hero-bg-ring hero-bg-ring-1"></div>
+    <div class="hero-bg-ring hero-bg-ring-2"></div>
+    <div class="hero-bg-ring hero-bg-ring-3"></div>
+    <div class="hero-bg-spark hero-bg-spark-1"></div>
+    <div class="hero-bg-spark hero-bg-spark-2"></div>
+    <div class="hero-bg-spark hero-bg-spark-3"></div>
+    <div class="hero-bg-spark hero-bg-spark-4"></div>
 
     <div class="container-iih position-relative">
       <div class="row align-items-center g-5">
@@ -42,6 +50,11 @@
             <a href="{{ url_for('main.explore') }}" class="btn btn-outline-iih btn-lg-iih">
               <i class="bi bi-compass"></i> Explore ideas 💡
             </a>
+          </div>
+
+          <div class="hero-live-ticker fade-up stagger-4">
+            <span class="live-dot"></span>
+            <span id="ecosystemTicker">🚀 New idea posted: "AI-powered legal assistant"</span>
           </div>
 
           <div class="hero-social-proof fade-up stagger-4">
@@ -127,6 +140,38 @@
         <span>🤝 1,600+ collaborations formed</span>
         <span>🌍 Founders from 47 countries</span>
         <span>⭐ 12,000+ community votes</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ ECOSYSTEM STATS ═══════════ -->
+  <section class="ecosystem-stats">
+    <div class="container-iih">
+      <div class="row g-4 justify-content-center">
+        <div class="col-6 col-md-3" data-scroll-reveal>
+          <div class="eco-stat-card eco-stat-card-1">
+            <div class="eco-stat-value" data-count data-target="{{ total_ideas }}" data-suffix="" data-duration="1600">0</div>
+            <div class="eco-stat-label">Ideas Submitted</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3" data-scroll-reveal>
+          <div class="eco-stat-card eco-stat-card-2">
+            <div class="eco-stat-value" data-count data-target="{{ total_votes }}" data-suffix="" data-duration="1800">0</div>
+            <div class="eco-stat-label">Community Votes</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3" data-scroll-reveal>
+          <div class="eco-stat-card eco-stat-card-3">
+            <div class="eco-stat-value" data-count data-target="{{ total_collabs }}" data-suffix="" data-duration="1500">0</div>
+            <div class="eco-stat-label">Collaborations</div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3" data-scroll-reveal>
+          <div class="eco-stat-card eco-stat-card-4">
+            <div class="eco-stat-value" data-count data-target="{{ launched_count }}" data-suffix="" data-duration="1400">0</div>
+            <div class="eco-stat-label">Ideas Launched</div>
+          </div>
+        </div>
       </div>
     </div>
   </section>
@@ -218,6 +263,112 @@
             </ul>
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════ INVESTOR ACTIVITY FEED ═══════════ -->
+  <section class="investor-feed-section">
+    <div class="container-iih">
+      <div class="row g-4 align-items-start">
+
+        <!-- Activity Feed Panel -->
+        <div class="col-lg-7" data-scroll-reveal>
+          <div class="feed-panel">
+            <div class="feed-panel-header">
+              <span class="feed-panel-title"><i class="bi bi-activity"></i> Live Activity</span>
+              <span class="live-dot"></span>
+            </div>
+            <div class="feed-item">
+              <div class="feed-item-icon feed-icon-join">JL</div>
+              <div class="feed-item-body">
+                <p class="feed-item-text"><strong>Jamie L.</strong> submitted a new idea — <em>"AI-powered legal assistant for SMBs"</em></p>
+                <div class="feed-item-meta"><span class="tag tag-brand">FinTech</span><span>2 minutes ago</span></div>
+              </div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-item-icon feed-icon-collab">MK</div>
+              <div class="feed-item-body">
+                <p class="feed-item-text"><strong>Maya K.</strong> requested to collaborate on <em>"Carbon-negative coffee subscription"</em></p>
+                <div class="feed-item-meta"><span class="tag tag-mint">GreenTech</span><span>11 minutes ago</span></div>
+              </div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-item-icon feed-icon-comment">SR</div>
+              <div class="feed-item-body">
+                <p class="feed-item-text"><strong>Sam R.</strong> left feedback on <em>"Duolingo for musical instruments"</em></p>
+                <div class="feed-item-meta"><span class="tag tag-violet">EdTech</span><span>28 minutes ago</span></div>
+              </div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-item-icon feed-icon-launch">TC</div>
+              <div class="feed-item-body">
+                <p class="feed-item-text"><strong>TuneCoach</strong> marked as <em>Launched</em> 🎉 — 312 upvotes, 4 collaborators</p>
+                <div class="feed-item-meta"><span class="tag tag-mint">Launched</span><span>1 hour ago</span></div>
+              </div>
+            </div>
+            <div class="feed-item">
+              <div class="feed-item-icon feed-icon-vote">AG</div>
+              <div class="feed-item-body">
+                <p class="feed-item-text"><strong>Alex G.</strong> upvoted <em>"FinTech for teens"</em> — now at 200 votes</p>
+                <div class="feed-item-meta"><span class="tag tag-brand">FinTech</span><span>2 hours ago</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Market Pulse Panel -->
+        <div class="col-lg-5" data-scroll-reveal>
+          <div class="market-pulse-panel">
+            <div class="market-pulse-title"><i class="bi bi-bar-chart-fill"></i> Category Pulse</div>
+            <div class="market-pulse-sub">This week's hottest sectors</div>
+            <div class="market-category-list">
+              <div class="market-cat-item">
+                <span class="market-cat-label">FinTech</span>
+                <div class="market-cat-bar-track">
+                  <div class="market-cat-bar-fill" style="width:84%;background:linear-gradient(90deg,#5B3FFF,#FF5A1F)"></div>
+                </div>
+                <span class="market-cat-pct">84%</span>
+              </div>
+              <div class="market-cat-item">
+                <span class="market-cat-label">EdTech</span>
+                <div class="market-cat-bar-track">
+                  <div class="market-cat-bar-fill" style="width:72%;background:linear-gradient(90deg,#7C3AED,#5B3FFF)"></div>
+                </div>
+                <span class="market-cat-pct">72%</span>
+              </div>
+              <div class="market-cat-item">
+                <span class="market-cat-label">GreenTech</span>
+                <div class="market-cat-bar-track">
+                  <div class="market-cat-bar-fill" style="width:67%;background:linear-gradient(90deg,#00D9A3,#00A382)"></div>
+                </div>
+                <span class="market-cat-pct">67%</span>
+              </div>
+              <div class="market-cat-item">
+                <span class="market-cat-label">Health</span>
+                <div class="market-cat-bar-track">
+                  <div class="market-cat-bar-fill" style="width:58%;background:linear-gradient(90deg,#EC4899,#F43F5E)"></div>
+                </div>
+                <span class="market-cat-pct">58%</span>
+              </div>
+              <div class="market-cat-item">
+                <span class="market-cat-label">DevTools</span>
+                <div class="market-cat-bar-track">
+                  <div class="market-cat-bar-fill" style="width:49%;background:linear-gradient(90deg,#3B82F6,#6366F1)"></div>
+                </div>
+                <span class="market-cat-pct">49%</span>
+              </div>
+              <div class="market-cat-item">
+                <span class="market-cat-label">Creator</span>
+                <div class="market-cat-bar-track">
+                  <div class="market-cat-bar-fill" style="width:41%;background:linear-gradient(90deg,#FFD63A,#FF5A1F)"></div>
+                </div>
+                <span class="market-cat-pct">41%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </section>
@@ -398,7 +549,7 @@
         <div class="row align-items-center g-4">
           <div class="col-lg-8">
             <h2 class="mb-3">Your idea isn't going to build itself.</h2>
-            <p class="mb-0 fs-5" style="color: var(--ink-300);">Join {{ total_users }}+ builders turning late-night ideas into real products. Free forever.</p>
+            <p class="mb-0 fs-5 cta-sub-text">Join {{ total_users }}+ builders turning late-night ideas into real products. Free forever.</p>
           </div>
           <div class="col-lg-4 text-lg-end">
             <a href="{{ url_for('auth.register') }}" class="btn btn-brand btn-lg-iih">
