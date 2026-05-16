@@ -297,6 +297,27 @@
 @media (max-width: 576px) {
   .profile-header { flex-direction: column; align-items: center; text-align: center; }
   .profile-stats  { justify-content: center; }
+  .profile-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .profile-tabs::-webkit-scrollbar { display: none; }
+  .profile-tab-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* idea 卡片单列 */
+  .psc-ideas-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* edit profile 按钮全宽 */
+  .profile-actions { flex-direction: column; width: 100%; }
+  .profile-actions .btn { width: 100%; }
+
 }
 
 /* Skill pills */
