@@ -456,11 +456,13 @@
   color: var(--ink-600);
 }
 .collab-item .avatar {
+  color: #fff !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   line-height: 1;
+  font-weight: 600;
 }
 .sidebar-card .btn {
   margin-top: 0.9rem;
