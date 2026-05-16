@@ -587,3 +587,36 @@
   .qa-icon { width: 48px; height: 48px; border-radius: 14px;}
   .digest-rank { width: 34px; height: 34px; border-radius: 12px; font-size: 0.85rem;}
 }
+@media (max-width: 767px) {
+  /* 4列图表卡片变单列 */
+  #chartsRow .col-md-3 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  /* stat 卡片 2列 */
+  .stats-row .col-6 {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+
+  /* dashboard hero 文字缩小 */
+  .dashboard-title { font-size: 1.5rem !important; }
+  .dashboard-subtitle { font-size: 0.9rem; }
+
+  /* 快捷操作 2列 */
+  .quick-actions-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* 侧边栏在手机端变全宽 */
+  .col-lg-4 { margin-top: 1rem; }
+}
+
+@media (max-width: 400px) {
+  /* stat 卡片在很小屏幕变单列 */
+  .stats-row .col-6 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}

@@ -909,6 +909,8 @@ def explore():
             .order_by(func.count(Vote.id).desc(), Idea.created_at.desc())
             .all()
         )
+    elif tab == "all":
+        ideas = query.order_by(Idea.created_at.desc()).all()
     else:
         # Default: hot (trending by hotness score)
         ideas = query.all()
@@ -1063,11 +1065,11 @@ def dashboard():
 
     hour = datetime.now().hour
     if hour < 12:
-        greeting = "Good morning"
+        greeting = "Good morning!"
     elif hour < 18:
-        greeting = "Good afternoon"
+        greeting = "Good afternoon!"
     else:
-        greeting = "Good evening"
+        greeting = "Good evening!"
 
     suggested_users = (
         User.query
@@ -1076,6 +1078,24 @@ def dashboard():
         .limit(4)
         .all()
     )
+
+    top_cat_row = db.session.query(Idea.category, func.count(Idea.id))\
+        .filter_by(user_id=current_user.id)\
+        .group_by(Idea.category)\
+        .order_by(func.count(Idea.id).desc()).first()
+
+    cat_emoji_map = {
+        'FinTech':'💰','EdTech':'📚','GreenTech':'🌱','Health':'❤️',
+        'DevTools':'🛠️','Productivity':'⚡','Social':'🤝',
+        'Creator Economy':'🎨','Other':'💡'
+    }
+    top_cat = top_cat_row[0] if top_cat_row else None
+    total_interactions = stats['upvotes_received'] + stats['comments_received']
+    engagement = min(100, int((total_interactions / max(stats['ideas_posted'], 1)) * 10))
+
+    stats['top_category']       = top_cat
+    stats['top_category_emoji'] = cat_emoji_map.get(top_cat, '💡') if top_cat else '💡'
+    stats['engagement_score']   = engagement
 
     return render_template(
         "dashboard.html",
@@ -2251,7 +2271,7 @@ def trending_hashtags():
 @main_bp.route("/api/chat", methods=["POST"])
 @login_required
 def chat_api():
-    """Floating chatbot endpoint. Calls DeepSeek API."""
+    """Floating chatbot — uses Anthropic Claude API."""
     data         = request.get_json(silent=True) or {}
     messages     = data.get("messages", [])
     idea_context = data.get("context", {})
@@ -2261,55 +2281,55 @@ def chat_api():
         idea = Idea.query.get(idea_context["idea_id"])
         if idea:
             idea_hint = (
-                f"\n\nThe user is currently viewing the idea: '{idea.title}' "
-                f"(category: {idea.category}, stage: {idea.stage}). "
-                f"Use this context to give relevant advice when appropriate."
+                f"\n\nThe user is viewing idea: '{idea.title}' "
+                f"(category: {idea.category}, stage: {idea.stage})."
             )
 
-    user_context = ""
-    if current_user.is_authenticated:
-        user_context = f"\n\nThe user is logged in as {current_user.display_name}."
-    else:
-        user_context = "\n\nThe user is not logged in. If they ask about personal data, ideas, or profile — encourage them to sign up by clicking 'Get started' in the top navigation bar. Do not mention URL paths."
-        
+    user_context = f"\n\nUser is logged in as {current_user.display_name}." \
+        if current_user.is_authenticated else \
+        "\n\nUser is not logged in. Encourage them to sign up."
+
     system_prompt = (
         "You are the Idea Incubator Hub assistant. "
-        "You help startup founders validate ideas and understand the platform. "
+        "Help startup founders validate ideas and understand the platform. "
         "Keep responses concise (2-4 sentences) and actionable."
         + idea_hint + user_context
     )
 
-    api_key = os.getenv("DEEPSEEK_API_KEY", "").strip()
+    api_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
     if not api_key:
         return jsonify({"reply": (
-            "Hi! I'm the Idea Incubator assistant. I can help you validate startup ideas, "
-            "understand platform features, and improve your pitches."
+            "Hi! I'm the Idea Incubator assistant. "
+            "I can help you validate startup ideas and improve your pitches. "
+            "Ask me anything!"
         )})
 
     try:
         import urllib.request as _urlreq
         payload = json.dumps({
-            "model": os.getenv("DEEPSEEK_MODEL", "deepseek-chat"),
+            "model": "claude-haiku-4-5-20251001",
             "max_tokens": 300,
+            "system": system_prompt,
             "messages": [
-                {"role": "system", "content": system_prompt},
-                *messages[-10:],
+                {"role": m["role"], "content": m["content"]}
+                for m in messages[-10:]
+                if m.get("role") in ("user", "assistant")
             ],
-            "temperature": 0.5,
         }).encode()
 
         req = _urlreq.Request(
-            os.getenv("DEEPSEEK_API_URL", "https://api.deepseek.com/v1/chat/completions"),
+            "https://api.anthropic.com/v1/messages",
             data=payload,
             headers={
-                "Content-Type": "application/json",
-                "Authorization": f"Bearer {api_key}",
+                "Content-Type":      "application/json",
+                "x-api-key":         api_key,
+                "anthropic-version": "2023-06-01",
             },
             method="POST",
         )
         with _urlreq.urlopen(req, timeout=15) as resp:
             body = json.loads(resp.read())
-        reply = body["choices"][0]["message"]["content"].strip()
+        reply = body["content"][0]["text"].strip()
         return jsonify({"reply": reply})
 
     except Exception as e:

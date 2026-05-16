@@ -45,14 +45,19 @@ document.addEventListener('DOMContentLoaded', () => {
     .then(r => r.json())
     .then(data => {
       const stageCtx = document.getElementById('stageChart');
-      if (stageCtx && data.by_stage.length) {
+      if (stageCtx) {
+        const stageData = data.by_stage.length
+          ? data.by_stage
+          : [{ stage: 'No data yet', count: 1 }];
         new Chart(stageCtx, {
           type: 'doughnut',
           data: {
-            labels: data.by_stage.map(d => d.stage.charAt(0).toUpperCase() + d.stage.slice(1)),
+            labels: stageData.map(d => d.stage.charAt(0).toUpperCase() + d.stage.slice(1)),
             datasets: [{
-              data: data.by_stage.map(d => d.count),
-              backgroundColor: ['#6366f1','#f59e0b','#10b981','#3b82f6'],
+              data: stageData.map(d => d.count),
+              backgroundColor: data.by_stage.length
+                ? ['#6366f1','#f59e0b','#10b981','#3b82f6']
+                : ['#e5e7eb'],
               borderWidth: 0,
             }]
           },

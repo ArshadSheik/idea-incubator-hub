@@ -41,17 +41,22 @@
 
   <!-- ── Explore Tabs ── -->
   <div class="explore-tabs-row mb-3 {% if not current_user.is_authenticated %}explore-guest-blur{% endif %}">
-    <button class="explore-tab-btn {% if active_filters.tab == 'trending' or not active_filters.tab %}active{% endif %}" data-tab="trending">
-      <i class="bi bi-fire"></i> Hot
+    <button class="explore-tab-btn {% if active_filters.tab == 'all' %}active{% endif %}"
+            data-tab="all">
+      <i class="bi bi-grid"></i> All
     </button>
-    <button class="explore-tab-btn {% if active_filters.tab == 'top' %}active{% endif %}" data-tab="top">
-      <i class="bi bi-trophy-fill"></i> Top All Time
+    <button class="explore-tab-btn {% if active_filters.tab == 'trending' or not active_filters.tab %}active{% endif %}"
+            data-tab="trending">
+      🔥 Hot
     </button>
-    {% if current_user.is_authenticated %}
-    <button class="explore-tab-btn {% if active_filters.tab == 'for_you' %}active{% endif %}" data-tab="for_you">
-      <i class="bi bi-stars"></i> For You
+    <button class="explore-tab-btn {% if active_filters.tab == 'top' %}active{% endif %}"
+            data-tab="top">
+      <i class="bi bi-trophy"></i> Top all time
     </button>
-    {% endif %}
+    <button class="explore-tab-btn {% if active_filters.tab == 'for_you' %}active{% endif %}"
+            data-tab="for_you">
+      <i class="bi bi-stars"></i> For you
+    </button>
   </div>
 
   <div class="filter-shell {% if not current_user.is_authenticated %}is-locked{% endif %}">

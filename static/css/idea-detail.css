@@ -315,21 +315,46 @@
   gap: 1rem;
   margin-bottom: 1rem;
 }
+.score-verdict {
+  flex: 1;
+  min-width: 0;           
+}
+.score-verdict strong {
+  display: block;
+  font-size: .95rem;
+  font-weight: 700;
+  white-space: normal;   /* 允许换行 */
+  word-break: break-word;
+}
+.score-verdict span {
+  font-size: .78rem;
+  color: var(--ink-500);
+  display: block;
+  margin-top: .2rem;
+  line-height: 1.4;
+}
 .score-ring-lg {
-  width: 72px;
-  height: 72px;
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0; 
 }
 .score-ring-lg .score-num {
-  font-size: 1.3rem;
+  font-size: 1.35rem;
+  font-weight: 700;
 }
 .score-row {
   display: grid;
-  grid-template-columns: 1fr 80px 32px;
+  grid-template-columns: minmax(80px, 1fr) 80px 28px;
   align-items: center;
   gap: 0.75rem;
   font-size: 0.85rem;
   color: var(--ink-700);
   margin-bottom: 0.45rem;
+}
+.score-row span:first-child {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .score-row:last-child {
   margin-bottom: 0;
@@ -431,11 +456,13 @@
   color: var(--ink-600);
 }
 .collab-item .avatar {
+  color: #fff !important;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   text-align: center;
   line-height: 1;
+  font-weight: 600;
 }
 .sidebar-card .btn {
   margin-top: 0.9rem;
@@ -533,6 +560,62 @@
   .vote-bar { padding: 0.7rem; }
   .comment-composer { flex-direction: column; }
   .timeline-track { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .col-lg-8, .col-lg-4 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  /* vote bar 自动换行 */
+  .vote-bar {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .vote-btn, .vote-btn-secondary {
+    flex: 1 1 auto;
+    justify-content: center;
+    min-width: 120px;
+  }
+
+  /* share modal 全屏 */
+  .share-modal {
+    max-width: 100%;
+    border-radius: 16px 16px 0 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    margin: 0;
+  }
+  .modal-overlay.active {
+    align-items: flex-end;
+  }
+
+  /* share 平台按钮 3列 → 2列 */
+  .share-platforms {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* score 区域防截断 */
+  .score-display {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  .score-ring-lg { align-self: center; }
+
+  /* collaborator 列表 */
+  .collab-list { gap: 0.5rem; }
+
+  /* 面包屑缩小 */
+  .breadcrumb-bar { font-size: 0.85rem; }
+
+  /* AI insights 按钮全宽 */
+  #aiInsightsBtn, #aiDownloadBtn {
+    width: 100%;
+    margin-left: 0 !important;
+    margin-top: 0.5rem;
+  }
+
 }
 
 .modal-overlay {

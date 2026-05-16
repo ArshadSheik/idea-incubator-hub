@@ -438,6 +438,32 @@
     justify-content: center;
     margin-top: 0.75rem;
   }
+  .explore-tabs-row {
+    overflow-x: auto;
+    flex-wrap: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding-bottom: 4px;
+  }
+  .explore-tabs-row::-webkit-scrollbar { display: none; }
+  .explore-tab-btn {
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  /* idea 卡片单列 */
+  .explore-grid .col-md-6,
+  .explore-grid .col-lg-4 {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+
+  /* 搜索框全宽 */
+  .explore-search-wrap { width: 100%; }
+  .explore-search { width: 100%; }
+
+  /* leaderboard 隐藏分数细节 */
+  .leaderboard-score-detail { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -1018,4 +1018,58 @@ body[data-page="messages"] .cb-widget { bottom: 5.6rem; }
   .empty-ring-2 { width: 188px; height: 188px; }
   .empty-orbit-scene .empty-ring-1 { width: 122px; height: 122px; }
   .empty-orbit-scene .empty-core { width: 66px; height: 66px; font-size: 1.6rem; }
+
+    .messages-layout {
+    flex-direction: column;
+    height: auto;
+    min-height: calc(100vh - 64px);
+  }
+
+  /* 侧边栏变顶部横条 */
+  .messages-sidebar {
+    width: 100%;
+    max-height: 200px;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border, #eee);
+  }
+
+  /* 联系人列表横向滚动 */
+  .contact-list {
+    display: flex;
+    flex-direction: row;
+    overflow-x: auto;
+    overflow-y: hidden;
+    flex: none;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .contact-list::-webkit-scrollbar { display: none; }
+
+  .contact-item {
+    flex-direction: column;
+    align-items: center;
+    min-width: 70px;
+    border-bottom: none;
+    border-radius: 12px;
+    padding: 0.5rem;
+    text-align: center;
+    gap: 0.25rem;
+  }
+  .contact-info strong {
+    font-size: 0.7rem;
+  }
+  .contact-preview { display: none; }
+
+  .messages-main { flex: 1; min-height: 60vh; }
+
+  .chat-input-wrap { border-radius: 16px; }
+
+  .msg-bubble { max-width: 85% !important; }
+
+}
+@media (max-width: 400px) {
+  .messages-sidebar-header h2 { font-size: 1rem; }
+  .chat-header strong { font-size: 0.85rem; }
 }
