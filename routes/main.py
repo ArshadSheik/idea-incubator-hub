@@ -909,6 +909,8 @@ def explore():
             .order_by(func.count(Vote.id).desc(), Idea.created_at.desc())
             .all()
         )
+    elif tab == "all":
+        ideas = query.order_by(Idea.created_at.desc()).all()
     else:
         # Default: hot (trending by hotness score)
         ideas = query.all()
