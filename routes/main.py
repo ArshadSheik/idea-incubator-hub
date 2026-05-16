@@ -1063,11 +1063,11 @@ def dashboard():
 
     hour = datetime.now().hour
     if hour < 12:
-        greeting = "Good morning"
+        greeting = "Good morning!"
     elif hour < 18:
-        greeting = "Good afternoon"
+        greeting = "Good afternoon!"
     else:
-        greeting = "Good evening"
+        greeting = "Good evening!"
 
     suggested_users = (
         User.query
