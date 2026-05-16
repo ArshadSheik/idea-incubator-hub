@@ -1,3 +1,11 @@
+/* Escape user-controlled data before inserting into innerHTML. */
+function escapeHtml(str) {
+  if (str == null) return '';
+  const div = document.createElement('div');
+  div.textContent = String(str);
+  return div.innerHTML;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const csrfToken = document
     .querySelector('meta[name="csrf-token"]')
@@ -385,8 +393,8 @@ document.addEventListener("DOMContentLoaded", () => {
           collabList.innerHTML = payload.collaborators
             .map(m => `
               <div class="collab-item">
-                <span class="avatar avatar-sm ${m.avatar_class}">${m.initials}</span>
-                <div><strong>${m.name}</strong><span>${m.role}</span></div>
+                <span class="avatar avatar-sm ${escapeHtml(m.avatar_class)}">${escapeHtml(m.initials)}</span>
+                <div><strong>${escapeHtml(m.name)}</strong><span>${escapeHtml(m.role)}</span></div>
               </div>`)
             .join("");
         }
@@ -483,20 +491,21 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         const comment = payload.comment;
+        const cid = escapeHtml(comment.id);
         const commentHTML = `
-          <div class="comment" data-comment-id="${comment.id}">
-            <span class="avatar ${comment.avatar_class}">${comment.initials}</span>
+          <div class="comment" data-comment-id="${cid}">
+            <span class="avatar ${escapeHtml(comment.avatar_class)}">${escapeHtml(comment.initials)}</span>
             <div class="flex-grow-1">
               <div class="comment-meta">
-                <strong>${comment.name}</strong>
-                <span class="text-muted-iih small">· ${comment.time}</span>
+                <strong>${escapeHtml(comment.name)}</strong>
+                <span class="text-muted-iih small">· ${escapeHtml(comment.time)}</span>
               </div>
               <p></p>
               <div class="comment-actions">
-                <button class="comment-action comment-like-btn" data-comment-id="${comment.id}"><i class="bi bi-hand-thumbs-up"></i> ${comment.likes}</button>
-                <button class="comment-action comment-reply-btn" data-comment-id="${comment.id}"><i class="bi bi-reply"></i> Reply</button>
+                <button class="comment-action comment-like-btn" data-comment-id="${cid}"><i class="bi bi-hand-thumbs-up"></i> ${escapeHtml(comment.likes)}</button>
+                <button class="comment-action comment-reply-btn" data-comment-id="${cid}"><i class="bi bi-reply"></i> Reply</button>
               </div>
-              <div class="reply-list mt-2" data-reply-list-for="${comment.id}"></div>
+              <div class="reply-list mt-2" data-reply-list-for="${cid}"></div>
             </div>
           </div>`;
 
@@ -654,12 +663,15 @@ document.addEventListener("DOMContentLoaded", () => {
           container.innerHTML = '<p class="text-muted-iih small text-center py-2">No recent news found.</p>';
           return;
         }
-        container.innerHTML = data.articles.slice(0, 4).map(a => `
-          <a href="${a.url}" target="_blank" rel="noopener" class="news-item">
-            <p class="news-title mb-0">${a.title}</p>
-            <span class="news-meta">${a.source} · ${new Date(a.published_at).toLocaleDateString()}</span>
-          </a>
-        `).join('');
+        container.innerHTML = data.articles.slice(0, 4).map(a => {
+          // Validate URL to guard against javascript: protocol injection from external API data
+          const safeUrl = /^https?:\/\//i.test(a.url) ? escapeHtml(a.url) : '#';
+          return `
+            <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="news-item">
+              <p class="news-title mb-0">${escapeHtml(a.title)}</p>
+              <span class="news-meta">${escapeHtml(a.source)} · ${new Date(a.published_at).toLocaleDateString()}</span>
+            </a>`;
+        }).join('');
       })
       .catch(() => {
         container.innerHTML = '<p class="text-muted-iih small text-center py-2">Could not load news.</p>';

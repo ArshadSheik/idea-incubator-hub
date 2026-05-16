@@ -10,37 +10,50 @@ from flask import Flask
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect
-from flask_mail import Mail  
+from flask_mail import Mail
 from flask_dance.contrib.google import make_google_blueprint
 from config import config
 from models.models import db, User
+from extensions import limiter
 import os
 
 
 migrate = Migrate()
 login_manager = LoginManager()
 csrf = CSRFProtect()
-mail = Mail() 
+mail = Mail()
 
 def create_app(config_name='default'):
     """
     Factory function — creates and configures a Flask application instance.
     Call with 'testing' for unit tests, 'production' for deployment.
     """
-    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+    # Allow OAuth over plain HTTP in non-production environments only.
+    if config_name not in ('production',):
+        os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
     os.environ['OAUTHLIB_RELAX_TOKEN_SCOPE'] = '1'
     app = Flask(__name__)
 
     # ── Load config ────────────────────────────────────────────────
     app.config.from_object(config[config_name])
 
+    # Guard: never run production with the insecure fallback key.
+    if config_name == 'production':
+        _fallback = 'fallback-dev-key-not-for-production'
+        if not app.config.get('SECRET_KEY') or app.config['SECRET_KEY'] == _fallback:
+            raise RuntimeError(
+                "SECRET_KEY must be set to a secure random value in production. "
+                "Set the SECRET_KEY environment variable."
+            )
+
     # ── Initialise extensions ──────────────────────────────────────
     db.init_app(app)
     os.makedirs(os.path.join(app.static_folder, 'uploads', 'ideas'), exist_ok=True)
-    migrate.init_app(app, db)       # enables `flask db init/migrate/upgrade`
+    migrate.init_app(app, db)
     login_manager.init_app(app)
     csrf.init_app(app)
     mail.init_app(app)
+    limiter.init_app(app)
 
     # Where Flask-Login redirects unauthenticated users
     login_manager.login_view = 'auth.login'

@@ -39,18 +39,35 @@ class DevelopmentConfig(Config):
 
 class TestingConfig(Config):
     TESTING = True
-    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'  # in-memory DB for tests
-    WTF_CSRF_ENABLED = False                        # easier form testing
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///:memory:'  # in-memory DB for unit tests
+    WTF_CSRF_ENABLED = False                        # easier programmatic form testing
+    RATELIMIT_ENABLED = False                       # disable rate limiting in unit tests
+
+
+class SeleniumConfig(TestingConfig):
+    """Config for Selenium end-to-end tests.
+    Uses a real file-based DB so the background server thread and the
+    test setup share the same database.  CSRF stays enabled because
+    the real browser submits the hidden csrf_token field automatically.
+    """
+    SQLALCHEMY_DATABASE_URI = 'sqlite:///selenium_test.db'
+    WTF_CSRF_ENABLED = True   # real-browser tests exercise full CSRF flow
 
 
 class ProductionConfig(Config):
     DEBUG = False
+    SESSION_COOKIE_SECURE = True
+    SESSION_COOKIE_HTTPONLY = True
+    SESSION_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_SECURE = True
+    REMEMBER_COOKIE_HTTPONLY = True
 
 
 # Map string names to config classes — used in app factory
 config = {
     'development': DevelopmentConfig,
     'testing': TestingConfig,
+    'selenium': SeleniumConfig,
     'production': ProductionConfig,
     'default': DevelopmentConfig,
 }

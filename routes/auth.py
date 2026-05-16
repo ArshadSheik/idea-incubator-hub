@@ -1,16 +1,20 @@
 # routes/auth.py
 import random
+import re
 from urllib.parse import urljoin, urlparse
 from flask_dance.contrib.google import google
-from flask import Blueprint, flash, redirect, render_template, request, url_for,current_app
+from flask import Blueprint, flash, redirect, render_template, request, url_for, current_app
 from flask_login import current_user, login_required, login_user, logout_user
 from flask_mail import Message
 from itsdangerous import URLSafeTimedSerializer, SignatureExpired, BadSignature
 from werkzeug.security import generate_password_hash
 
+from extensions import limiter
 from models.models import User, db
 
 auth_bp = Blueprint("auth", __name__)
+
+_EMAIL_RE = re.compile(r'^[^@\s]+@[^@\s]+\.[^@\s]+$')
 
 
 def _is_safe_redirect(target: str) -> bool:
@@ -42,6 +46,10 @@ def register():
         # ── verify ──────────────────────────────────────────────────
         if not all([first_name, last_name, username, email, password]):
             flash("All fields are required.")
+            return render_template("register.html")
+
+        if not _EMAIL_RE.match(email):
+            flash("Please enter a valid email address.")
             return render_template("register.html")
 
         if len(password) < 8:
@@ -81,6 +89,7 @@ def register():
 # login
 # ─────────────────────────────────────────
 @auth_bp.route("/login", methods=["GET", "POST"])
+@limiter.limit("15 per minute", methods=["POST"])
 def login():
     if current_user.is_authenticated:
         return redirect(url_for("main.index"))
@@ -182,12 +191,18 @@ This link expires in 1 hour. If you didn't request this, you can safely ignore t
 # Step 1：input email , send reset mail
 # ─────────────────────────────────────────
 @auth_bp.route("/forgot-password", methods=["GET", "POST"])
+@limiter.limit("10 per hour", methods=["POST"])
 def forgot_password():
     if current_user.is_authenticated:
         return redirect(url_for("main.index"))
 
     if request.method == "POST":
         email = request.form.get("email", "").strip().lower()
+
+        if not _EMAIL_RE.match(email):
+            flash("If that email is registered, you'll receive a reset link shortly.")
+            return redirect(url_for("auth.forgot_password"))
+
         user = User.query.filter_by(email=email).first()
 
         if user:

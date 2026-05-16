@@ -8,8 +8,10 @@
 {% block content %}
 <div class="collab-layout">
 
-  <!-- Sidebar -->
+  <!-- ── Sidebar ─────────────────────────────────────────── -->
   <aside class="collab-sidebar">
+
+    <!-- Idea hero card -->
     <div class="sidebar-idea-card">
       <h2 class="sidebar-idea-title">{{ idea.title }}</h2>
       <p class="sidebar-idea-summary">{{ idea.summary }}</p>
@@ -18,8 +20,9 @@
       </a>
     </div>
 
+    <!-- Team -->
     <div class="sidebar-section">
-      <h3 class="sidebar-heading">Team ({{ team | length }})</h3>
+      <h3 class="sidebar-heading">Team <span style="margin-left:0.2rem;opacity:.6">({{ team | length }})</span></h3>
       <ul class="team-list">
         {% for member in team %}
           <li class="team-member">
@@ -32,19 +35,55 @@
       </ul>
     </div>
 
+    <!-- Stage -->
     <div class="sidebar-section">
       <h3 class="sidebar-heading">Stage</h3>
-      <p class="sidebar-stage">{{ idea.stage.capitalize() if idea.stage else 'Ideation' }}</p>
+      <span class="stage-badge">
+        <i class="bi bi-layers-half"></i>
+        {{ idea.stage.replace('_',' ').title() if idea.stage else 'Ideation' }}
+      </span>
     </div>
+
+    <!-- Activity log -->
+    <div class="sidebar-section" style="flex:1">
+      <h3 class="sidebar-heading">
+        Live Activity
+        <span class="activity-live-dot"></span>
+      </h3>
+      {% if activity_log %}
+        <ul class="activity-list" id="activityList">
+          {% for entry in activity_log %}
+            <li class="activity-item" data-action="{{ entry.action }}">
+              <div class="activity-dot action-{{ entry.action }}">
+                {% if entry.action == 'created' %}✦
+                {% elif entry.action == 'moved' %}⇒
+                {% elif entry.action == 'deleted' %}✕
+                {% else %}✎{% endif %}
+              </div>
+              <div class="activity-body">
+                <div class="activity-detail">{{ entry.detail }}</div>
+                <div class="activity-meta">{{ entry.user_name }} · {{ entry.time }}</div>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <ul class="activity-list" id="activityList"></ul>
+        <p class="activity-empty" id="activityEmpty">No activity yet.</p>
+      {% endif %}
+    </div>
+
   </aside>
 
-  <!-- Kanban board -->
+  <!-- ── Kanban board ────────────────────────────────────── -->
   <main class="collab-main">
     <div class="kanban-header">
       <h1 class="kanban-title">Kanban Board</h1>
+      {% if can_edit %}
       <button class="btn btn-brand btn-sm" id="addTaskBtn">
         <i class="bi bi-plus-lg"></i> Add Task
       </button>
+      {% endif %}
     </div>
 
     {% if is_owner and pending_requests %}
@@ -71,13 +110,11 @@
           </div>
           <div class="d-flex gap-2 ms-auto">
             <button class="btn btn-brand btn-sm-iih accept-collab-btn"
-                    data-collab-id="{{ req.id }}"
-                    data-idea-id="{{ idea.id }}">
+                    data-collab-id="{{ req.id }}" data-idea-id="{{ idea.id }}">
               <i class="bi bi-check-lg"></i> Accept
             </button>
             <button class="btn btn-outline-iih btn-sm-iih decline-collab-btn"
-                    data-collab-id="{{ req.id }}"
-                    data-idea-id="{{ idea.id }}">
+                    data-collab-id="{{ req.id }}" data-idea-id="{{ idea.id }}">
               <i class="bi bi-x-lg"></i> Decline
             </button>
           </div>
@@ -102,14 +139,17 @@
               {% if task.status == col_status %}
                 <div class="task-card priority-{{ task.priority }}"
                      data-task-id="{{ task.id }}"
+                     data-task-title="{{ task.title | e }}"
                      data-status="{{ task.status }}"
-                     draggable="true">
+                     {% if can_edit %}draggable="true"{% endif %}>
                   <div class="task-header">
                     <span class="priority-dot dot-{{ task.priority }}"></span>
                     <span class="task-title">{{ task.title }}</span>
+                    {% if can_edit %}
                     <button class="task-delete-btn" data-task-id="{{ task.id }}" title="Delete task">
                       <i class="bi bi-x"></i>
                     </button>
+                    {% endif %}
                   </div>
                   {% if task.description %}
                     <p class="task-desc">{{ task.description[:80] }}{% if task.description | length > 80 %}…{% endif %}</p>
@@ -134,7 +174,7 @@
   </main>
 </div>
 
-<!-- Add Task Modal -->
+{% if can_edit %}
 <div class="modal fade" id="taskModal" tabindex="-1">
   <div class="modal-dialog">
     <div class="modal-content">
@@ -176,12 +216,19 @@
     </div>
   </div>
 </div>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
 <script>
-  const IDEA_ID   = {{ idea.id }};
+  const IDEA_ID    = {{ idea.id }};
   const CSRF_TOKEN = document.querySelector('meta[name="csrf-token"]').content;
+  const CAN_EDIT   = {{ 'true' if can_edit else 'false' }};
+  const CURRENT_USER = {
+    name:        {{ current_user.display_name | tojson }},
+    initials:    {{ current_user.initials | tojson }},
+    avatarColor: {{ current_user.avatar_color }},
+  };
 </script>
 <script src="{{ url_for('static', filename='js/collaboration.js') }}"></script>
 {% endblock %}

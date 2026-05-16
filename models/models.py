@@ -20,6 +20,7 @@ Tables:
 from datetime import datetime, timezone
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import UserMixin
+from sqlalchemy import update as _sql_update
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
@@ -56,7 +57,7 @@ class User(UserMixin, db.Model):
     # avatar_color maps to CSS class .avatar-1 through .avatar-6
     avatar_color = db.Column(db.Integer, default=1)
 
-    created_at   = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at   = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     # ── Relationships ──────────────────────────────────────────────
     ideas          = db.relationship('Idea', backref='author', lazy='dynamic',
@@ -132,7 +133,7 @@ class UserFollow(db.Model):
     id          = db.Column(db.Integer, primary_key=True)
     follower_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
     followed_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
-    created_at  = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at  = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     follower = db.relationship(
         'User', foreign_keys=[follower_id], backref=db.backref('_out_follows', lazy='dynamic')
@@ -170,7 +171,7 @@ class Idea(db.Model):
     description = db.Column(db.Text,        nullable=False)   # full markdown body
     category    = db.Column(db.String(30),  nullable=False, default='Other')
     stage       = db.Column(db.String(20),  nullable=False, default='ideation')
-    privacy     = db.Column(db.String(10),  nullable=False, default='public')
+    privacy     = db.Column(db.String(10),  nullable=False, default='public', index=True)
     emoji       = db.Column(db.String(10),  default='💡')
 
     # Analytics scores (0–100), calculated/updated server-side
@@ -180,8 +181,8 @@ class Idea(db.Model):
     differentiation_score = db.Column(db.Integer, default=0)
 
     views      = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # ── Relationships ──────────────────────────────────────────────
     votes          = db.relationship('Vote',          backref='idea', lazy='dynamic',
@@ -226,9 +227,12 @@ class Idea(db.Model):
         return mapping.get(self.stage, 0)
 
     def increment_views(self):
-        """Call this whenever the idea detail page is loaded."""
-        self.views += 1
+        """Atomic SQL UPDATE avoids a read-modify-write race under concurrent requests."""
+        db.session.execute(
+            _sql_update(Idea).where(Idea.id == self.id).values(views=Idea.views + 1)
+        )
         db.session.commit()
+        db.session.refresh(self)
 
     def __repr__(self):
         return f'<Idea {self.id}: {self.title}>'
@@ -250,7 +254,7 @@ class Vote(db.Model):
     id         = db.Column(db.Integer, primary_key=True)
     user_id    = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     idea_id    = db.Column(db.Integer, db.ForeignKey('ideas.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def __repr__(self):
         return f'<Vote user={self.user_id} idea={self.idea_id}>'
@@ -273,7 +277,7 @@ class Comment(db.Model):
 
     body       = db.Column(db.Text, nullable=False)
     like_count = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     # Self-referential relationship for threaded replies
     replies = db.relationship('Comment', backref=db.backref('parent', remote_side=[id]),
@@ -281,6 +285,28 @@ class Comment(db.Model):
 
     def __repr__(self):
         return f'<Comment {self.id} on idea={self.idea_id}>'
+
+
+# ─────────────────────────────────────────
+# COMMENT LIKE  (per-user tracking)
+# ─────────────────────────────────────────
+class CommentLike(db.Model):
+    """One row per (user, comment) pair — prevents duplicate likes."""
+    __tablename__ = 'comment_likes'
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'comment_id', name='uq_comment_like'),
+    )
+
+    id         = db.Column(db.Integer, primary_key=True)
+    user_id    = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    comment_id = db.Column(db.Integer, db.ForeignKey('comments.id'), nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user    = db.relationship('User',    backref=db.backref('comment_likes', lazy='dynamic'))
+    comment = db.relationship('Comment', backref=db.backref('likes',         lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<CommentLike user={self.user_id} comment={self.comment_id}>'
 
 
 # ─────────────────────────────────────────
@@ -316,7 +342,7 @@ class Collaboration(db.Model):
     id         = db.Column(db.Integer, primary_key=True)
     user_id    = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     idea_id    = db.Column(db.Integer, db.ForeignKey('ideas.id'), nullable=False)
-    status     = db.Column(db.String(10), default='pending')  # requires owner approval
+    status     = db.Column(db.String(10), default='pending', index=True)  # requires owner approval
     role       = db.Column(db.String(20), default='contributor')
     message    = db.Column(db.String(200), nullable=True) # optional request message
     joined_at  = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
@@ -346,8 +372,8 @@ class Task(db.Model):
     description = db.Column(db.Text, default='')
     status      = db.Column(db.String(20), default='todo')
     priority    = db.Column(db.String(10), default='medium')  # low | medium | high
-    created_at  = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at  = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at  = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at  = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Explicit foreign_keys needed because Task references users.id twice
     creator  = db.relationship('User', foreign_keys=[created_by])
@@ -355,6 +381,29 @@ class Task(db.Model):
 
     def __repr__(self):
         return f'<Task {self.id}: {self.title} [{self.status}]>'
+
+
+# ─────────────────────────────────────────
+# TASK ACTIVITY  (audit log)
+# ─────────────────────────────────────────
+class TaskActivity(db.Model):
+    """One row per board action: created / moved / updated / deleted."""
+    __tablename__ = 'task_activities'
+
+    id         = db.Column(db.Integer, primary_key=True)
+    idea_id    = db.Column(db.Integer, db.ForeignKey('ideas.id'), nullable=False, index=True)
+    task_id    = db.Column(db.Integer, db.ForeignKey('tasks.id'), nullable=True)   # NULL after deletion
+    user_id    = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    action     = db.Column(db.String(20), nullable=False)    # created | moved | updated | deleted
+    detail     = db.Column(db.String(200), nullable=True)    # human-readable description
+    to_status  = db.Column(db.String(20), nullable=True)     # destination status for "moved" actions
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = db.relationship('User', backref=db.backref('task_activities', lazy='dynamic'))
+
+    def __repr__(self):
+        return f'<TaskActivity {self.action} task={self.task_id} by user={self.user_id}>'
+
 
 # ─────────────────────────────────────────
 # IDEA MEDIA  (attached images / files)
@@ -378,7 +427,7 @@ class IdeaMedia(db.Model):
     stored_filename   = db.Column(db.String(255), nullable=False)
     mime_type         = db.Column(db.String(100), nullable=False)
     file_size         = db.Column(db.Integer, nullable=False)
-    uploaded_at       = db.Column(db.DateTime, default=datetime.utcnow)
+    uploaded_at       = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     idea     = db.relationship('Idea', backref=db.backref('media', lazy='dynamic',
                                cascade='all, delete-orphan'))
@@ -421,7 +470,7 @@ class Notification(db.Model):
     message    = db.Column(db.String(300), nullable=False)
     link       = db.Column(db.String(200), nullable=True)   # URL to navigate to on click
     is_read    = db.Column(db.Boolean, default=False, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = db.relationship('User', backref=db.backref('notifications', lazy='dynamic'))
 
@@ -445,7 +494,7 @@ class Bookmark(db.Model):
     id         = db.Column(db.Integer, primary_key=True)
     user_id    = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     idea_id    = db.Column(db.Integer, db.ForeignKey('ideas.id'), nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     user = db.relationship('User', backref=db.backref('bookmarks', lazy='dynamic'))
     idea = db.relationship('Idea', backref=db.backref('bookmarks', lazy='dynamic'))
@@ -474,9 +523,9 @@ class AIAnalysis(db.Model):
     strengths_json       = db.Column(db.Text, nullable=True)   # JSON list of strings
     risks_json           = db.Column(db.Text, nullable=True)   # JSON list of strings
     sentiment_score      = db.Column(db.Integer, nullable=True)  # 0–100
-    created_at           = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at           = db.Column(db.DateTime, default=datetime.utcnow,
-                                     onupdate=datetime.utcnow)
+    created_at           = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at           = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc),
+                                     onupdate=lambda: datetime.now(timezone.utc))
 
     idea = db.relationship('Idea', backref=db.backref('ai_analysis', uselist=False))
 
@@ -509,7 +558,7 @@ class MarketTrend(db.Model):
     category    = db.Column(db.String(30), nullable=False)   # e.g. 'FinTech'
     source      = db.Column(db.String(30), nullable=False)   # e.g. 'newsapi', 'alphavantage'
     data_json   = db.Column(db.Text, nullable=False)          # raw JSON string from API
-    fetched_at  = db.Column(db.DateTime, default=datetime.utcnow)
+    fetched_at  = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
     def data(self):
         """Return the cached data as a Python dict/list."""
@@ -518,8 +567,10 @@ class MarketTrend(db.Model):
 
     def is_stale(self, max_age_hours=24):
         """Returns True if this cache entry is older than max_age_hours."""
-        from datetime import timedelta
-        return datetime.utcnow() - self.fetched_at > timedelta(hours=max_age_hours)
+        from datetime import timedelta, timezone as _tz
+        now = datetime.now(_tz.utc)
+        fetched = self.fetched_at.replace(tzinfo=_tz.utc) if self.fetched_at.tzinfo is None else self.fetched_at
+        return now - fetched > timedelta(hours=max_age_hours)
 
     def __repr__(self):
         return f'<MarketTrend {self.category}/{self.source} fetched={self.fetched_at}>'
@@ -538,7 +589,7 @@ class DirectMessage(db.Model):
     body = db.Column(db.Text, nullable=False)
     is_read = db.Column(db.Boolean, default=False, nullable=False)
 
-    created_at = db.Column(db.DateTime, default=datetime.utcnow, nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), nullable=False)
 
     sender = db.relationship("User", foreign_keys=[sender_id], lazy="joined")
     recipient = db.relationship("User", foreign_keys=[recipient_id], lazy="joined")
