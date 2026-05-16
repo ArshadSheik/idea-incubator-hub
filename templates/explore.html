@@ -38,6 +38,22 @@
 </section>
 
 <section class="container-iih explore-main mt-4 mb-5">
+
+  <!-- ── Explore Tabs ── -->
+  <div class="explore-tabs-row mb-3 {% if not current_user.is_authenticated %}explore-guest-blur{% endif %}">
+    <button class="explore-tab-btn {% if active_filters.tab == 'trending' or not active_filters.tab %}active{% endif %}" data-tab="trending">
+      <i class="bi bi-fire"></i> Hot
+    </button>
+    <button class="explore-tab-btn {% if active_filters.tab == 'top' %}active{% endif %}" data-tab="top">
+      <i class="bi bi-trophy-fill"></i> Top All Time
+    </button>
+    {% if current_user.is_authenticated %}
+    <button class="explore-tab-btn {% if active_filters.tab == 'for_you' %}active{% endif %}" data-tab="for_you">
+      <i class="bi bi-stars"></i> For You
+    </button>
+    {% endif %}
+  </div>
+
   <div class="filter-shell {% if not current_user.is_authenticated %}is-locked{% endif %}">
     <div class="filter-bar">
       <div class="filter-group">
@@ -73,6 +89,17 @@
           <option value="votes" {% if active_filters.sort == 'votes' %}selected{% endif %}>Most votes</option>
         </select>
       </div>
+      {% if tag_names %}
+      <div class="filter-group">
+        <label class="filter-label" for="filterTag">Tag</label>
+        <select class="filter-select" id="filterTag">
+          <option value="">All tags</option>
+          {% for tag in tag_names %}
+          <option value="{{ tag|lower }}" {% if active_filters.tag == tag|lower %}selected{% endif %}>#{{ tag }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      {% endif %}
       <button class="btn btn-outline-iih reset-btn" id="resetFilters">
         <i class="bi bi-arrow-counterclockwise"></i> Reset
       </button>
@@ -140,6 +167,13 @@
       {% endfor %}
     </div>
 
+    <!-- Load More -->
+    <div class="text-center mt-4" id="loadMoreWrap" style="display:none;">
+      <button class="btn btn-outline-iih" id="loadMoreBtn">
+        <i class="bi bi-arrow-down-circle me-1"></i> Load more ideas
+      </button>
+    </div>
+
     {% if ideas|length == 0 %}
     <div id="emptyState" class="empty-state explore-empty" style="display:block;">
     {% else %}
@@ -153,6 +187,30 @@
       </button>
     </div>
   </div>
+
+  <!-- ── Leaderboard ── -->
+  {% if leaderboard %}
+  <div class="leaderboard-section mt-5">
+    <div class="leaderboard-header">
+      <h3 class="leaderboard-title"><i class="bi bi-trophy-fill me-2"></i>All-Time Leaderboard</h3>
+      <p class="leaderboard-sub">Top ideas by community votes</p>
+    </div>
+    <div class="leaderboard-list">
+      {% for idea in leaderboard %}
+      <a href="{{ url_for('main.idea_detail', idea_id=idea.id) }}" class="leaderboard-item">
+        <span class="leaderboard-rank {% if loop.index == 1 %}rank-gold{% elif loop.index == 2 %}rank-silver{% elif loop.index == 3 %}rank-bronze{% endif %}">{{ loop.index }}</span>
+        <span class="leaderboard-emoji">{{ idea.emoji }}</span>
+        <div class="leaderboard-info">
+          <strong class="leaderboard-idea-title">{{ idea.title }}</strong>
+          <span class="leaderboard-meta">by {{ idea.author.name }} · {{ idea.category }}</span>
+        </div>
+        <span class="leaderboard-votes"><i class="bi bi-caret-up-fill text-brand"></i> {{ idea.votes }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
 </section>
 </div>
 {% endblock %}

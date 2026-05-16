@@ -17,12 +17,27 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* ─── Theme toggle ─── */
+  /* ─── Theme toggle — hologram flicker transition ─── */
   const toggleBtn = document.getElementById('themeToggle');
   if (toggleBtn) {
     toggleBtn.addEventListener('click', () => {
       const current = document.documentElement.getAttribute('data-theme') || 'light';
-      window.__iihTheme.apply(current === 'dark' ? 'light' : 'dark');
+      const next    = current === 'dark' ? 'light' : 'dark';
+
+      // Apply new theme immediately — visible through the flicker gaps
+      window.__iihTheme.apply(next);
+
+      // Skip overlay for users who prefer reduced motion
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+      // Overlay tinted with the OLD theme colour — flickers, then fades,
+      // revealing the already-applied new theme beneath
+      const holo = document.createElement('div');
+      holo.className = 'holo-overlay';
+      holo.style.setProperty('--holo-bg',
+        current === 'dark' ? 'rgba(11,11,18,0.90)' : 'rgba(249,249,252,0.90)');
+      document.body.appendChild(holo);
+      setTimeout(() => holo.remove(), 800);
     });
   }
 

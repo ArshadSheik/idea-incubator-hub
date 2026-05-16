@@ -78,6 +78,13 @@
             <li class="nav-item"><a class="nav-link" href="{{ url_for('messages.inbox') }}" data-page="messages">Messages</a></li>
             {% endif %}
             </ul>
+            <!-- Navbar search (CSS + JS already wired in main.css / main.js) -->
+            {% if current_user.is_authenticated %}
+            <div class="navbar-search d-none d-lg-block">
+              <i class="bi bi-search search-icon"></i>
+              <input type="text" placeholder="Search ideas..." aria-label="Search ideas">
+            </div>
+            {% endif %}
             <div class="d-flex align-items-center gap-2">
             {% if current_user.is_authenticated %}
                 <!-- Notification bell -->
@@ -182,7 +189,7 @@
                     </div>
                     <div class="footer-meta-item">
                         <span class="footer-meta-label">Source</span>
-                        <a href="#" class="footer-meta-link">
+                        <a href="https://github.com/ArshadSheik/idea-incubator-hub" class="footer-meta-link" target="_blank" rel="noopener">
                             <i class="bi bi-github"></i> View on GitHub
                         </a>
                     </div>

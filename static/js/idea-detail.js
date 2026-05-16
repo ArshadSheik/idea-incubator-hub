@@ -515,6 +515,17 @@ document.addEventListener("DOMContentLoaded", () => {
         newComment.querySelector("p").textContent = comment.text;
         commentList.insertBefore(newComment, commentList.firstChild);
         commentInput.value = "";
+
+        // Update all comment count badges on the page
+        document.querySelectorAll('[data-comment-count]').forEach(el => {
+          const n = (parseInt(el.dataset.commentCount, 10) || 0) + 1;
+          el.dataset.commentCount = n;
+          el.textContent = n;
+        });
+        // Also update any plain text badges that show comment count (meta strip)
+        document.querySelectorAll('.meta-comments-count').forEach(el => {
+          el.textContent = (parseInt(el.textContent, 10) || 0) + 1;
+        });
       } catch (error) {
         console.error(error);
         showActionFeedback("Unable to post comment. Please try again.");

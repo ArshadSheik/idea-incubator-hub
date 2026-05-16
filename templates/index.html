@@ -130,16 +130,16 @@
     <div class="marquee-strip">
       <div class="marquee-track">
         <span>💡 {{ total_ideas }}+ ideas submitted</span>
-        <span>🚀 180 ideas turned into startups</span>
-        <span>🤝 1,600+ collaborations formed</span>
-        <span>🌍 Founders from 47 countries</span>
-        <span>⭐ 12,000+ community votes</span>
+        <span>🚀 {{ launched_count }} ideas launched</span>
+        <span>🤝 {{ total_collabs }}+ collaborations formed</span>
+        <span>👥 {{ total_users }}+ builders joined</span>
+        <span>⭐ {{ total_votes }}+ community votes</span>
         <!-- duplicate for seamless loop -->
         <span>💡 {{ total_ideas }}+ ideas submitted</span>
-        <span>🚀 180 ideas turned into startups</span>
-        <span>🤝 1,600+ collaborations formed</span>
-        <span>🌍 Founders from 47 countries</span>
-        <span>⭐ 12,000+ community votes</span>
+        <span>🚀 {{ launched_count }} ideas launched</span>
+        <span>🤝 {{ total_collabs }}+ collaborations formed</span>
+        <span>👥 {{ total_users }}+ builders joined</span>
+        <span>⭐ {{ total_votes }}+ community votes</span>
       </div>
     </div>
   </section>
@@ -272,46 +272,18 @@
     <div class="container-iih">
       <div class="row g-4 align-items-start">
 
-        <!-- Activity Feed Panel -->
+        <!-- Activity Feed Panel (live — polled every 30 s) -->
         <div class="col-lg-7" data-scroll-reveal>
           <div class="feed-panel">
             <div class="feed-panel-header">
               <span class="feed-panel-title"><i class="bi bi-activity"></i> Live Activity</span>
               <span class="live-dot"></span>
             </div>
-            <div class="feed-item">
-              <div class="feed-item-icon feed-icon-join">JL</div>
-              <div class="feed-item-body">
-                <p class="feed-item-text"><strong>Jamie L.</strong> submitted a new idea — <em>"AI-powered legal assistant for SMBs"</em></p>
-                <div class="feed-item-meta"><span class="tag tag-brand">FinTech</span><span>2 minutes ago</span></div>
-              </div>
-            </div>
-            <div class="feed-item">
-              <div class="feed-item-icon feed-icon-collab">MK</div>
-              <div class="feed-item-body">
-                <p class="feed-item-text"><strong>Maya K.</strong> requested to collaborate on <em>"Carbon-negative coffee subscription"</em></p>
-                <div class="feed-item-meta"><span class="tag tag-mint">GreenTech</span><span>11 minutes ago</span></div>
-              </div>
-            </div>
-            <div class="feed-item">
-              <div class="feed-item-icon feed-icon-comment">SR</div>
-              <div class="feed-item-body">
-                <p class="feed-item-text"><strong>Sam R.</strong> left feedback on <em>"Duolingo for musical instruments"</em></p>
-                <div class="feed-item-meta"><span class="tag tag-violet">EdTech</span><span>28 minutes ago</span></div>
-              </div>
-            </div>
-            <div class="feed-item">
-              <div class="feed-item-icon feed-icon-launch">TC</div>
-              <div class="feed-item-body">
-                <p class="feed-item-text"><strong>TuneCoach</strong> marked as <em>Launched</em> 🎉 — 312 upvotes, 4 collaborators</p>
-                <div class="feed-item-meta"><span class="tag tag-mint">Launched</span><span>1 hour ago</span></div>
-              </div>
-            </div>
-            <div class="feed-item">
-              <div class="feed-item-icon feed-icon-vote">AG</div>
-              <div class="feed-item-body">
-                <p class="feed-item-text"><strong>Alex G.</strong> upvoted <em>"FinTech for teens"</em> — now at 200 votes</p>
-                <div class="feed-item-meta"><span class="tag tag-brand">FinTech</span><span>2 hours ago</span></div>
+            <div id="activityStream">
+              <div class="feed-item" id="activityStreamLoading">
+                <div class="feed-item-body">
+                  <p class="feed-item-text text-muted-iih"><span class="spinner-border spinner-border-sm me-2"></span> Loading activity...</p>
+                </div>
               </div>
             </div>
           </div>
@@ -321,50 +293,29 @@
         <div class="col-lg-5" data-scroll-reveal>
           <div class="market-pulse-panel">
             <div class="market-pulse-title"><i class="bi bi-bar-chart-fill"></i> Category Pulse</div>
-            <div class="market-pulse-sub">This week's hottest sectors</div>
+            <div class="market-pulse-sub">Community idea distribution</div>
             <div class="market-category-list">
-              <div class="market-cat-item">
-                <span class="market-cat-label">FinTech</span>
-                <div class="market-cat-bar-track">
-                  <div class="market-cat-bar-fill" style="width:84%;background:linear-gradient(90deg,#5B3FFF,#FF5A1F)"></div>
+              {% set pulse_gradients = [
+                'linear-gradient(90deg,#5B3FFF,#FF5A1F)',
+                'linear-gradient(90deg,#7C3AED,#5B3FFF)',
+                'linear-gradient(90deg,#00D9A3,#00A382)',
+                'linear-gradient(90deg,#EC4899,#F43F5E)',
+                'linear-gradient(90deg,#3B82F6,#6366F1)',
+                'linear-gradient(90deg,#FFD63A,#FF5A1F)'
+              ] %}
+              {% if market_trends %}
+                {% for trend in market_trends %}
+                <div class="market-cat-item">
+                  <span class="market-cat-label">{{ trend.category }}</span>
+                  <div class="market-cat-bar-track">
+                    <div class="market-cat-bar-fill" style="width:{{ [trend.share_percent, 8] | max }}%;background:{{ pulse_gradients[loop.index0 % pulse_gradients|length] }}"></div>
+                  </div>
+                  <span class="market-cat-pct">{{ trend.share_percent }}%</span>
                 </div>
-                <span class="market-cat-pct">84%</span>
-              </div>
-              <div class="market-cat-item">
-                <span class="market-cat-label">EdTech</span>
-                <div class="market-cat-bar-track">
-                  <div class="market-cat-bar-fill" style="width:72%;background:linear-gradient(90deg,#7C3AED,#5B3FFF)"></div>
-                </div>
-                <span class="market-cat-pct">72%</span>
-              </div>
-              <div class="market-cat-item">
-                <span class="market-cat-label">GreenTech</span>
-                <div class="market-cat-bar-track">
-                  <div class="market-cat-bar-fill" style="width:67%;background:linear-gradient(90deg,#00D9A3,#00A382)"></div>
-                </div>
-                <span class="market-cat-pct">67%</span>
-              </div>
-              <div class="market-cat-item">
-                <span class="market-cat-label">Health</span>
-                <div class="market-cat-bar-track">
-                  <div class="market-cat-bar-fill" style="width:58%;background:linear-gradient(90deg,#EC4899,#F43F5E)"></div>
-                </div>
-                <span class="market-cat-pct">58%</span>
-              </div>
-              <div class="market-cat-item">
-                <span class="market-cat-label">DevTools</span>
-                <div class="market-cat-bar-track">
-                  <div class="market-cat-bar-fill" style="width:49%;background:linear-gradient(90deg,#3B82F6,#6366F1)"></div>
-                </div>
-                <span class="market-cat-pct">49%</span>
-              </div>
-              <div class="market-cat-item">
-                <span class="market-cat-label">Creator</span>
-                <div class="market-cat-bar-track">
-                  <div class="market-cat-bar-fill" style="width:41%;background:linear-gradient(90deg,#FFD63A,#FF5A1F)"></div>
-                </div>
-                <span class="market-cat-pct">41%</span>
-              </div>
+                {% endfor %}
+              {% else %}
+                <p class="text-muted-iih text-center py-3 small">No data yet — be the first to post an idea.</p>
+              {% endif %}
             </div>
           </div>
         </div>
@@ -565,4 +516,43 @@
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+(function() {
+  const TAG_CLASSES = {
+    'FinTech': 'tag-brand', 'EdTech': 'tag-violet', 'GreenTech': 'tag-mint',
+    'Health': 'tag-pink', 'DevTools': 'tag-blue', 'Creator': 'tag-yellow',
+    'Productivity': 'tag-brand', 'Social': 'tag-violet'
+  };
+
+  function renderFeed(events) {
+    const container = document.getElementById('activityStream');
+    if (!container) return;
+    if (!events || events.length === 0) {
+      container.innerHTML = '<div class="feed-item"><div class="feed-item-body"><p class="feed-item-text text-muted-iih">No recent activity yet.</p></div></div>';
+      return;
+    }
+    container.innerHTML = events.map(ev => {
+      const tagClass = TAG_CLASSES[ev.tag] || ev.tag_class || 'tag-brand';
+      const tagHtml = ev.tag ? `<span class="tag ${tagClass}">${ev.tag}</span>` : '';
+      return `<div class="feed-item">
+        <div class="feed-item-icon ${ev.icon_class}">${ev.initials}</div>
+        <div class="feed-item-body">
+          <p class="feed-item-text">${ev.text}</p>
+          <div class="feed-item-meta">${tagHtml}<span>${ev.rel_time}</span></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function loadFeed() {
+    fetch('/api/activity-stream')
+      .then(r => { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(renderFeed)
+      .catch(() => renderFeed([]));
+  }
+
+  loadFeed();
+  setInterval(loadFeed, 30000);
+})();
+</script>
 {% endblock %}

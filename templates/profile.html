@@ -24,6 +24,13 @@
         <h1 class="profile-name">{{ profile_user.display_name }}</h1>
         <p class="profile-username">@{{ profile_user.username }}</p>
         <p class="profile-bio">{{ profile_user.bio or "No bio yet." }}</p>
+        {% if profile_user.skill_list %}
+        <div class="skill-pills mb-2">
+          {% for skill in profile_user.skill_list %}
+          <span class="skill-pill">{{ skill }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
         <div class="profile-stats">
           <button type="button" class="stat-pill profile-stat" data-stat="followers">
             <i class="bi bi-people-fill"></i> {{ profile_user.followers_count }} followers
@@ -58,19 +65,25 @@
             <i class="bi bi-chat-dots"></i> Message
           </a>
 
-    <form method="post"
-          action="{{ url_for('main.profile_toggle_follow', username=profile_user.username) }}"
-          class="profile-follow-form">
-      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-      <button type="submit" class="btn btn-sm {% if viewer_follows_profile %}btn-outline-secondary{% else %}btn-outline-iih{% endif %}">
-        {% if viewer_follows_profile %}
-          <i class="bi bi-person-dash"></i> Unfollow
-        {% else %}
-          <i class="bi bi-person-plus"></i> Follow
-        {% endif %}
-      </button>
-    </form>
-  </div>
+          <form method="post"
+                action="{{ url_for('main.profile_toggle_follow', username=profile_user.username) }}"
+                class="profile-follow-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn btn-sm {% if viewer_follows_profile %}btn-outline-secondary{% else %}btn-outline-iih{% endif %}">
+              {% if viewer_follows_profile %}
+                <i class="bi bi-person-dash"></i> Unfollow
+              {% else %}
+                <i class="bi bi-person-plus"></i> Follow
+              {% endif %}
+            </button>
+          </form>
+
+          {% if cofounder_match is not none %}
+          <span class="cofounder-match-badge" title="Based on complementary skills and shared interests">
+            <i class="bi bi-people-fill"></i> {{ cofounder_match }}% collaboration fit
+          </span>
+          {% endif %}
+        </div>
 {% endif %}
       </div>
     </div>

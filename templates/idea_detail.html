@@ -235,7 +235,7 @@
       <div id="actionFeedback" class="alert d-none mt-3 mb-0" role="alert"></div>
 
       <div class="idea-section">
-        <h2 class="section-heading section-heading--anchor"><i class="bi bi-chat-dots"></i><span>Discussion</span> <span class="text-muted-iih small">({{ idea.comments_total }})</span></h2>
+        <h2 class="section-heading section-heading--anchor"><i class="bi bi-chat-dots"></i><span>Discussion</span> <span class="text-muted-iih small">(<span class="meta-comments-count" data-comment-count="{{ idea.comments_total }}">{{ idea.comments_total }}</span>)</span></h2>
         <form class="comment-composer" id="commentForm">
           <span class="avatar {{ idea.author.avatar_class }}">{{ idea.author.initials }}</span>
           <div class="flex-grow-1">
@@ -301,6 +301,10 @@
           </div>
         </div>
         <hr class="divider">
+        <!-- Radar chart -->
+        <div style="max-width:240px;margin:0 auto 1rem;">
+          <canvas id="scoreRadar" height="200"></canvas>
+        </div>
         <div class="score-breakdown">
           <div class="score-row">
             <span>Market potential</span>
@@ -533,4 +537,47 @@
 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='js/idea-detail.js') }}"></script>
+<script>
+(function() {
+  const ctx = document.getElementById('scoreRadar');
+  if (!ctx) return;
+  const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+  const gridColor  = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(11,11,18,0.08)';
+  const tickColor  = isDark ? 'rgba(255,255,255,0.4)'  : 'rgba(11,11,18,0.45)';
+  const labelColor = isDark ? 'rgba(255,255,255,0.7)'  : '#4A4A5E';
+
+  new Chart(ctx, {
+    type: 'radar',
+    data: {
+      labels: ['Market', 'Community', 'Feasibility', 'Differentiation'],
+      datasets: [{
+        data: [
+          {{ idea.score_breakdown.market }},
+          {{ idea.score_breakdown.support }},
+          {{ idea.score_breakdown.feasibility }},
+          {{ idea.score_breakdown.differentiation }}
+        ],
+        backgroundColor: 'rgba(255,90,31,0.15)',
+        borderColor: '#FF5A1F',
+        borderWidth: 2,
+        pointBackgroundColor: '#FF5A1F',
+        pointRadius: 4,
+        pointHoverRadius: 6,
+      }]
+    },
+    options: {
+      scales: {
+        r: {
+          min: 0, max: 100,
+          ticks: { stepSize: 25, display: false },
+          grid:        { color: gridColor },
+          angleLines:  { color: gridColor },
+          pointLabels: { color: labelColor, font: { size: 11, weight: '500' } },
+        }
+      },
+      plugins: { legend: { display: false } },
+    }
+  });
+})();
+</script>
 {% endblock %}
