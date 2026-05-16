@@ -78,7 +78,22 @@
   <section class="container-iih mt-4">
     <!-- Charts row -->
     <div class="row g-4 mb-4" id="chartsRow">
-      <div class="col-md-5">
+      <!-- 新增：左侧卡片 -->
+      <div class="col-md-3">
+        <div class="dashboard-card chart-card h-100 d-flex flex-column justify-content-between">
+          <h3 class="card-section-title">Top Category</h3>
+          <div class="text-center py-3">
+            <div style="font-size:2.5rem;">{{ stats.top_category_emoji or '💡' }}</div>
+            <div class="fw-bold mt-2" style="font-size:1.1rem;">{{ stats.top_category or '—' }}</div>
+            <div class="text-muted-iih small mt-1">Your most active category</div>
+          </div>
+          <a href="{{ url_for('main.explore', category=stats.top_category) }}"
+            class="btn btn-ghost btn-sm-iih w-100">Explore category</a>
+        </div>
+      </div>
+
+      <!-- 原 Ideas by Stage，宽度缩小 -->
+      <div class="col-md-3">
         <div class="dashboard-card chart-card">
           <h3 class="card-section-title">Ideas by Stage</h3>
           <div class="chart-wrapper-sm">
@@ -86,14 +101,36 @@
           </div>
         </div>
       </div>
-      <div class="col-md-7">
+
+      <!-- 原 Submissions by Week，宽度缩小 -->
+      <div class="col-md-3">
         <div class="dashboard-card chart-card">
-          <h3 class="card-section-title">Vote velocity — <span id="voteVelocityIdeaTitle" class="text-muted-iih small fw-normal">your top idea</span></h3>
+          <h3 class="card-section-title">Submissions by Week</h3>
           <div class="chart-wrapper-sm">
             <canvas id="weeklyChart"></canvas>
           </div>
         </div>
       </div>
+
+      <!-- 新增：右侧卡片 -->
+      <div class="col-md-3">
+        <div class="dashboard-card chart-card h-100 d-flex flex-column justify-content-between">
+          <h3 class="card-section-title">Engagement Score</h3>
+          <div class="text-center py-3">
+            <div class="score-ring score-ring-lg mx-auto" style="width:72px;height:72px;">
+              <svg viewBox="0 0 36 36">
+                <path class="ring-bg" d="M18 2.5 a15.5 15.5 0 0 1 0 31 a15.5 15.5 0 0 1 0 -31"></path>
+                <path class="ring-fill" d="M18 2.5 a15.5 15.5 0 0 1 0 31 a15.5 15.5 0 0 1 0 -31"
+                  style="stroke-dasharray:{{ stats.engagement_score or 0 }},100;"></path>
+              </svg>
+              <span class="score-num">{{ stats.engagement_score or 0 }}</span>
+            </div>
+            <div class="text-muted-iih small mt-2">Based on votes + comments</div>
+          </div>
+          <a href="{{ url_for('main.explore') }}" class="btn btn-ghost btn-sm-iih w-100">View all ideas</a>
+        </div>
+      </div>
+
     </div>
   </section>
 

@@ -245,7 +245,8 @@
 }
 
 /* Tabs */
-.profile-body { padding: 2rem 0 4rem; min-height: 60vh; }
+.profile-body { padding: 2rem 0 0; min-height: unset; }
+.profile-body--tabs { padding-bottom: 0; }
 
 .profile-tabs { border-bottom: 2px solid var(--border, #e5e7eb); gap: 0; }
 
