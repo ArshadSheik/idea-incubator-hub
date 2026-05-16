@@ -1774,3 +1774,42 @@ main, nav, footer, section, .auth-split { position: relative; z-index: 2; }
   80%  { transform: translate(16px, -36px) rotate(10deg); }
   100% { transform: translate(0px,   0px)  rotate(0deg); }
 }
+/* ═══════════════ GLOBAL SMOOTH TRANSITIONS ═══════════════ */
+
+/* 按钮 */
+.btn, button, [role="button"] {
+  transition: transform .15s, box-shadow .15s, background .15s,
+              border-color .15s, color .15s, opacity .15s !important;
+}
+.btn:hover, button:hover   { transform: translateY(-1px); }
+.btn:active, button:active { transform: translateY(0) scale(.97); }
+
+/* 导航链接 */
+.nav-link, .avatar-dropdown-item, .navbar-brand {
+  transition: color .2s, background .2s, transform .15s !important;
+}
+.nav-link:hover { transform: translateY(-1px); }
+
+/* 卡片 */
+.idea-card, .sidebar-card, .dashboard-card,
+.stat-card, .my-idea-card {
+  transition: transform .2s, box-shadow .2s !important;
+}
+.idea-card:hover, .stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,.1) !important;
+}
+
+/* Tab 切换 */
+.explore-tab-btn, .profile-tab-btn {
+  transition: color .2s, border-color .2s, background .2s !important;
+}
+
+/* 页面内容淡入 */
+@keyframes pageFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+main, .container-iih, section {
+  animation: pageFadeIn .3s ease both;
+}
