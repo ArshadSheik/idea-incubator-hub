@@ -248,36 +248,39 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-/* ─── Notification bell ─── */
-const notifBell     = document.getElementById('notifBell');
-const notifDropdown = document.getElementById('notifDropdown');
-const notifBadge    = document.getElementById('notifBadge');
-const notifList     = document.getElementById('notifList');
-const markAllBtn    = document.getElementById('markAllRead');
-
+/* ─── Notification bell (jQuery) ─── */
 const NOTIF_ICONS = {
   vote:    { icon: 'bi-caret-up-fill',    cls: 'type-vote'    },
   comment: { icon: 'bi-chat-dots-fill',   cls: 'type-comment' },
   collab:  { icon: 'bi-person-plus-fill', cls: 'type-collab'  },
 };
 
+$.ajaxSetup({
+  beforeSend(xhr) {
+    const token = $('meta[name="csrf-token"]').attr('content');
+    if (token) xhr.setRequestHeader('X-CSRFToken', token);
+  }
+});
+
 function loadNotifications() {
-  if (!notifBell) return;
-  fetch('/api/notifications')
-    .then(r => r.json())
-    .then(data => {
+  if (!$('#notifBell').length) return;
+  $.ajax({
+    url: '/api/notifications',
+    method: 'GET',
+    success(data) {
       if (!data.ok) return;
+      const $badge = $('#notifBadge');
       if (data.unread_count > 0) {
-        notifBadge.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
-        notifBadge.classList.remove('d-none');
+        $badge.text(data.unread_count > 9 ? '9+' : data.unread_count).removeClass('d-none');
       } else {
-        notifBadge.classList.add('d-none');
+        $badge.addClass('d-none');
       }
+      const $list = $('#notifList');
       if (data.notifications.length === 0) {
-        notifList.innerHTML = '<p class="notif-empty">No notifications yet.</p>';
+        $list.html('<p class="notif-empty">No notifications yet.</p>');
         return;
       }
-      notifList.innerHTML = data.notifications.map(n => {
+      const html = data.notifications.map(n => {
         const iconInfo = NOTIF_ICONS[n.type] || { icon: 'bi-bell', cls: 'type-comment' };
         return `
           <div class="notif-item ${n.is_read ? '' : 'unread'}"
@@ -291,42 +294,50 @@ function loadNotifications() {
             </div>
           </div>`;
       }).join('');
-      notifList.querySelectorAll('.notif-item').forEach(item => {
-        item.addEventListener('click', () => {
-          const id   = item.dataset.id;
-          const link = item.dataset.link;
-          fetch(`/api/notifications/${id}/read`, {
-            method: 'POST',
-            headers: { 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
-          }).then(() => {
-            item.classList.remove('unread');
-            loadNotifications();
-          });
-          if (link && link !== '#') window.location.href = link;
-        });
-      });
-    })
-    .catch(() => {});
-}
-
-if (notifBell) {
-  notifBell.addEventListener('click', (e) => {
-    e.stopPropagation();
-    notifDropdown.classList.toggle('show');
-    if (notifDropdown.classList.contains('show')) loadNotifications();
-  });
-  document.addEventListener('click', (e) => {
-    if (!notifDropdown.contains(e.target) && e.target !== notifBell) {
-      notifDropdown.classList.remove('show');
+      $list.html(html);
     }
   });
-  if (markAllBtn) {
-    markAllBtn.addEventListener('click', () => {
-      fetch('/api/notifications/read-all', {
-        method: 'POST',
-        headers: { 'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content }
-      }).then(() => loadNotifications());
-    });
-  }
-  loadNotifications();
 }
+
+/* Delegated click on notif items — handles dynamically rendered rows */
+$(document).on('click', '.notif-item', function () {
+  const id   = $(this).data('id');
+  const link = $(this).data('link');
+  const $item = $(this);
+  $.ajax({
+    url: `/api/notifications/${id}/read`,
+    method: 'POST',
+    success() {
+      $item.removeClass('unread');
+      loadNotifications();
+    }
+  });
+  if (link && link !== '#') window.location.href = link;
+});
+
+$(function () {
+  if (!$('#notifBell').length) return;
+
+  $('#notifBell').on('click', function (e) {
+    e.stopPropagation();
+    const $dropdown = $('#notifDropdown');
+    $dropdown.toggleClass('show');
+    if ($dropdown.hasClass('show')) loadNotifications();
+  });
+
+  $(document).on('click', function (e) {
+    if (!$(e.target).closest('#notifDropdown, #notifBell').length) {
+      $('#notifDropdown').removeClass('show');
+    }
+  });
+
+  $('#markAllRead').on('click', function () {
+    $.ajax({
+      url: '/api/notifications/read-all',
+      method: 'POST',
+      success: loadNotifications
+    });
+  });
+
+  loadNotifications();
+});

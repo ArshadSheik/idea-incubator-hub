@@ -7,27 +7,213 @@
   min-height: calc(100vh - 64px);
 }
 
-/* Sidebar */
+/* ── Sidebar ──────────────────────────────────────────────── */
 .collab-sidebar {
-  width: 280px;
+  width: 300px;
   flex-shrink: 0;
-  border-right: 1px solid var(--border, #e5e7eb);
-  padding: 1.5rem;
-  background: var(--surface-raised, #f9fafb);
+  background: linear-gradient(180deg, #fafafe 0%, #f3f2ff 100%);
+  border-right: 1px solid rgba(91,63,255,0.12);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  max-height: calc(100vh - 64px);
+  align-self: flex-start;
+  position: sticky;
+  top: 0;
 }
 
-.sidebar-idea-title   { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
-.sidebar-idea-summary { font-size: 0.825rem; color: var(--ink-500, #6b7280); margin-bottom: 1rem; }
-.sidebar-section      { margin-top: 1.5rem; }
-.sidebar-heading      { font-size: 0.75rem; font-weight: 700; text-transform: uppercase;
-                         letter-spacing: 0.06em; color: var(--ink-400, #9ca3af); margin-bottom: 0.75rem; }
-.sidebar-stage        { font-size: 0.875rem; color: var(--ink-700, #374151); }
+/* Idea hero card */
+.sidebar-idea-card {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, rgba(91,63,255,0.09) 0%, rgba(168,85,247,0.06) 100%);
+  border-bottom: 1px solid rgba(91,63,255,0.1);
+  position: relative;
+}
 
-.team-list  { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
-.team-member { display: flex; align-items: center; gap: 0.5rem; }
-.team-member-name { font-size: 0.825rem; color: var(--ink-700, #374151); }
+.sidebar-idea-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  margin-bottom: 0.4rem;
+  background: linear-gradient(135deg, #5b3fff 0%, #a855f7 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.3;
+}
+.sidebar-idea-summary {
+  font-size: 0.78rem;
+  color: var(--ink-500, #6b7280);
+  margin-bottom: 1rem;
+  line-height: 1.5;
+}
 
-/* Main board area */
+/* Sidebar sections */
+.sidebar-section {
+  padding: 1.2rem 1.5rem;
+  border-bottom: 1px solid rgba(91,63,255,0.06);
+}
+
+.sidebar-heading {
+  font-size: 0.67rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #5b3fff;
+  margin-bottom: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+.sidebar-heading::before {
+  content: '';
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #5b3fff, #a855f7);
+  flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(91,63,255,0.5);
+}
+
+/* Stage badge */
+.stage-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.38rem 0.9rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, rgba(91,63,255,0.12), rgba(168,85,247,0.1));
+  border: 1px solid rgba(91,63,255,0.22);
+  color: #5b3fff;
+  letter-spacing: 0.02em;
+}
+
+/* Team members */
+.team-list {
+  list-style: none;
+  padding: 0; margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+.team-member {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.55rem;
+  border-radius: 10px;
+  transition: background 0.15s, transform 0.15s;
+  cursor: default;
+}
+.team-member:hover {
+  background: rgba(91,63,255,0.07);
+  transform: translateX(4px);
+}
+.team-member-name {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ink-700, #374151);
+}
+
+/* ── Activity log ─────────────────────────────────────────── */
+.activity-live-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16,185,129,0.25);
+  animation: livePulse 2s infinite;
+  display: inline-block;
+  margin-left: 0.3rem;
+}
+@keyframes livePulse {
+  0%, 100% { box-shadow: 0 0 0 2px rgba(16,185,129,0.25); }
+  50%       { box-shadow: 0 0 0 6px rgba(16,185,129,0.08); }
+}
+
+.activity-list {
+  list-style: none;
+  padding: 0; margin: 0;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+.activity-list::before {
+  content: '';
+  position: absolute;
+  left: 8px; top: 12px; bottom: 12px;
+  width: 1.5px;
+  background: linear-gradient(to bottom, rgba(91,63,255,0.4), rgba(91,63,255,0.04));
+  pointer-events: none;
+}
+.activity-empty {
+  font-size: 0.78rem;
+  color: var(--ink-400, #9ca3af);
+  font-style: italic;
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.45rem 0;
+  position: relative;
+}
+.activity-dot {
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  font-weight: 900;
+  position: relative;
+  z-index: 1;
+  margin-top: 2px;
+}
+.activity-dot.action-created { background: rgba(16,185,129,0.15);  color: #059669; border: 1.5px solid rgba(16,185,129,0.4); }
+.activity-dot.action-moved   { background: rgba(59,130,246,0.15);  color: #2563eb; border: 1.5px solid rgba(59,130,246,0.4); }
+.activity-dot.action-deleted { background: rgba(239,68,68,0.15);   color: #dc2626; border: 1.5px solid rgba(239,68,68,0.4);  }
+.activity-dot.action-updated { background: rgba(245,158,11,0.15);  color: #d97706; border: 1.5px solid rgba(245,158,11,0.4); }
+
+.activity-body {
+  flex: 1; min-width: 0;
+  background: rgba(255,255,255,0.75);
+  border: 1px solid rgba(91,63,255,0.08);
+  border-radius: 8px;
+  padding: 0.35rem 0.55rem;
+  backdrop-filter: blur(4px);
+}
+.activity-detail {
+  font-size: 0.775rem;
+  font-weight: 500;
+  color: var(--ink-800, #1f2937);
+  line-height: 1.4;
+  word-break: break-word;
+}
+.activity-meta {
+  font-size: 0.68rem;
+  color: var(--ink-400, #9ca3af);
+  margin-top: 0.1rem;
+}
+
+@keyframes slideInActivity {
+  from { opacity: 0; transform: translateX(-10px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.activity-item.activity-new .activity-body {
+  animation: slideInActivity 0.35s cubic-bezier(0.16,1,0.3,1);
+}
+@keyframes flashActivity {
+  0%, 100% { background: rgba(255,255,255,0.75); }
+  40%       { background: rgba(91,63,255,0.08);  }
+}
+.activity-item.activity-flash .activity-body {
+  animation: flashActivity 0.8s ease;
+}
+
+/* ── Main board area ──────────────────────────────────────── */
 .collab-main    { flex: 1; padding: 1.5rem; overflow-x: auto; }
 .kanban-header  { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.5rem; }
 .kanban-title   { font-size: 1.25rem; font-weight: 700; margin: 0; }
@@ -40,15 +226,10 @@
   padding: 1.5rem;
 }
 .collab-requests-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-top: 1rem;
+  display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1rem;
 }
 .collab-request-card {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  display: flex; align-items: center; gap: 1rem;
   padding: 1rem;
   border: 1px solid var(--ink-200);
   border-radius: 12px;
@@ -56,9 +237,7 @@
   flex-wrap: wrap;
 }
 .collab-request-msg {
-  font-size: 0.82rem;
-  color: var(--ink-600);
-  font-style: italic;
+  font-size: 0.82rem; color: var(--ink-600); font-style: italic;
 }
 
 /* Columns */
@@ -73,11 +252,8 @@
 .kanban-col.drag-over { background: var(--brand-50, #eff6ff); border-color: var(--brand-300, #93c5fd); }
 
 .col-header {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  padding-bottom: 0.75rem;
+  display: flex; align-items: center; gap: 0.5rem;
+  margin-bottom: 1rem; padding-bottom: 0.75rem;
   border-bottom: 1px solid var(--border, #e5e7eb);
 }
 .col-title { font-weight: 600; font-size: 0.875rem; flex: 1; }
@@ -85,8 +261,7 @@
   background: var(--surface, #fff);
   border: 1px solid var(--border, #e5e7eb);
   border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.75rem; font-weight: 600;
   padding: 0.1rem 0.5rem;
   color: var(--ink-500, #6b7280);
 }
@@ -110,14 +285,9 @@
 .task-card:hover  { box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
 .task-card.dragging { opacity: 0.5; cursor: grabbing; }
 
-.task-header {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.4rem;
-  margin-bottom: 0.4rem;
-}
-.task-title      { font-size: 0.825rem; font-weight: 600; flex: 1; color: var(--ink-800, #1f2937); }
-.task-desc       { font-size: 0.775rem; color: var(--ink-500, #6b7280); margin-bottom: 0.5rem; }
+.task-header { display: flex; align-items: flex-start; gap: 0.4rem; margin-bottom: 0.4rem; }
+.task-title  { font-size: 0.825rem; font-weight: 600; flex: 1; color: var(--ink-800, #1f2937); }
+.task-desc   { font-size: 0.775rem; color: var(--ink-500, #6b7280); margin-bottom: 0.5rem; }
 .task-delete-btn {
   background: none; border: none; cursor: pointer; padding: 0;
   color: var(--ink-300, #d1d5db); font-size: 0.875rem; line-height: 1;
@@ -140,36 +310,49 @@
 .badge-medium { background: #fef3c7; color: #92400e; }
 .badge-high   { background: #fee2e2; color: #991b1b; }
 
-/* ─── Dark mode overrides ─── */
+/* ── Dark mode ────────────────────────────────────────────── */
 [data-theme="dark"] .collab-sidebar {
-  background: rgba(16,16,28,0.90);
-  border-right-color: rgba(255,255,255,0.07);
+  background: linear-gradient(180deg, #0e0e1f 0%, #111128 100%);
+  border-right-color: rgba(91,63,255,0.18);
 }
+[data-theme="dark"] .sidebar-idea-card {
+  background: linear-gradient(135deg, rgba(91,63,255,0.14) 0%, rgba(168,85,247,0.09) 100%);
+  border-bottom-color: rgba(91,63,255,0.18);
+}
+[data-theme="dark"] .sidebar-section { border-bottom-color: rgba(255,255,255,0.05); }
+[data-theme="dark"] .team-member:hover { background: rgba(91,63,255,0.12); }
+[data-theme="dark"] .team-member-name { color: #e5e7eb; }
+[data-theme="dark"] .stage-badge {
+  background: linear-gradient(135deg, rgba(91,63,255,0.22), rgba(168,85,247,0.16));
+  border-color: rgba(91,63,255,0.32);
+  color: #a78bfa;
+}
+[data-theme="dark"] .activity-body {
+  background: rgba(255,255,255,0.05);
+  border-color: rgba(255,255,255,0.07);
+}
+[data-theme="dark"] .activity-detail { color: #e5e7eb; }
+[data-theme="dark"] .activity-meta   { color: #6b7280; }
 [data-theme="dark"] .collab-requests-section,
-[data-theme="dark"] .collab-request-card {
-  background: rgba(16,16,28,0.90);
-  border-color: rgba(255,255,255,0.07);
-}
+[data-theme="dark"] .collab-request-card { background: rgba(16,16,28,0.90); border-color: rgba(255,255,255,0.07); }
 [data-theme="dark"] .collab-request-card { background: rgba(255,255,255,0.03); }
-[data-theme="dark"] .kanban-col {
-  background: rgba(255,255,255,0.04);
-  border-color: rgba(255,255,255,0.08);
-}
-[data-theme="dark"] .kanban-col.drag-over {
-  background: rgba(91,63,255,0.10);
-  border-color: rgba(91,63,255,0.35);
-}
-[data-theme="dark"] .task-card {
-  background: rgba(20,20,36,0.95);
-  border-color: rgba(255,255,255,0.07);
-}
+[data-theme="dark"] .kanban-col { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.08); }
+[data-theme="dark"] .kanban-col.drag-over { background: rgba(91,63,255,0.10); border-color: rgba(91,63,255,0.35); }
+[data-theme="dark"] .task-card { background: rgba(20,20,36,0.95); border-color: rgba(255,255,255,0.07); }
 [data-theme="dark"] .task-card:hover { box-shadow: 0 2px 12px rgba(0,0,0,0.4); }
 [data-theme="dark"] .badge-low    { background: rgba(16,185,129,0.15); color: #34d399; }
-[data-theme="dark"] .badge-medium { background: rgba(245,158,11,0.15); color: #fbbf24; }
-[data-theme="dark"] .badge-high   { background: rgba(239,68,68,0.15);  color: #f87171; }
+[data-theme="dark"] .badge-medium { background: rgba(245,158,11,0.15);  color: #fbbf24; }
+[data-theme="dark"] .badge-high   { background: rgba(239,68,68,0.15);   color: #f87171; }
+[data-theme="dark"] .activity-item.activity-flash .activity-body {
+  animation: flashActivityDark 0.8s ease;
+}
+@keyframes flashActivityDark {
+  0%, 100% { background: rgba(255,255,255,0.05); }
+  40%       { background: rgba(91,63,255,0.15);  }
+}
 
 @media (max-width: 768px) {
   .collab-layout  { flex-direction: column; }
-  .collab-sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border, #e5e7eb); }
+  .collab-sidebar { width: 100%; max-height: none; position: static; align-self: auto; border-right: none; border-bottom: 1px solid rgba(91,63,255,0.12); }
   .kanban-board   { flex-direction: column; min-width: unset; }
 }

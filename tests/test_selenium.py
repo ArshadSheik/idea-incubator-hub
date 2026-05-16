@@ -12,6 +12,7 @@ REQUIRES the app to be running on port 5001 before running:
 Uses headless Chrome via webdriver-manager so no manual ChromeDriver install needed.
 """
 
+import sys
 import threading
 import time
 import pytest
@@ -90,9 +91,10 @@ def driver(live_app):
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1280,800")
+    _exe = "chromedriver.exe" if sys.platform == "win32" else "chromedriver"
     chrome_driver_path = os.path.join(
         os.path.dirname(ChromeDriverManager().install()),
-        "chromedriver.exe"
+        _exe
     )
     service = Service(chrome_driver_path)
     d = webdriver.Chrome(service=service, options=options)

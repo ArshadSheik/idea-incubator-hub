@@ -1,9 +1,10 @@
 import json
+import mimetypes
 import os
 import uuid
 from urllib import error as urlerror
 from urllib import request as urlrequest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from flask import Blueprint, abort, flash, jsonify, redirect, render_template, request, url_for
 from flask_login import current_user, login_required
@@ -16,11 +17,13 @@ from models.models import (
     Bookmark,
     Collaboration,
     Comment,
+    CommentLike,
     Idea,
     IdeaMedia,
     Notification,
     Tag,
     Task,
+    TaskActivity,
     User,
     UserFollow,
     Vote,
@@ -62,11 +65,37 @@ def _avatar_class_for_user(user) -> str:
     return f"avatar-{color}"
 
 
+def _check_idea_visibility(idea: Idea) -> None:
+    """Abort 403 when the current user cannot see this idea.
+
+    - public   → accessible to everyone (logged-in or anonymous)
+    - unlisted → accessible via direct link to everyone
+    - private  → owner only; any other visitor gets 403
+    """
+    if idea.privacy == 'private':
+        if not current_user.is_authenticated or current_user.id != idea.user_id:
+            abort(403)
+
+
+def _user_can_edit_board(idea: Idea) -> bool:
+    """Return True if the current user may create/edit/delete tasks on this board.
+
+    Only the idea owner and accepted collaborators have board write-access.
+    """
+    if idea.user_id == current_user.id:
+        return True
+    return Collaboration.query.filter_by(
+        idea_id=idea.id, user_id=current_user.id, status='accepted'
+    ).first() is not None
+
+
 def _relative_time(dt) -> str:
     if not dt:
         return "just now"
 
-    delta = datetime.utcnow() - dt
+    now = datetime.now(timezone.utc)
+    aware_dt = dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
+    delta = now - aware_dt
     seconds = int(delta.total_seconds())
 
     if seconds < 60:
@@ -321,6 +350,7 @@ def _serialize_detail_idea(idea: Idea) -> dict:
     actor = current_user if current_user and current_user.is_authenticated else None
     user_voted = False
     user_collaborating = False
+    user_collab_pending = False
     if actor is not None:
         user_voted = (
             Vote.query.filter_by(user_id=actor.id, idea_id=idea.id).first() is not None
@@ -470,6 +500,11 @@ def _serialize_detail_idea(idea: Idea) -> dict:
 
 def _serialize_comment(comment: Comment) -> dict:
     author = comment.author
+    user_liked = False
+    if current_user.is_authenticated:
+        user_liked = CommentLike.query.filter_by(
+            user_id=current_user.id, comment_id=comment.id
+        ).first() is not None
     return {
         "id": comment.id,
         "idea_id": comment.idea_id,
@@ -479,6 +514,7 @@ def _serialize_comment(comment: Comment) -> dict:
         "time": _format_comment_time(comment.created_at),
         "text": comment.body,
         "likes": comment.like_count or 0,
+        "user_liked": user_liked,
         "parent_id": comment.parent_id,
     }
 
@@ -530,7 +566,7 @@ def _serialize_related_idea(idea: Idea) -> dict:
 
 
 def _build_weekly_momentum(idea_id: int) -> dict:
-    today = datetime.utcnow().date()
+    today = datetime.now(timezone.utc).date()
     start_date = today - timedelta(days=6)
 
     vote_rows = (
@@ -731,6 +767,12 @@ def page_not_found(_error):
     return render_template("404.html"), 404
 
 
+@main_bp.app_errorhandler(500)
+def internal_server_error(_error):
+    db.session.rollback()
+    return render_template("500.html"), 500
+
+
 # ─────────────────────────────────────────
 # Landing page
 # ─────────────────────────────────────────
@@ -924,6 +966,7 @@ def dashboard():
 @login_required
 def idea_detail(idea_id: int):
     idea = Idea.query.get_or_404(idea_id)
+    _check_idea_visibility(idea)
     idea.increment_views()
     return render_template("idea_detail.html", idea=_serialize_detail_idea(idea), idea_media=idea.media.all())
 
@@ -932,6 +975,7 @@ def idea_detail(idea_id: int):
 @login_required
 def toggle_idea_vote(idea_id: int):
     idea = Idea.query.get_or_404(idea_id)
+    _check_idea_visibility(idea)
     actor = current_user
 
     existing_vote = Vote.query.filter_by(user_id=actor.id, idea_id=idea.id).first()
@@ -987,6 +1031,7 @@ def _get_collab_data(idea: Idea) -> list[dict]:
 @login_required
 def toggle_idea_collaboration(idea_id: int):
     idea  = Idea.query.get_or_404(idea_id)
+    _check_idea_visibility(idea)
     actor = current_user
 
     # Owner cannot request to collaborate on their own idea
@@ -1005,6 +1050,7 @@ def toggle_idea_collaboration(idea_id: int):
         return jsonify({
             "ok": True,
             "state": "none",
+            "collaborating": False,
             "collaborators_total": idea.collaborator_count,
             "collaborators": _get_collab_data(idea),
         })
@@ -1034,6 +1080,7 @@ def toggle_idea_collaboration(idea_id: int):
     return jsonify({
         "ok": True,
         "state": "pending",
+        "collaborating": True,
         "collaborators_total": idea.collaborator_count,
         "collaborators": _get_collab_data(idea),
     })
@@ -1105,6 +1152,7 @@ def decline_collaboration(idea_id: int, collab_id: int):
 @login_required
 def create_idea_comment(idea_id: int):
     idea = Idea.query.get_or_404(idea_id)
+    _check_idea_visibility(idea)
     actor = current_user
 
     payload = request.get_json(silent=True) or {}
@@ -1150,35 +1198,29 @@ def toggle_comment_like(idea_id: int, comment_id: int):
     idea = Idea.query.get_or_404(idea_id)
     comment = Comment.query.filter_by(id=comment_id, idea_id=idea.id).first_or_404()
 
-    payload = request.get_json(silent=True) or {}
-    action = (payload.get("action") or "toggle").strip().lower()
-    if action not in {"like", "unlike", "toggle"}:
-        return jsonify({"ok": False, "error": "Invalid action"}), 400
+    existing = CommentLike.query.filter_by(
+        user_id=current_user.id, comment_id=comment.id
+    ).first()
 
-    # For now we persist aggregate likes; per-user state is restored on frontend.
-    if action == "like":
-        comment.like_count = (comment.like_count or 0) + 1
-        liked = True
-    elif action == "unlike":
-        comment.like_count = max((comment.like_count or 0) - 1, 0)
+    if existing:
+        db.session.delete(existing)
         liked = False
     else:
-        currently_liked = bool(payload.get("currently_liked", False))
-        if currently_liked:
-            comment.like_count = max((comment.like_count or 0) - 1, 0)
-            liked = False
-        else:
-            comment.like_count = (comment.like_count or 0) + 1
-            liked = True
+        db.session.add(CommentLike(user_id=current_user.id, comment_id=comment.id))
+        liked = True
 
+    # Flush so the dynamic relationship reflects the pending change before counting.
+    db.session.flush()
+    comment.like_count = comment.likes.count()
     db.session.commit()
+
     return jsonify(
         {
             "ok": True,
             "idea_id": idea.id,
             "comment_id": comment.id,
             "liked": liked,
-            "like_count": comment.like_count or 0,
+            "like_count": comment.like_count,
         }
     )
 
@@ -1549,18 +1591,39 @@ def bookmark_status(idea_id: int):
 @login_required
 def collaboration_board(idea_id: int):
     idea  = Idea.query.get_or_404(idea_id)
+    _check_idea_visibility(idea)
     tasks = Task.query.filter_by(idea_id=idea_id).order_by(Task.created_at.asc()).all()
     team  = Collaboration.query.filter_by(idea_id=idea_id, status='accepted').all()
     team_members = [c.user for c in team if c.user]
+    is_owner = (current_user.id == idea.user_id)
+    can_edit = _user_can_edit_board(idea)
 
     # Pending requests — only visible to idea owner
     pending_requests = []
-    if current_user.id == idea.user_id:
+    if is_owner:
         pending_requests = (
             Collaboration.query
             .filter_by(idea_id=idea_id, status='pending')
             .all()
         )
+
+    recent_activity = (
+        TaskActivity.query
+        .filter_by(idea_id=idea_id)
+        .order_by(TaskActivity.created_at.desc())
+        .limit(20)
+        .all()
+    )
+    activity_log = [
+        {
+            "user_name":         a.user.display_name,
+            "user_initials":     a.user.initials,
+            "user_avatar_color": a.user.avatar_color,
+            "detail":            a.detail,
+            "time":              _relative_time(a.created_at),
+        }
+        for a in recent_activity
+    ]
 
     return render_template(
         "collaboration.html",
@@ -1568,8 +1631,33 @@ def collaboration_board(idea_id: int):
         tasks=tasks,
         team=team_members,
         pending_requests=pending_requests,
-        is_owner=(current_user.id == idea.user_id),
+        is_owner=is_owner,
+        can_edit=can_edit,
+        activity_log=activity_log,
     )
+
+@main_bp.route("/api/ideas/<int:idea_id>/board/activity")
+@login_required
+def board_activity(idea_id: int):
+    idea = Idea.query.get_or_404(idea_id)
+    _check_idea_visibility(idea)
+    activities = (
+        TaskActivity.query
+        .filter_by(idea_id=idea_id)
+        .order_by(TaskActivity.created_at.desc())
+        .limit(20)
+        .all()
+    )
+    return jsonify([{
+        "id":               a.id,
+        "user_name":        a.user.display_name,
+        "user_initials":    a.user.initials,
+        "user_avatar_color": a.user.avatar_color,
+        "action":           a.action,
+        "detail":           a.detail,
+        "time":             _relative_time(a.created_at),
+    } for a in activities])
+
 
 def _allowed_file(filename: str) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in IdeaMedia.ALLOWED_EXTENSIONS
@@ -1609,12 +1697,15 @@ def upload_idea_media(idea_id: int):
     with open(os.path.join(idea_upload_dir, stored_name), 'wb') as f:
         f.write(file_data)
 
+    guessed_mime, _ = mimetypes.guess_type(original_name)
+    safe_mime = guessed_mime or 'application/octet-stream'
+
     media = IdeaMedia(
         idea_id=idea.id,
         uploader_id=current_user.id,
         original_filename=original_name,
         stored_filename=stored_name,
-        mime_type=file.mimetype or 'application/octet-stream',
+        mime_type=safe_mime,
         file_size=len(file_data),
     )
     db.session.add(media)
@@ -1649,15 +1740,29 @@ def delete_idea_media(idea_id: int, media_id: int):
     db.session.commit()
     return jsonify({"ok": True, "media_id": media_id})
 
+_VALID_TASK_STATUSES   = {'todo', 'in_progress', 'done'}
+_VALID_TASK_PRIORITIES = {'low', 'medium', 'high'}
+
+
 @main_bp.route("/api/ideas/<int:idea_id>/tasks", methods=["POST"])
 @login_required
 def create_task(idea_id: int):
-    """Create a new task on the Kanban board."""
-    Idea.query.get_or_404(idea_id)
+    """Create a new task on the Kanban board. Owner and accepted collaborators only."""
+    idea = Idea.query.get_or_404(idea_id)
+    if not _user_can_edit_board(idea):
+        return jsonify({"ok": False, "error": "Only the idea owner or accepted collaborators can manage tasks."}), 403
+
     payload = request.get_json(silent=True) or {}
     title = (payload.get("title") or "").strip()
     if not title:
         return jsonify({"ok": False, "error": "Title is required"}), 400
+
+    status   = payload.get("status",   "todo")
+    priority = payload.get("priority", "medium")
+    if status not in _VALID_TASK_STATUSES:
+        return jsonify({"ok": False, "error": f"Invalid status. Must be one of: {', '.join(_VALID_TASK_STATUSES)}"}), 400
+    if priority not in _VALID_TASK_PRIORITIES:
+        return jsonify({"ok": False, "error": f"Invalid priority. Must be one of: {', '.join(_VALID_TASK_PRIORITIES)}"}), 400
 
     task = Task(
         idea_id=idea_id,
@@ -1665,10 +1770,15 @@ def create_task(idea_id: int):
         assigned_to=payload.get("assigned_to") or None,
         title=title,
         description=payload.get("description", ""),
-        status=payload.get("status", "todo"),
-        priority=payload.get("priority", "medium"),
+        status=status,
+        priority=priority,
     )
     db.session.add(task)
+    db.session.flush()
+    db.session.add(TaskActivity(
+        idea_id=idea_id, task_id=task.id, user_id=current_user.id,
+        action='created', detail=f"created '{title}'",
+    ))
     db.session.commit()
     return jsonify({"ok": True, "task_id": task.id}), 201
 
@@ -1677,16 +1787,43 @@ def create_task(idea_id: int):
 @login_required
 def update_task(idea_id: int, task_id: int):
     """Update a task — used for drag-and-drop status changes and edits."""
+    idea = Idea.query.get_or_404(idea_id)
+    if not _user_can_edit_board(idea):
+        return jsonify({"ok": False, "error": "Only the idea owner or accepted collaborators can manage tasks."}), 403
+
     task = Task.query.filter_by(id=task_id, idea_id=idea_id).first_or_404()
     payload = request.get_json(silent=True) or {}
+    _status_labels = {'todo': 'To Do', 'in_progress': 'In Progress', 'done': 'Done'}
 
     if "status" in payload:
+        if payload["status"] not in _VALID_TASK_STATUSES:
+            return jsonify({"ok": False, "error": f"Invalid status. Must be one of: {', '.join(_VALID_TASK_STATUSES)}"}), 400
+        if payload["status"] != task.status:
+            new_status = payload["status"]
+            last_move = (
+                TaskActivity.query
+                .filter_by(task_id=task.id, action='moved')
+                .order_by(TaskActivity.created_at.desc())
+                .first()
+            )
+            if last_move and last_move.to_status == task.status:
+                # Moving back to where the task came from — undo the last entry
+                db.session.delete(last_move)
+            else:
+                db.session.add(TaskActivity(
+                    idea_id=idea_id, task_id=task.id, user_id=current_user.id,
+                    action='moved',
+                    detail=f"moved '{task.title}' to {_status_labels.get(new_status, new_status)}",
+                    to_status=new_status,
+                ))
         task.status = payload["status"]
     if "title" in payload:
         task.title = payload["title"]
     if "description" in payload:
         task.description = payload["description"]
     if "priority" in payload:
+        if payload["priority"] not in _VALID_TASK_PRIORITIES:
+            return jsonify({"ok": False, "error": f"Invalid priority. Must be one of: {', '.join(_VALID_TASK_PRIORITIES)}"}), 400
         task.priority = payload["priority"]
     if "assigned_to" in payload:
         task.assigned_to = payload["assigned_to"] or None
@@ -1698,8 +1835,16 @@ def update_task(idea_id: int, task_id: int):
 @main_bp.route("/api/ideas/<int:idea_id>/tasks/<int:task_id>", methods=["DELETE"])
 @login_required
 def delete_task(idea_id: int, task_id: int):
-    """Delete a task from the board."""
+    """Delete a task from the board. Owner and accepted collaborators only."""
+    idea = Idea.query.get_or_404(idea_id)
+    if not _user_can_edit_board(idea):
+        return jsonify({"ok": False, "error": "Only the idea owner or accepted collaborators can manage tasks."}), 403
+
     task = Task.query.filter_by(id=task_id, idea_id=idea_id).first_or_404()
+    db.session.add(TaskActivity(
+        idea_id=idea_id, task_id=None, user_id=current_user.id,
+        action='deleted', detail=f"deleted '{task.title}'",
+    ))
     db.session.delete(task)
     db.session.commit()
     return jsonify({"ok": True})
@@ -1752,6 +1897,7 @@ def submit_idea():
 def idea_news(idea_id: int):
     """Market news for an idea's category — cached 24h."""
     idea = Idea.query.get_or_404(idea_id)
+    _check_idea_visibility(idea)
     try:
         from services.news_service import get_news_for_category
         articles = get_news_for_category(idea.category)
@@ -1798,10 +1944,9 @@ def chart_data():
     )
 
     # Ideas submitted per day for last 7 days
-    from datetime import datetime, timedelta
     seven_days = []
     for i in range(6, -1, -1):
-        day = datetime.utcnow().date() - timedelta(days=i)
+        day = datetime.now(timezone.utc).date() - timedelta(days=i)
         count = Idea.query.filter(
             db.func.date(Idea.created_at) == day,
             Idea.privacy == "public"
@@ -1872,6 +2017,7 @@ def trending_hashtags():
     return jsonify(data)
 
 @main_bp.route("/api/chat", methods=["POST"])
+@login_required
 def chat_api():
     """Floating chatbot endpoint. Calls DeepSeek API."""
     data         = request.get_json(silent=True) or {}
