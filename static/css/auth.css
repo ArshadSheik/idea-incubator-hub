@@ -397,3 +397,30 @@
   .auth-decor { display: none; }
   .auth-form-side { padding: 2rem 1.25rem; }
 }
+@media (max-width: 991px) {
+  .auth-split { grid-template-columns: 1fr; }
+  .auth-brand-side {
+    min-height: 300px;
+    order: -1;
+    padding: 2rem 1rem;
+  }
+  .auth-brand-inner { padding: 1rem; }
+  .auth-perks-title { font-size: 1.75rem; }
+  .auth-testimonial-big { padding: 1.5rem; }
+  .auth-testimonial-big p { font-size: 1rem; }
+  .auth-decor { display: none; }
+  .auth-form-side { padding: 2rem 1.25rem; }
+
+  @media (max-width: 576px) {
+    .auth-form-side { padding: 1.5rem 1rem; }
+    .auth-form-inner { max-width: 100%; }
+    .auth-header h1 { font-size: 1.5rem; }
+
+    .auth-social-row { flex-direction: column; }
+    .auth-social-row .btn { width: 100%; }
+
+    a[href*="google"] {
+      width: 100%;
+    }
+  }
+}
