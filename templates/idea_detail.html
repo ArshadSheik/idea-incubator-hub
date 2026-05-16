@@ -303,7 +303,7 @@
         <hr class="divider">
         <!-- Radar chart -->
         <div style="max-width:240px;margin:0 auto 1rem;">
-          <canvas id="scoreRadar" height="200"></canvas>
+          <canvas id="scoreRadar"></canvas>
         </div>
         <div class="score-breakdown">
           <div class="score-row">
@@ -566,13 +566,20 @@
       }]
     },
     options: {
+      layout: {
+        padding: { left: 20, right: 20, top: 5, bottom: 5 }  // ← 新增这行
+      },
       scales: {
         r: {
           min: 0, max: 100,
           ticks: { stepSize: 25, display: false },
           grid:        { color: gridColor },
           angleLines:  { color: gridColor },
-          pointLabels: { color: labelColor, font: { size: 11, weight: '500' } },
+          pointLabels: {
+                        color: labelColor,
+                        font: { size: 10, weight: '500' },
+                        padding: 8,
+                      },
         }
       },
       plugins: { legend: { display: false } },

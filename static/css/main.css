@@ -1080,6 +1080,11 @@ textarea.form-control-iih { resize: vertical; min-height: 100px; }
 .text-violet { color: var(--brand-secondary); }
 .divider { height: 1px; background: var(--ink-200); margin: 1.5rem 0; border: none; }
 
+#scoreRadar {
+  max-width: 100%;
+  width: 100% !important;
+}
+
 .container-iih { max-width: 1240px; margin: 0 auto; padding: 0 1.5rem; }
 .container-narrow { max-width: 780px; margin: 0 auto; padding: 0 1.5rem; }
 
