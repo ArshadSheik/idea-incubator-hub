@@ -97,7 +97,8 @@ def login():
     next_page = request.args.get("next") or request.form.get("next") or ""
     if not next_page:
         referrer = request.referrer or ""
-        if _is_safe_redirect(referrer):
+        login_path = url_for('auth.login')
+        if _is_safe_redirect(referrer) and urlparse(referrer).path != login_path:
             next_page = referrer
     if request.method == "POST":
         login_input = request.form.get("email", "").strip()

@@ -963,7 +963,6 @@ def dashboard():
 
 
 @main_bp.route("/ideas/<int:idea_id>")
-@login_required
 def idea_detail(idea_id: int):
     idea = Idea.query.get_or_404(idea_id)
     _check_idea_visibility(idea)
