@@ -23,7 +23,6 @@ from models.models import (
     Notification,
     Tag,
     Task,
-    TaskActivity,
     User,
     UserFollow,
     Vote,
@@ -793,6 +792,7 @@ def index():
     total_collabs  = Collaboration.query.count()
     launched_count = Idea.query.filter_by(stage='launched', privacy='public').count()
 
+    market_trends = _build_public_market_trends()
     return render_template(
         "index.html",
         trending_ideas=trending_ideas,
@@ -802,6 +802,7 @@ def index():
         total_votes=total_votes,
         total_collabs=total_collabs,
         launched_count=launched_count,
+        market_trends=market_trends,
     )
 
 
@@ -809,16 +810,51 @@ def index():
 # Render-only shells for pages owned elsewhere.
 # These keep the app booting end-to-end while each page is built out.
 # ─────────────────────────────────────────
-@main_bp.route("/explore")
-def explore():
-    query = Idea.query.filter_by(privacy="public")
+def _compute_idea_scores(idea: "Idea") -> None:
+    """Deterministic scoring — no external AI needed.
+    Scores are 0-100 integers saved back to the idea object.
+    """
+    # Market score: based on category popularity and vote momentum
+    category_counts = db.session.query(func.count(Idea.id)).filter_by(
+        privacy="public", category=idea.category
+    ).scalar() or 1
+    total_ideas = Idea.query.filter_by(privacy="public").count() or 1
+    cat_share = category_counts / total_ideas  # 0..1
+    # Higher share = validated market, but diminishing returns
+    market = min(95, int(40 + cat_share * 200 + min(idea.vote_count * 2, 30)))
 
-    q = (request.args.get("q") or "").strip()
-    category = (request.args.get("category") or "all").strip()
-    stage = (request.args.get("stage") or "all").strip().lower()
-    sort = (request.args.get("sort") or "trending").strip().lower()
-    tag_filter = (request.args.get("tag")      or "").strip().lower()
+    # Community score: votes + comments relative to idea age
+    now = datetime.now(timezone.utc)
+    created = idea.created_at.replace(tzinfo=timezone.utc) if idea.created_at.tzinfo is None else idea.created_at
+    age_days = max(1, (now - created).days)
+    engagement = idea.vote_count + idea.comment_count * 2
+    community = min(95, int(30 + min(engagement / age_days * 15, 50) + min(idea.collaborator_count * 5, 15)))
 
+    # Feasibility score: description depth + stage maturity
+    desc_len = len(idea.description or "")
+    stage_bonus = {"ideation": 0, "validation": 15, "building": 30, "launched": 45}.get(idea.stage or "ideation", 0)
+    feasibility = min(95, int(25 + min(desc_len / 30, 35) + stage_bonus))
+
+    # Differentiation score: tag diversity + uniqueness of title keywords
+    tag_count = len(idea.tags) if idea.tags else 0
+    title_words = len((idea.title or "").split())
+    differentiation = min(95, int(35 + tag_count * 8 + min(title_words * 3, 25)))
+
+    idea.market_score          = market
+    idea.community_score       = community
+    idea.feasibility_score     = feasibility
+    idea.differentiation_score = differentiation
+
+
+def _hotness_score(idea) -> float:
+    """Hacker-News-style hotness: votes / (age_hours + 2)^1.8"""
+    now = datetime.now(timezone.utc)
+    created = idea.created_at.replace(tzinfo=timezone.utc) if idea.created_at.tzinfo is None else idea.created_at
+    age_hours = max(0, (now - created).total_seconds() / 3600)
+    return idea.vote_count / ((age_hours + 2) ** 1.8)
+
+
+def _apply_explore_filters(query, q, category, stage, tag_filter):
     if q:
         like_expr = f"%{q}%"
         query = query.filter(
@@ -826,13 +862,10 @@ def explore():
             (Idea.summary.ilike(like_expr)) |
             (Idea.category.ilike(like_expr))
         )
-
     if category and category.lower() != "all":
         query = query.filter(Idea.category == category)
-
     if stage and stage != "all":
         query = query.filter(Idea.stage == stage)
-
     if tag_filter:
         query = (
             query
@@ -840,21 +873,63 @@ def explore():
             .join(Tag, Tag.id == idea_tags.c.tag_id)
             .filter(func.lower(Tag.name) == tag_filter)
         )
+    return query
 
-    if sort == "newest":
-        query = query.order_by(Idea.created_at.desc())
-    elif sort == "votes":
-        query = (
+
+@main_bp.route("/explore")
+def explore():
+    q = (request.args.get("q") or "").strip()
+    category = (request.args.get("category") or "all").strip()
+    stage = (request.args.get("stage") or "all").strip().lower()
+    sort = (request.args.get("sort") or "trending").strip().lower()
+    tag_filter = (request.args.get("tag") or "").strip().lower()
+    tab = (request.args.get("tab") or "trending").strip().lower()
+
+    query = Idea.query.filter_by(privacy="public")
+    query = _apply_explore_filters(query, q, category, stage, tag_filter)
+
+    # For You tab: weight by user's own category interests
+    if tab == "for_you" and current_user.is_authenticated:
+        user_cats = [
+            r[0] for r in db.session.query(Idea.category)
+            .filter_by(user_id=current_user.id).distinct().all()
+        ]
+        ideas = query.all()
+        def _for_you_score(idea):
+            cat_bonus = 3.0 if idea.category in user_cats else 1.0
+            return _hotness_score(idea) * cat_bonus
+        ideas.sort(key=_for_you_score, reverse=True)
+    elif sort == "newest":
+        ideas = query.order_by(Idea.created_at.desc()).all()
+    elif sort == "votes" or tab == "top":
+        ideas = (
             query
             .outerjoin(Vote, Vote.idea_id == Idea.id)
             .group_by(Idea.id)
             .order_by(func.count(Vote.id).desc(), Idea.created_at.desc())
+            .all()
         )
     else:
-        # Keep trending stable for now: latest public ideas first.
-        query = query.order_by(Idea.created_at.desc())
+        # Default: hot (trending by hotness score)
+        ideas = query.all()
+        ideas.sort(key=_hotness_score, reverse=True)
 
-    ideas = query.all()
+    # Available tags from DB for the tag filter dropdown
+    all_tags = db.session.query(Tag.name).join(idea_tags).join(
+        Idea, Idea.id == idea_tags.c.idea_id
+    ).filter(Idea.privacy == "public").distinct().order_by(Tag.name).limit(30).all()
+    tag_names = [t[0] for t in all_tags]
+
+    # Leaderboard: top 5 ideas all time by votes
+    leaderboard = (
+        Idea.query.filter_by(privacy="public")
+        .outerjoin(Vote, Vote.idea_id == Idea.id)
+        .group_by(Idea.id)
+        .order_by(func.count(Vote.id).desc())
+        .limit(5)
+        .all()
+    )
+
     return render_template(
         "explore.html",
         ideas=[_serialize_explore_idea(idea) for idea in ideas],
@@ -864,8 +939,61 @@ def explore():
             "stage": stage or "all",
             "sort": sort or "trending",
             "tag": tag_filter or "",
+            "tab": tab,
         },
+        tag_names=tag_names,
+        leaderboard=[_serialize_explore_idea(i) for i in leaderboard],
     )
+
+
+@main_bp.route("/api/explore")
+def api_explore():
+    """JSON endpoint for explore AJAX load-more / tab switching."""
+    q = (request.args.get("q") or "").strip()
+    category = (request.args.get("category") or "all").strip()
+    stage = (request.args.get("stage") or "all").strip().lower()
+    sort = (request.args.get("sort") or "trending").strip().lower()
+    tag_filter = (request.args.get("tag") or "").strip().lower()
+    tab = (request.args.get("tab") or "trending").strip().lower()
+    page = max(1, int(request.args.get("page", 1)))
+    per_page = 12
+
+    query = Idea.query.filter_by(privacy="public")
+    query = _apply_explore_filters(query, q, category, stage, tag_filter)
+
+    if tab == "for_you" and current_user.is_authenticated:
+        user_cats = [
+            r[0] for r in db.session.query(Idea.category)
+            .filter_by(user_id=current_user.id).distinct().all()
+        ]
+        all_ideas = query.all()
+        def _fy(idea):
+            return _hotness_score(idea) * (3.0 if idea.category in user_cats else 1.0)
+        all_ideas.sort(key=_fy, reverse=True)
+    elif sort == "newest":
+        all_ideas = query.order_by(Idea.created_at.desc()).all()
+    elif sort == "votes" or tab == "top":
+        all_ideas = (
+            query.outerjoin(Vote, Vote.idea_id == Idea.id)
+            .group_by(Idea.id)
+            .order_by(func.count(Vote.id).desc(), Idea.created_at.desc())
+            .all()
+        )
+    else:
+        all_ideas = query.all()
+        all_ideas.sort(key=_hotness_score, reverse=True)
+
+    total = len(all_ideas)
+    start = (page - 1) * per_page
+    page_ideas = all_ideas[start:start + per_page]
+    has_more = (start + per_page) < total
+
+    return jsonify({
+        "ideas": [_serialize_explore_idea(i) for i in page_ideas],
+        "total": total,
+        "page": page,
+        "has_more": has_more,
+    })
 
 
 @main_bp.route("/explore/public")
@@ -985,6 +1113,7 @@ def toggle_idea_vote(idea_id: int):
         db.session.add(Vote(user_id=actor.id, idea_id=idea.id))
         voted = True
 
+    _compute_idea_scores(idea)
     db.session.commit()
 
     # Notify idea author if someone else voted
@@ -1167,6 +1296,8 @@ def create_idea_comment(idea_id: int):
         body=text,
     )
     db.session.add(comment)
+    db.session.flush()
+    _compute_idea_scores(idea)
     db.session.commit()
 
     # Notify idea author if someone else commented
@@ -1378,6 +1509,35 @@ def profile(username):
         not is_own_profile and current_user.follows(profile_user)
     )
 
+    # Co-founder match score (SQL-based, no ML)
+    cofounder_match = None
+    if current_user.is_authenticated and not is_own_profile:
+        viewer_skills  = set(s.lower() for s in current_user.skill_list)
+        profile_skills = set(s.lower() for s in profile_user.skill_list)
+
+        viewer_cats  = set(
+            r[0] for r in db.session.query(Idea.category)
+            .filter_by(user_id=current_user.id).distinct().all()
+        )
+        profile_cats = set(
+            r[0] for r in db.session.query(Idea.category)
+            .filter_by(user_id=profile_user.id).distinct().all()
+        )
+
+        # Complementary skills (union minus intersection) weighted by shared interests
+        all_skills  = viewer_skills | profile_skills
+        shared_skills = viewer_skills & profile_skills
+        comp_skills = all_skills - shared_skills  # what the other person brings
+
+        skill_score = min(100, len(comp_skills) * 12 + len(shared_skills) * 6)
+        cat_overlap = len(viewer_cats & profile_cats)
+        cat_score   = min(40, cat_overlap * 15)
+        activity_score = min(20, profile_user.idea_count * 4)
+
+        cofounder_match = min(98, skill_score + cat_score + activity_score)
+        if not all_skills:
+            cofounder_match = None  # can't score without any skills data
+
     return render_template(
         "profile.html",
         profile_user=profile_user,
@@ -1388,6 +1548,7 @@ def profile(username):
         total_votes_received=total_votes_received,
         is_own_profile=is_own_profile,
         viewer_follows_profile=viewer_follows_profile,
+        cofounder_match=cofounder_match,
     )
 
 
@@ -1447,6 +1608,91 @@ def platform_stats():
         "votes":    Vote.query.count(),
         "comments": Comment.query.count(),
     })
+
+@main_bp.route("/api/activity-stream")
+def activity_stream():
+    """Public live activity feed — aggregates recent ideas, votes, comments, collabs."""
+    now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(days=7)
+    events = []
+
+    # Recent public ideas
+    recent_ideas = (
+        Idea.query.filter(Idea.privacy == "public", Idea.created_at >= cutoff)
+        .order_by(Idea.created_at.desc()).limit(5).all()
+    )
+    for idea in recent_ideas:
+        if not idea.author:
+            continue
+        events.append({
+            "type": "idea",
+            "icon_class": "feed-icon-join",
+            "initials": idea.author.initials,
+            "text": f"<strong>{idea.author.display_name}</strong> submitted — <em>\"{idea.title}\"</em>",
+            "tag": idea.category or "",
+            "tag_class": idea.tag_class if hasattr(idea, 'tag_class') else "tag-brand",
+            "ts": idea.created_at.replace(tzinfo=timezone.utc).isoformat(),
+        })
+
+    # Recent comments
+    recent_comments = (
+        Comment.query.join(Idea).filter(
+            Idea.privacy == "public", Comment.created_at >= cutoff
+        ).order_by(Comment.created_at.desc()).limit(5).all()
+    )
+    for c in recent_comments:
+        if not c.author or not c.idea:
+            continue
+        events.append({
+            "type": "comment",
+            "icon_class": "feed-icon-comment",
+            "initials": c.author.initials,
+            "text": f"<strong>{c.author.display_name}</strong> commented on <em>\"{c.idea.title}\"</em>",
+            "tag": c.idea.category or "",
+            "tag_class": "tag-violet",
+            "ts": c.created_at.replace(tzinfo=timezone.utc).isoformat(),
+        })
+
+    # Recent collaborations
+    recent_collabs = (
+        Collaboration.query.join(Idea).filter(
+            Idea.privacy == "public", Collaboration.joined_at >= cutoff
+        ).order_by(Collaboration.joined_at.desc()).limit(4).all()
+    )
+    for col in recent_collabs:
+        if not col.user or not col.idea:
+            continue
+        events.append({
+            "type": "collab",
+            "icon_class": "feed-icon-collab",
+            "initials": col.user.initials,
+            "text": f"<strong>{col.user.display_name}</strong> joined as collaborator on <em>\"{col.idea.title}\"</em>",
+            "tag": col.idea.category or "",
+            "tag_class": "tag-mint",
+            "ts": col.joined_at.replace(tzinfo=timezone.utc).isoformat(),
+        })
+
+    # Sort all events by timestamp desc, take top 8
+    events.sort(key=lambda e: e["ts"], reverse=True)
+    events = events[:8]
+
+    # Compute human-readable relative time
+    def _rel(iso_ts):
+        try:
+            dt = datetime.fromisoformat(iso_ts)
+            diff = int((now - dt).total_seconds())
+            if diff < 60:   return "just now"
+            if diff < 3600: return f"{diff // 60}m ago"
+            if diff < 86400: return f"{diff // 3600}h ago"
+            return f"{diff // 86400}d ago"
+        except Exception:
+            return ""
+
+    for e in events:
+        e["rel_time"] = _rel(e["ts"])
+
+    return jsonify(events)
+
 
 @main_bp.route("/api/notifications")
 @login_required
@@ -1594,35 +1840,15 @@ def collaboration_board(idea_id: int):
     tasks = Task.query.filter_by(idea_id=idea_id).order_by(Task.created_at.asc()).all()
     team  = Collaboration.query.filter_by(idea_id=idea_id, status='accepted').all()
     team_members = [c.user for c in team if c.user]
-    is_owner = (current_user.id == idea.user_id)
-    can_edit = _user_can_edit_board(idea)
 
     # Pending requests — only visible to idea owner
     pending_requests = []
-    if is_owner:
+    if current_user.id == idea.user_id:
         pending_requests = (
             Collaboration.query
             .filter_by(idea_id=idea_id, status='pending')
             .all()
         )
-
-    recent_activity = (
-        TaskActivity.query
-        .filter_by(idea_id=idea_id)
-        .order_by(TaskActivity.created_at.desc())
-        .limit(20)
-        .all()
-    )
-    activity_log = [
-        {
-            "user_name":         a.user.display_name,
-            "user_initials":     a.user.initials,
-            "user_avatar_color": a.user.avatar_color,
-            "detail":            a.detail,
-            "time":              _relative_time(a.created_at),
-        }
-        for a in recent_activity
-    ]
 
     return render_template(
         "collaboration.html",
@@ -1630,33 +1856,8 @@ def collaboration_board(idea_id: int):
         tasks=tasks,
         team=team_members,
         pending_requests=pending_requests,
-        is_owner=is_owner,
-        can_edit=can_edit,
-        activity_log=activity_log,
+        is_owner=(current_user.id == idea.user_id),
     )
-
-@main_bp.route("/api/ideas/<int:idea_id>/board/activity")
-@login_required
-def board_activity(idea_id: int):
-    idea = Idea.query.get_or_404(idea_id)
-    _check_idea_visibility(idea)
-    activities = (
-        TaskActivity.query
-        .filter_by(idea_id=idea_id)
-        .order_by(TaskActivity.created_at.desc())
-        .limit(20)
-        .all()
-    )
-    return jsonify([{
-        "id":               a.id,
-        "user_name":        a.user.display_name,
-        "user_initials":    a.user.initials,
-        "user_avatar_color": a.user.avatar_color,
-        "action":           a.action,
-        "detail":           a.detail,
-        "time":             _relative_time(a.created_at),
-    } for a in activities])
-
 
 def _allowed_file(filename: str) -> bool:
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in IdeaMedia.ALLOWED_EXTENSIONS
@@ -1773,11 +1974,6 @@ def create_task(idea_id: int):
         priority=priority,
     )
     db.session.add(task)
-    db.session.flush()
-    db.session.add(TaskActivity(
-        idea_id=idea_id, task_id=task.id, user_id=current_user.id,
-        action='created', detail=f"created '{title}'",
-    ))
     db.session.commit()
     return jsonify({"ok": True, "task_id": task.id}), 201
 
@@ -1792,29 +1988,10 @@ def update_task(idea_id: int, task_id: int):
 
     task = Task.query.filter_by(id=task_id, idea_id=idea_id).first_or_404()
     payload = request.get_json(silent=True) or {}
-    _status_labels = {'todo': 'To Do', 'in_progress': 'In Progress', 'done': 'Done'}
 
     if "status" in payload:
         if payload["status"] not in _VALID_TASK_STATUSES:
             return jsonify({"ok": False, "error": f"Invalid status. Must be one of: {', '.join(_VALID_TASK_STATUSES)}"}), 400
-        if payload["status"] != task.status:
-            new_status = payload["status"]
-            last_move = (
-                TaskActivity.query
-                .filter_by(task_id=task.id, action='moved')
-                .order_by(TaskActivity.created_at.desc())
-                .first()
-            )
-            if last_move and last_move.to_status == task.status:
-                # Moving back to where the task came from — undo the last entry
-                db.session.delete(last_move)
-            else:
-                db.session.add(TaskActivity(
-                    idea_id=idea_id, task_id=task.id, user_id=current_user.id,
-                    action='moved',
-                    detail=f"moved '{task.title}' to {_status_labels.get(new_status, new_status)}",
-                    to_status=new_status,
-                ))
         task.status = payload["status"]
     if "title" in payload:
         task.title = payload["title"]
@@ -1840,10 +2017,6 @@ def delete_task(idea_id: int, task_id: int):
         return jsonify({"ok": False, "error": "Only the idea owner or accepted collaborators can manage tasks."}), 403
 
     task = Task.query.filter_by(id=task_id, idea_id=idea_id).first_or_404()
-    db.session.add(TaskActivity(
-        idea_id=idea_id, task_id=None, user_id=current_user.id,
-        action='deleted', detail=f"deleted '{task.title}'",
-    ))
     db.session.delete(task)
     db.session.commit()
     return jsonify({"ok": True})
@@ -1877,6 +2050,8 @@ def submit_idea():
         )
         idea.tags = tags
         db.session.add(idea)
+        db.session.flush()  # get idea.id before computing scores
+        _compute_idea_scores(idea)
         db.session.commit()
 
         # Create a notification for the user confirming submission
@@ -1918,6 +2093,60 @@ def trending_categories():
         .all()
     )
     return jsonify([{"category": r.category, "count": r.count} for r in rows])
+
+@main_bp.route("/api/vote-velocity")
+@login_required
+def vote_velocity():
+    """Returns daily votes received on the current user's top idea for the last 7 days."""
+    top_idea = (
+        Idea.query
+        .filter_by(user_id=current_user.id, privacy="public")
+        .outerjoin(Vote, Vote.idea_id == Idea.id)
+        .group_by(Idea.id)
+        .order_by(func.count(Vote.id).desc())
+        .first()
+    )
+
+    days = []
+    now = datetime.now(timezone.utc)
+    for i in range(6, -1, -1):
+        day = (now - timedelta(days=i)).date()
+        if top_idea:
+            count = Vote.query.filter(
+                Vote.idea_id == top_idea.id,
+                db.func.date(Vote.created_at) == day
+            ).count()
+        else:
+            count = 0
+        days.append({"date": day.strftime("%a"), "count": count})
+
+    # Also compute this-week vs last-week totals for the widget
+    week_start = now - timedelta(days=7)
+    prev_week_start = now - timedelta(days=14)
+    votes_this_week = (
+        db.session.query(func.count(Vote.id))
+        .join(Idea, Vote.idea_id == Idea.id)
+        .filter(Idea.user_id == current_user.id, Vote.created_at >= week_start)
+        .scalar() or 0
+    )
+    votes_last_week = (
+        db.session.query(func.count(Vote.id))
+        .join(Idea, Vote.idea_id == Idea.id)
+        .filter(
+            Idea.user_id == current_user.id,
+            Vote.created_at >= prev_week_start,
+            Vote.created_at < week_start
+        )
+        .scalar() or 0
+    )
+
+    return jsonify({
+        "top_idea_title": top_idea.title if top_idea else None,
+        "daily": days,
+        "votes_this_week": votes_this_week,
+        "votes_last_week": votes_last_week,
+    })
+
 
 @main_bp.route("/api/chart-data")
 def chart_data():
@@ -1969,6 +2198,10 @@ def edit_profile():
         current_user.last_name    = form.last_name.data.strip()
         current_user.bio          = form.bio.data.strip()
         current_user.avatar_color = int(form.avatar_color.data)
+        # Normalise skills: strip whitespace, deduplicate, max 10 tags
+        raw_skills = form.skills.data or ''
+        skill_list = [s.strip() for s in raw_skills.split(',') if s.strip()]
+        current_user.skills = ','.join(skill_list[:10])
         db.session.commit()
         return redirect(url_for("main.profile", username=current_user.username))
 

@@ -98,6 +98,7 @@ class ProfileEditForm(FlaskForm):
     last_name    = StringField('Last name',  validators=[DataRequired(), Length(1, 50)])
     bio          = TextAreaField('Bio', validators=[Optional(), Length(max=300)])
     avatar_color = SelectField('Avatar colour', choices=AVATAR_CHOICES, default='1')
+    skills       = StringField('Skills', validators=[Optional(), Length(max=200)])
 
 
 # ─────────────────────────────────────────

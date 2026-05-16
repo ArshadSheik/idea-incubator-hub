@@ -104,18 +104,47 @@ a:hover { color: var(--brand-primary-dark); }
 
 /* ─── Navbar ─── */
 .navbar-iih {
-  background: var(--paper);
-  border-bottom: 1px solid var(--ink-200);
-  padding: 0.75rem 0;
+  background: rgba(255, 255, 255, 0.55);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.35);
+  padding: 0.6rem 0;
   position: sticky;
   top: 0;
   z-index: 1030;
-  backdrop-filter: saturate(180%) blur(10px);
+  backdrop-filter: saturate(200%) blur(20px);
+  -webkit-backdrop-filter: saturate(200%) blur(20px);
+  box-shadow: 0 1px 0 rgba(11,11,18,0.04), 0 4px 24px rgba(11,11,18,0.05);
+  transition: background var(--tr-base), box-shadow var(--tr-base), border-color var(--tr-base);
 }
+.navbar-iih.is-scrolled {
+  background: rgba(255, 255, 255, 0.80);
+  box-shadow: 0 2px 20px rgba(11, 11, 18, 0.10);
+}
+
+/* Subtle animated gradient shimmer line at bottom of navbar */
+.navbar-iih::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    var(--brand-primary) 25%,
+    var(--brand-secondary) 50%,
+    var(--brand-accent) 75%,
+    transparent 100%);
+  background-size: 200% 100%;
+  animation: navShimmer 4s linear infinite;
+  opacity: 0.5;
+}
+@keyframes navShimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 .navbar-iih .navbar-brand {
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 1.4rem;
+  font-size: 1.35rem;
   letter-spacing: -0.025em;
   color: var(--ink-900);
   display: flex;
@@ -123,36 +152,56 @@ a:hover { color: var(--brand-primary-dark); }
   gap: 8px;
 }
 .navbar-iih .navbar-brand .brand-mark {
-  width: 34px;
-  height: 34px;
+  width: 32px;
+  height: 32px;
   border-radius: 10px;
   background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-pink) 100%);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-size: 1.15rem;
+  font-size: 1.05rem;
   box-shadow: var(--shadow-brand);
   transform: rotate(-6deg);
   transition: transform var(--tr-bounce);
 }
-.navbar-iih .navbar-brand:hover .brand-mark { transform: rotate(0) scale(1.06); }
+.navbar-iih .navbar-brand:hover .brand-mark { transform: rotate(0) scale(1.08); }
 
+/* Pill-style nav links */
 .navbar-iih .nav-link {
   font-weight: 500;
-  color: var(--ink-700) !important;
-  padding: 0.5rem 0.85rem !important;
-  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  color: var(--ink-600) !important;
+  padding: 0.42rem 1rem !important;
+  border-radius: var(--radius-pill);
   transition: all var(--tr-fast);
   position: relative;
+  letter-spacing: 0.005em;
+  border: 1px solid transparent;
 }
 .navbar-iih .nav-link:hover {
   color: var(--ink-900) !important;
-  background: var(--ink-100);
+  background: rgba(11, 11, 18, 0.06);
+  border-color: rgba(11, 11, 18, 0.08);
 }
 .navbar-iih .nav-link.active {
   color: var(--brand-primary) !important;
-  background: var(--brand-primary-light);
+  background: linear-gradient(135deg, rgba(255,90,31,0.12), rgba(255,77,143,0.08));
+  border-color: rgba(255,90,31,0.2);
+  font-weight: 600;
+}
+/* Futuristic glow dot indicator for active link */
+.navbar-iih .nav-link.active::before {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: var(--brand-primary);
+  box-shadow: 0 0 6px var(--brand-primary);
 }
 
 .navbar-search {
@@ -1246,19 +1295,26 @@ main, nav, footer, section, .auth-split { position: relative; z-index: 2; }
 
 /* ── Navbar ── */
 [data-theme="dark"] .navbar-iih {
-  background: rgba(14, 14, 28, 0.88);
-  border-bottom-color: rgba(255,255,255,0.07);
-  backdrop-filter: saturate(180%) blur(20px);
+  background: rgba(11, 11, 22, 0.60);
+  border-bottom-color: rgba(255,255,255,0.06);
+  backdrop-filter: saturate(200%) blur(24px);
+  -webkit-backdrop-filter: saturate(200%) blur(24px);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 4px 24px rgba(0,0,0,0.25);
+}
+[data-theme="dark"] .navbar-iih.is-scrolled {
+  background: rgba(11, 11, 22, 0.85);
 }
 [data-theme="dark"] .navbar-iih .navbar-brand { color: var(--ink-900); }
-[data-theme="dark"] .navbar-iih .nav-link { color: var(--ink-700) !important; }
+[data-theme="dark"] .navbar-iih .nav-link { color: rgba(255,255,255,0.60) !important; }
 [data-theme="dark"] .navbar-iih .nav-link:hover {
-  color: var(--ink-900) !important;
-  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.92) !important;
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.10);
 }
 [data-theme="dark"] .navbar-iih .nav-link.active {
-  background: var(--brand-primary-light);
-  color: var(--brand-primary) !important;
+  background: linear-gradient(135deg, rgba(255,90,31,0.18), rgba(255,77,143,0.12));
+  border-color: rgba(255,90,31,0.28);
+  color: #FF7A4F !important;
 }
 
 /* ── Avatar dropdown ── */
@@ -1421,6 +1477,114 @@ main, nav, footer, section, .auth-split { position: relative; z-index: 2; }
 }
 
 /* ══════════════════════════════════════════════════════
+   HOLOGRAM FLICKER — dark/light mode transition
+   ══════════════════════════════════════════════════════ */
+
+/* Scan-line beam sweeping top → bottom */
+@keyframes holoScanBeam {
+  0%   { top: -4px; opacity: 1; }
+  88%  { opacity: 0.5; }
+  100% { top: 100%;  opacity: 0; }
+}
+
+/* Main flicker — steps in first half, smooth fade in second half */
+@keyframes holoFlicker {
+  0%   { opacity: 1;    filter: brightness(1.0) hue-rotate(0deg);              animation-timing-function: steps(1,end); }
+  6%   { opacity: 0.05; filter: brightness(0.1) hue-rotate(0deg);              animation-timing-function: steps(1,end); }
+  10%  { opacity: 1;    filter: brightness(3.2) hue-rotate(195deg) saturate(4);animation-timing-function: steps(1,end); }
+  14%  { opacity: 0.18; filter: brightness(0.4) hue-rotate(0deg);              animation-timing-function: steps(1,end); }
+  18%  { opacity: 0.93; filter: brightness(2.3) hue-rotate(88deg)  saturate(3);animation-timing-function: steps(1,end); }
+  22%  { opacity: 0.28; filter: brightness(0.7) hue-rotate(0deg);              animation-timing-function: steps(1,end); }
+  27%  { opacity: 0.95; filter: brightness(2.0) hue-rotate(-58deg) saturate(2);animation-timing-function: steps(1,end); }
+  32%  { opacity: 0.42; filter: brightness(1.0) hue-rotate(0deg);              animation-timing-function: steps(1,end); }
+  38%  { opacity: 0.87; filter: brightness(1.8) hue-rotate(115deg);            animation-timing-function: steps(1,end); }
+  44%  { opacity: 0.38; filter: brightness(1.0) hue-rotate(0deg);              animation-timing-function: steps(1,end); }
+  50%  { opacity: 0.78; filter: brightness(1.3) hue-rotate(32deg);             animation-timing-function: ease-out; }
+  62%  { opacity: 0.52; filter: brightness(1.1) hue-rotate(6deg); }
+  74%  { opacity: 0.30; filter: brightness(1.0) hue-rotate(0deg); }
+  86%  { opacity: 0.13; }
+  94%  { opacity: 0.04; }
+  100% { opacity: 0;    filter: brightness(1.0) hue-rotate(0deg); }
+}
+
+/* Chromatic aberration — RGB channel glitch offset */
+@keyframes holoChroma {
+  0%   { transform: translateX(0);    opacity: 0;    animation-timing-function: steps(1,end); }
+  10%  { transform: translateX(-7px); opacity: 0.65; animation-timing-function: steps(1,end); }
+  18%  { transform: translateX( 7px); opacity: 0.50; animation-timing-function: steps(1,end); }
+  27%  { transform: translateX(-4px); opacity: 0.58; animation-timing-function: steps(1,end); }
+  35%  { transform: translateX( 4px); opacity: 0.42; animation-timing-function: steps(1,end); }
+  44%  { transform: translateX(-2px); opacity: 0.45; animation-timing-function: ease-out; }
+  58%  { transform: translateX( 1px); opacity: 0.24; }
+  72%  { transform: translateX(0);    opacity: 0.11; }
+  100% { transform: translateX(0);    opacity: 0; }
+}
+
+/* Hologram overlay — scan-line grid + neon glow shell */
+.holo-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  overflow: hidden;
+  /* Base tint set inline (old theme colour) */
+  background-color: var(--holo-bg, rgba(11,11,18,0.90));
+  /* Horizontal scan lines */
+  background-image: repeating-linear-gradient(
+    0deg,
+    transparent 0px,
+    transparent 2px,
+    rgba(91,63,255,0.055) 2px,
+    rgba(91,63,255,0.055) 4px
+  );
+  box-shadow:
+    inset 0 0 70px  rgba(91, 63,255,0.20),
+    inset 0 0 180px rgba(0,220,185,0.08);
+  animation: holoFlicker 0.75s linear forwards;
+}
+
+/* Sweeping neon scan-line beam */
+.holo-overlay::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 4px;
+  top: -4px;
+  background: linear-gradient(
+    90deg,
+    transparent            0%,
+    rgba(91,63,255,0.95)  25%,
+    rgba(0,220,185,0.80)  75%,
+    transparent           100%
+  );
+  box-shadow:
+    0 0 10px 3px rgba(91,63,255,0.55),
+    0 0 28px 9px rgba(0,220,185,0.22);
+  animation: holoScanBeam 0.75s ease-in-out forwards;
+}
+
+/* Chromatic aberration — red/cyan edge split */
+.holo-overlay::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(255,0,80,0.09)   0%,
+    transparent           35%,
+    transparent           65%,
+    rgba(0,200,255,0.09) 100%
+  );
+  animation: holoChroma 0.75s linear forwards;
+}
+
+/* Accessibility — skip the overlay for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .holo-overlay { display: none !important; }
+}
+
+/* ══════════════════════════════════════════════════════
    DARK MODE TOGGLE BUTTON
    ══════════════════════════════════════════════════════ */
 .theme-toggle {
@@ -1530,15 +1694,7 @@ main, nav, footer, section, .auth-split { position: relative; z-index: 2; }
   100% { background-position: 200% 0; }
 }
 
-/* Navbar scroll-enhanced state */
-.navbar-iih.is-scrolled {
-  background: rgba(255, 255, 255, 0.90) !important;
-  box-shadow: 0 2px 20px rgba(11, 11, 18, 0.08);
-}
-[data-theme="dark"] .navbar-iih.is-scrolled {
-  background: rgba(9, 9, 18, 0.95) !important;
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.5);
-}
+/* Navbar scroll-enhanced state (overrides in dark mode handled above) */
 
 /* Count-up animated numbers */
 .count-up-value { animation: countUp 0.7s cubic-bezier(.22,1,.36,1) both; }

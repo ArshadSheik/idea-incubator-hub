@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // ── Charts ─────────────────────────────────────────────────────
+  // ── Stage doughnut chart ─────────────────────────────────────
   fetch('/api/chart-data')
     .then(r => r.json())
     .then(data => {
@@ -62,29 +62,37 @@ document.addEventListener('DOMContentLoaded', () => {
           }
         });
       }
-
-      const weeklyCtx = document.getElementById('weeklyChart');
-      if (weeklyCtx && data.weekly.length) {
-        new Chart(weeklyCtx, {
-          type: 'bar',
-          data: {
-            labels: data.weekly.map(d => d.date),
-            datasets: [{
-              label: 'Ideas submitted',
-              data:  data.weekly.map(d => d.count),
-              backgroundColor: '#6366f1',
-              borderRadius: 6,
-            }]
-          },
-          options: {
-            plugins: { legend: { display: false } },
-            scales: {
-              y: { beginAtZero: true, ticks: { stepSize: 1 }, grid: { color: '#f3f4f6' } },
-              x: { grid: { display: false } }
-            }
-          }
-        });
-      }
     })
-  .catch(() => {});
+    .catch(() => {});
+
+  // ── Vote velocity chart (top idea, last 7 days) ───────────────
+  fetch('/api/vote-velocity')
+    .then(r => r.json())
+    .then(data => {
+      const weeklyCtx = document.getElementById('weeklyChart');
+      if (!weeklyCtx) return;
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const gridColor = isDark ? 'rgba(255,255,255,0.06)' : '#f3f4f6';
+      new Chart(weeklyCtx, {
+        type: 'bar',
+        data: {
+          labels: data.daily.map(d => d.date),
+          datasets: [{
+            label: 'Votes',
+            data: data.daily.map(d => d.count),
+            backgroundColor: 'rgba(91,63,255,0.75)',
+            hoverBackgroundColor: '#FF5A1F',
+            borderRadius: 6,
+          }]
+        },
+        options: {
+          plugins: { legend: { display: false } },
+          scales: {
+            y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: gridColor } },
+            x: { grid: { display: false } }
+          }
+        }
+      });
+    })
+    .catch(() => {});
 });

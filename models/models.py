@@ -56,6 +56,8 @@ class User(UserMixin, db.Model):
     bio          = db.Column(db.Text, default='')
     # avatar_color maps to CSS class .avatar-1 through .avatar-6
     avatar_color = db.Column(db.Integer, default=1)
+    # skills: comma-separated list e.g. "Python,Design,Marketing"
+    skills       = db.Column(db.Text, default='')
 
     created_at   = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -97,6 +99,13 @@ class User(UserMixin, db.Model):
         return Collaboration.query.filter_by(
             user_id=self.id, idea_id=idea.id, status='accepted'
         ).first() is not None
+
+    @property
+    def skill_list(self) -> list:
+        """Returns skills as a list, filtering empty strings."""
+        if not self.skills:
+            return []
+        return [s.strip() for s in self.skills.split(',') if s.strip()]
 
     @property
     def followers_count(self) -> int:
