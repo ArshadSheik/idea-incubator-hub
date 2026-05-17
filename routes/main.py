@@ -1877,6 +1877,7 @@ def collaboration_board(idea_id: int):
         team=team_members,
         pending_requests=pending_requests,
         is_owner=(current_user.id == idea.user_id),
+        can_edit=_user_can_edit_board(idea),
     )
 
 def _allowed_file(filename: str) -> bool:
