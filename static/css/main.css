@@ -1482,111 +1482,20 @@ main, nav, footer, section, .auth-split { position: relative; z-index: 2; }
 }
 
 /* ══════════════════════════════════════════════════════
-   HOLOGRAM FLICKER — dark/light mode transition
+   THEME CROSSFADE — dark/light mode transition
    ══════════════════════════════════════════════════════ */
 
-/* Scan-line beam sweeping top → bottom */
-@keyframes holoScanBeam {
-  0%   { top: -4px; opacity: 1; }
-  88%  { opacity: 0.5; }
-  100% { top: 100%;  opacity: 0; }
+html.theme-transition,
+html.theme-transition *,
+html.theme-transition *::before,
+html.theme-transition *::after {
+  transition-property: background-color, color, border-color, fill, stroke, box-shadow;
+  transition-duration: 0.32s;
+  transition-timing-function: ease;
 }
 
-/* Main flicker — steps in first half, smooth fade in second half */
-@keyframes holoFlicker {
-  0%   { opacity: 1;    filter: brightness(1.0) hue-rotate(0deg);              animation-timing-function: steps(1,end); }
-  6%   { opacity: 0.05; filter: brightness(0.1) hue-rotate(0deg);              animation-timing-function: steps(1,end); }
-  10%  { opacity: 1;    filter: brightness(3.2) hue-rotate(195deg) saturate(4);animation-timing-function: steps(1,end); }
-  14%  { opacity: 0.18; filter: brightness(0.4) hue-rotate(0deg);              animation-timing-function: steps(1,end); }
-  18%  { opacity: 0.93; filter: brightness(2.3) hue-rotate(88deg)  saturate(3);animation-timing-function: steps(1,end); }
-  22%  { opacity: 0.28; filter: brightness(0.7) hue-rotate(0deg);              animation-timing-function: steps(1,end); }
-  27%  { opacity: 0.95; filter: brightness(2.0) hue-rotate(-58deg) saturate(2);animation-timing-function: steps(1,end); }
-  32%  { opacity: 0.42; filter: brightness(1.0) hue-rotate(0deg);              animation-timing-function: steps(1,end); }
-  38%  { opacity: 0.87; filter: brightness(1.8) hue-rotate(115deg);            animation-timing-function: steps(1,end); }
-  44%  { opacity: 0.38; filter: brightness(1.0) hue-rotate(0deg);              animation-timing-function: steps(1,end); }
-  50%  { opacity: 0.78; filter: brightness(1.3) hue-rotate(32deg);             animation-timing-function: ease-out; }
-  62%  { opacity: 0.52; filter: brightness(1.1) hue-rotate(6deg); }
-  74%  { opacity: 0.30; filter: brightness(1.0) hue-rotate(0deg); }
-  86%  { opacity: 0.13; }
-  94%  { opacity: 0.04; }
-  100% { opacity: 0;    filter: brightness(1.0) hue-rotate(0deg); }
-}
-
-/* Chromatic aberration — RGB channel glitch offset */
-@keyframes holoChroma {
-  0%   { transform: translateX(0);    opacity: 0;    animation-timing-function: steps(1,end); }
-  10%  { transform: translateX(-7px); opacity: 0.65; animation-timing-function: steps(1,end); }
-  18%  { transform: translateX( 7px); opacity: 0.50; animation-timing-function: steps(1,end); }
-  27%  { transform: translateX(-4px); opacity: 0.58; animation-timing-function: steps(1,end); }
-  35%  { transform: translateX( 4px); opacity: 0.42; animation-timing-function: steps(1,end); }
-  44%  { transform: translateX(-2px); opacity: 0.45; animation-timing-function: ease-out; }
-  58%  { transform: translateX( 1px); opacity: 0.24; }
-  72%  { transform: translateX(0);    opacity: 0.11; }
-  100% { transform: translateX(0);    opacity: 0; }
-}
-
-/* Hologram overlay — scan-line grid + neon glow shell */
-.holo-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 9999;
-  pointer-events: none;
-  overflow: hidden;
-  /* Base tint set inline (old theme colour) */
-  background-color: var(--holo-bg, rgba(11,11,18,0.90));
-  /* Horizontal scan lines */
-  background-image: repeating-linear-gradient(
-    0deg,
-    transparent 0px,
-    transparent 2px,
-    rgba(91,63,255,0.055) 2px,
-    rgba(91,63,255,0.055) 4px
-  );
-  box-shadow:
-    inset 0 0 70px  rgba(91, 63,255,0.20),
-    inset 0 0 180px rgba(0,220,185,0.08);
-  animation: holoFlicker 0.75s linear forwards;
-}
-
-/* Sweeping neon scan-line beam */
-.holo-overlay::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 4px;
-  top: -4px;
-  background: linear-gradient(
-    90deg,
-    transparent            0%,
-    rgba(91,63,255,0.95)  25%,
-    rgba(0,220,185,0.80)  75%,
-    transparent           100%
-  );
-  box-shadow:
-    0 0 10px 3px rgba(91,63,255,0.55),
-    0 0 28px 9px rgba(0,220,185,0.22);
-  animation: holoScanBeam 0.75s ease-in-out forwards;
-}
-
-/* Chromatic aberration — red/cyan edge split */
-.holo-overlay::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    rgba(255,0,80,0.09)   0%,
-    transparent           35%,
-    transparent           65%,
-    rgba(0,200,255,0.09) 100%
-  );
-  animation: holoChroma 0.75s linear forwards;
-}
-
-/* Accessibility — skip the overlay for users who prefer reduced motion */
-@media (prefers-reduced-motion: reduce) {
-  .holo-overlay { display: none !important; }
+html.theme-transition #bgCanvas {
+  transition: none !important;
 }
 
 /* ══════════════════════════════════════════════════════

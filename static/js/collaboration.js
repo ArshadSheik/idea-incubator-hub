@@ -159,6 +159,59 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  /* ── Accept / Decline collaboration requests (owner; not gated on CAN_EDIT) ─ */
+  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+  document.addEventListener('click', async (e) => {
+    const acceptBtn  = e.target.closest('.accept-collab-btn');
+    const declineBtn = e.target.closest('.decline-collab-btn');
+    const btn = acceptBtn || declineBtn;
+    if (!btn) return;
+
+    const collabId = btn.dataset.collabId;
+    const ideaId   = btn.dataset.ideaId;
+    const action   = acceptBtn ? 'accept' : 'decline';
+    btn.disabled = true;
+
+    try {
+      const res  = await fetch(`/ideas/${ideaId}/collaborate/${collabId}/${action}`, {
+        method:  'POST',
+        headers: { ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}) },
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Request failed');
+
+      document.getElementById(`collabReq-${collabId}`)?.remove();
+
+      if (acceptBtn && data.user_name) {
+        const teamList = document.querySelector('.team-list');
+        if (teamList) {
+          const li = document.createElement('li');
+          li.className = 'team-member';
+          const avatarNum = escapeHtml(String(data.avatar_class).replace('avatar-', ''));
+          li.innerHTML = `
+            <div class="avatar avatar-${avatarNum} avatar-sm">${escapeHtml(data.user_initials)}</div>
+            <span class="team-member-name">${escapeHtml(data.user_name)}</span>`;
+          teamList.querySelector('.text-muted-iih')?.closest('li')?.remove();
+          teamList.appendChild(li);
+        }
+        const teamHeading = document.querySelector('.sidebar-heading');
+        if (teamHeading) {
+          const count = document.querySelectorAll('.team-member').length;
+          teamHeading.innerHTML = `Team <span style="margin-left:.2rem;opacity:.6">(${count})</span>`;
+        }
+      }
+
+      const remaining = document.querySelectorAll('[id^="collabReq-"]').length;
+      if (remaining === 0) document.querySelector('.collab-requests-section')?.remove();
+
+    } catch (err) {
+      console.error(err);
+      alert('Something went wrong. Please try again.');
+      btn.disabled = false;
+    }
+  });
+
   /* ── Drag and drop (editors only) ────────────────────────── */
   if (!CAN_EDIT) return;
 
@@ -235,58 +288,5 @@ document.addEventListener('DOMContentLoaded', () => {
       if (body && count) count.textContent = body.querySelectorAll('.task-card').length;
     });
   }
-
-  /* ── Accept / Decline collaboration requests ──────────────── */
-  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-
-  document.addEventListener('click', async (e) => {
-    const acceptBtn  = e.target.closest('.accept-collab-btn');
-    const declineBtn = e.target.closest('.decline-collab-btn');
-    const btn = acceptBtn || declineBtn;
-    if (!btn) return;
-
-    const collabId = btn.dataset.collabId;
-    const ideaId   = btn.dataset.ideaId;
-    const action   = acceptBtn ? 'accept' : 'decline';
-    btn.disabled = true;
-
-    try {
-      const res  = await fetch(`/ideas/${ideaId}/collaborate/${collabId}/${action}`, {
-        method:  'POST',
-        headers: { ...(csrfToken ? { 'X-CSRFToken': csrfToken } : {}) },
-      });
-      const data = await res.json();
-      if (!data.ok) throw new Error(data.error || 'Request failed');
-
-      document.getElementById(`collabReq-${collabId}`)?.remove();
-
-      if (acceptBtn && data.user_name) {
-        const teamList = document.querySelector('.team-list');
-        if (teamList) {
-          const li = document.createElement('li');
-          li.className = 'team-member';
-          const avatarNum = escapeHtml(String(data.avatar_class).replace('avatar-', ''));
-          li.innerHTML = `
-            <div class="avatar avatar-${avatarNum} avatar-sm">${escapeHtml(data.user_initials)}</div>
-            <span class="team-member-name">${escapeHtml(data.user_name)}</span>`;
-          teamList.querySelector('.text-muted-iih')?.closest('li')?.remove();
-          teamList.appendChild(li);
-        }
-        const teamHeading = document.querySelector('.sidebar-heading');
-        if (teamHeading) {
-          const count = document.querySelectorAll('.team-member').length;
-          teamHeading.innerHTML = `Team <span style="margin-left:.2rem;opacity:.6">(${count})</span>`;
-        }
-      }
-
-      const remaining = document.querySelectorAll('[id^="collabReq-"]').length;
-      if (remaining === 0) document.querySelector('.collab-requests-section')?.remove();
-
-    } catch (err) {
-      console.error(err);
-      alert('Something went wrong. Please try again.');
-      btn.disabled = false;
-    }
-  });
 
 });
