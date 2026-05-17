@@ -170,6 +170,8 @@
 
             <form method="post" action="{{ url_for('main.profile_toggle_follow', username=selected_user.username) }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="next" value="{{ url_for('messages.inbox', username=selected_user.username) }}">
+
               <button type="submit" class="btn btn-brand">
                 <i class="bi bi-person-plus"></i> Follow {{ selected_user.display_name }}
               </button>
@@ -231,34 +233,38 @@
   var debounceTimer  = null;
   var SEARCH_URL     = '{{ url_for("messages.search_users") }}';
 
-  /* ── Avatar colour map (matches server-side palette) ── */
-  var AVATAR_COLORS = {
-    blue:'#3B82F6', violet:'#7C3AED', orange:'#F97316', green:'#10B981',
-    pink:'#EC4899', red:'#EF4444', teal:'#14B8A6', yellow:'#F59E0B',
-    indigo:'#6366F1', sky:'#0EA5E9', lime:'#84CC16', rose:'#F43F5E'
-  };
+  
 
-  function avatarStyle(color) {
-    var bg = AVATAR_COLORS[color] || '#6366F1';
-    return 'background:' + bg + ';';
-  }
+  function escapeHtml(value) {
+  return String(value || '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
 
-  /* ── Render one search result as a conversation-item ── */
-  function renderUser(u) {
-    var pillHtml = u.can_message
-      ? '<span class="conversation-pill ok">Can message</span>'
-      : '<span class="conversation-pill muted">Follow first</span>';
+/* ── Render one search result as a conversation-item ── */
+function renderUser(u) {
+  var username = encodeURIComponent(u.username || '');
+  var displayName = escapeHtml(u.display_name);
+  var safeUsername = escapeHtml(u.username);
+  var initials = escapeHtml(u.initials);
+  var avatarColor = escapeHtml(u.avatar_color || '1');
 
-    return '<a href="/messages/' + u.username + '" class="conversation-item live-search-hit">'
-      + '<span class="avatar" style="' + avatarStyle(u.avatar_color) + 'color:#fff;width:36px;height:36px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:600;font-size:.85rem;flex-shrink:0;">'
-      + u.initials + '</span>'
-      + '<div class="conversation-main">'
-      + '<strong>' + u.display_name + '</strong>'
-      + '<p>@' + u.username + '</p>'
-      + '</div>'
-      + pillHtml
-      + '</a>';
-  }
+  var pillHtml = u.can_message
+    ? '<span class="conversation-pill ok">Can message</span>'
+    : '<span class="conversation-pill muted">Follow first</span>';
+
+  return '<a href="/messages/' + username + '" class="conversation-item live-search-hit">'
+    + '<span class="avatar avatar-' + avatarColor + '">' + initials + '</span>'
+    + '<div class="conversation-main">'
+    + '<strong>' + displayName + '</strong>'
+    + '<p>@' + safeUsername + '</p>'
+    + '</div>'
+    + pillHtml
+    + '</a>';
+}
 
   /* ── Run the live search ── */
   function doSearch(q) {
@@ -278,7 +284,7 @@
       .then(function (r) { return r.json(); })
       .then(function (users) {
         if (users.length === 0) {
-          liveList.innerHTML = '<div class="live-search-empty">No people found for "<strong>' + q + '</strong>"</div>';
+          liveList.innerHTML = '<div class="live-search-empty">No people found for "<strong>' + escapeHtml(q) + '</strong>"</div>';
         } else {
           liveList.innerHTML = users.map(renderUser).join('');
         }
