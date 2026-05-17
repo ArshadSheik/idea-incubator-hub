@@ -998,6 +998,67 @@ def api_explore():
     })
 
 
+@main_bp.route("/api/live-search")
+def live_search():
+    """Dropdown search — returns matching ideas and users for as-you-type results."""
+    q = request.args.get("q", "").strip()
+    if not q or len(q) < 2:
+        return jsonify({"ideas": [], "users": []})
+
+    ideas = (
+        Idea.query
+        .filter(
+            Idea.privacy == "public",
+            db.or_(
+                Idea.title.ilike(f"%{q}%"),
+                Idea.summary.ilike(f"%{q}%"),
+                Idea.category.ilike(f"%{q}%"),
+            ),
+        )
+        .outerjoin(Vote, Vote.idea_id == Idea.id)
+        .group_by(Idea.id)
+        .order_by(func.count(Vote.id).desc())
+        .limit(5)
+        .all()
+    )
+
+    users = (
+        User.query
+        .filter(
+            db.or_(
+                User.username.ilike(f"%{q}%"),
+                User.first_name.ilike(f"%{q}%"),
+                User.last_name.ilike(f"%{q}%"),
+            )
+        )
+        .limit(4)
+        .all()
+    )
+
+    return jsonify({
+        "ideas": [
+            {
+                "id":        i.id,
+                "title":     i.title,
+                "emoji":     i.emoji or "💡",
+                "category":  i.category,
+                "tag_class": CATEGORY_TAG_CLASS.get(i.category, "tag-brand"),
+                "votes":     i.vote_count,
+            }
+            for i in ideas
+        ],
+        "users": [
+            {
+                "username":     u.username,
+                "display_name": u.display_name,
+                "initials":     u.initials,
+                "avatar_color": u.avatar_color,
+            }
+            for u in users
+        ],
+    })
+
+
 @main_bp.route("/explore/public")
 def explore_public():
     return redirect(url_for("main.explore"))
@@ -2270,9 +2331,8 @@ def trending_hashtags():
     return jsonify(data)
 
 @main_bp.route("/api/chat", methods=["POST"])
-@login_required
 def chat_api():
-    """Floating chatbot — uses Anthropic Claude API."""
+    """Floating chatbot — uses the configured AI provider (DeepSeek or OpenAI)."""
     data         = request.get_json(silent=True) or {}
     messages     = data.get("messages", [])
     idea_context = data.get("context", {})
@@ -2286,9 +2346,11 @@ def chat_api():
                 f"(category: {idea.category}, stage: {idea.stage})."
             )
 
-    user_context = f"\n\nUser is logged in as {current_user.display_name}." \
-        if current_user.is_authenticated else \
-        "\n\nUser is not logged in. Encourage them to sign up."
+    user_context = (
+        f"\n\nUser is logged in as {current_user.display_name}."
+        if current_user.is_authenticated
+        else "\n\nUser is browsing as a guest. Keep answers brief and naturally encourage them to sign up to post ideas and collaborate."
+    )
 
     system_prompt = (
         "You are the Idea Incubator Hub assistant. "
@@ -2297,7 +2359,22 @@ def chat_api():
         + idea_hint + user_context
     )
 
-    api_key = os.getenv("ANTHROPIC_API_KEY", "").strip()
+    # Provider selection: groq → deepseek → openai
+    provider = os.getenv("AI_PROVIDER", "groq").strip().lower()
+    if provider == "openai":
+        api_key  = os.getenv("OPENAI_API_KEY", "").strip()
+        model    = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        endpoint = os.getenv("OPENAI_API_URL", "https://api.openai.com/v1/chat/completions")
+    elif provider == "deepseek":
+        api_key  = os.getenv("DEEPSEEK_API_KEY", "").strip()
+        model    = os.getenv("DEEPSEEK_MODEL", "deepseek-chat")
+        endpoint = os.getenv("DEEPSEEK_API_URL", "https://api.deepseek.com/v1/chat/completions")
+    else:
+        # groq (default) — free tier, no credit card needed
+        api_key  = os.getenv("GROQ_API_KEY", "").strip()
+        model    = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+        endpoint = os.getenv("GROQ_API_URL", "https://api.groq.com/openai/v1/chat/completions")
+
     if not api_key:
         return jsonify({"reply": (
             "Hi! I'm the Idea Incubator assistant. "
@@ -2306,34 +2383,27 @@ def chat_api():
         )})
 
     try:
-        import urllib.request as _urlreq
-        payload = json.dumps({
-            "model": "claude-haiku-4-5-20251001",
-            "max_tokens": 300,
-            "system": system_prompt,
-            "messages": [
-                {"role": m["role"], "content": m["content"]}
-                for m in messages[-10:]
-                if m.get("role") in ("user", "assistant")
-            ],
-        }).encode()
-
-        req = _urlreq.Request(
-            "https://api.anthropic.com/v1/messages",
-            data=payload,
-            headers={
-                "Content-Type":      "application/json",
-                "x-api-key":         api_key,
-                "anthropic-version": "2023-06-01",
+        import requests as _requests
+        chat_messages = [{"role": "system", "content": system_prompt}]
+        chat_messages += [
+            {"role": m["role"], "content": m["content"]}
+            for m in messages[-10:]
+            if m.get("role") in ("user", "assistant")
+        ]
+        resp = _requests.post(
+            endpoint,
+            json={
+                "model":      model,
+                "max_tokens": 300,
+                "messages":   chat_messages,
             },
-            method="POST",
+            headers={"Authorization": f"Bearer {api_key}"},
+            timeout=15,
         )
-        with _urlreq.urlopen(req, timeout=15) as resp:
-            body = json.loads(resp.read())
-        reply = body["content"][0]["text"].strip()
+        resp.raise_for_status()
+        reply = resp.json()["choices"][0]["message"]["content"].strip()
         return jsonify({"reply": reply})
 
     except Exception as e:
         current_app.logger.error(f"Chat API error: {e}")
         return jsonify({"reply": "Sorry, I had trouble responding. Please try again."}), 500
-    

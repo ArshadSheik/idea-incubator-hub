@@ -62,7 +62,7 @@ python seed.py
 ```
 > ⚠️ This wipes existing DB data and reloads from `seed_data/*.json`. Only run again if you want to reset to the sample dataset — otherwise you'll lose anything created through the website.
 
-The seed script creates 6 users (password `password123` for all) and 8 sample ideas.
+The seed script creates **6 users** (password `password123` for all) and **18 sample ideas** with full votes, comments, collaborations, tasks, and follow relationships pre-loaded.
 
 ---
 
@@ -89,11 +89,9 @@ python -m pytest tests/test_models.py tests/test_routes.py -v
 ### Selenium end-to-end tests
 These drive a real headless Chrome browser. `webdriver-manager` downloads ChromeDriver automatically — no manual install needed.
 
-```bash
-# Terminal 1 — start the app on port 5001
-python run.py
+**No separate server needed** — the test suite starts Flask automatically on port 5001 in a background thread and tears it down when done.
 
-# Terminal 2 — run Selenium tests
+```bash
 python -m pytest tests/test_selenium.py -v
 ```
 

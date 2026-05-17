@@ -264,17 +264,16 @@
   padding: 4rem 0;
   text-align: center;
   background:
-    radial-gradient(circle at top right, rgba(255, 90, 31, 0.16), transparent 30%),
-    var(--ink-900);
-  color: white;
+    transparent;
+  color: rgb(0, 0, 0);
 }
 
 .about-cta h2 {
-  color: white;
+  color: rgb(0, 0, 0);
 }
 
 .about-cta p {
-  color: rgba(255,255,255,0.72);
+  color: rgba(0, 0, 0, 0.72);
   margin-bottom: 1.4rem;
 }
 
@@ -295,8 +294,15 @@
 }
 [data-theme="dark"] .about-cta {
   background:
-    radial-gradient(circle at top right, rgba(255,90,31,0.18), transparent 30%),
-    #0a0a14;
+    transparent;
+}
+[data-theme="dark"] .about-cta h2 {
+  color: rgb(255, 255, 255);
+}
+
+[data-theme="dark"] .about-cta p {
+  color: rgba(255, 255, 255, 0.72);
+  margin-bottom: 1.4rem;
 }
 
 @media (max-width: 900px) {

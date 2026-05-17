@@ -223,5 +223,50 @@
     "differentiation_score": 85,
     "views": 1350,
     "tags": ["creator-economy", "newsletter", "monetisation", "writing"]
+  },
+  {
+    "username": "maya",
+    "title": "Anonymous feedback tool for remote teams",
+    "category": "Productivity",
+    "stage": "validation",
+    "emoji": "💬",
+    "summary": "Safe space for honest team feedback — no names, no politics, better retros.",
+    "description": "A Slack-integrated tool for collecting anonymous team feedback. Managers get aggregated themes, not raw statements. Designed for remote teams who need honest retros without social dynamics getting in the way.",
+    "market_score": 85,
+    "community_score": 80,
+    "feasibility_score": 88,
+    "differentiation_score": 77,
+    "views": 1320,
+    "tags": ["remote-work", "productivity", "feedback", "teams"]
+  },
+  {
+    "username": "taylor",
+    "title": "Micro-internship marketplace for uni students",
+    "category": "EdTech",
+    "stage": "ideation",
+    "emoji": "🎯",
+    "summary": "2-week sprint projects with real companies — no CV required, just a portfolio.",
+    "description": "Platform matching university students with companies for two-week project-based internships. Students build their portfolio, companies get fresh perspectives on defined problems. Verified via university email.",
+    "market_score": 82,
+    "community_score": 87,
+    "feasibility_score": 74,
+    "differentiation_score": 83,
+    "views": 1090,
+    "tags": ["edtech", "students", "careers", "marketplace"]
+  },
+  {
+    "username": "alex",
+    "title": "Dog-friendly venue finder",
+    "category": "Social",
+    "stage": "building",
+    "emoji": "🐕",
+    "summary": "Find cafes, parks, and restaurants that actually welcome your dog.",
+    "description": "Crowdsourced map of dog-friendly venues with user ratings on space, water availability, and welcome level. Filter by city, venue type, and dog size. Add photos of your visit.",
+    "market_score": 76,
+    "community_score": 84,
+    "feasibility_score": 82,
+    "differentiation_score": 78,
+    "views": 760,
+    "tags": ["social", "maps", "pets", "community"]
   }
 ]
