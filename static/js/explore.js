@@ -119,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
           cell.dataset.title    = (idea.title || '').toLowerCase();
           cell.dataset.tagClass = idea.tag_class || '';
           cell.innerHTML = `
-            <a href="/idea/${idea.id}" class="explore-card-link text-decoration-none">
+            <a href="/ideas/${idea.id}" class="explore-card-link text-decoration-none">
               <div class="idea-card card-iih explore-idea-card h-100">
                 <div class="card-body-iih">
                   <div class="d-flex justify-content-between align-items-start gap-2 mb-2">
