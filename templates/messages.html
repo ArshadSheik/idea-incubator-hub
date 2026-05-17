@@ -170,6 +170,8 @@
 
             <form method="post" action="{{ url_for('main.profile_toggle_follow', username=selected_user.username) }}">
               <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="hidden" name="next" value="{{ url_for('messages.inbox', username=selected_user.username) }}">
+
               <button type="submit" class="btn btn-brand">
                 <i class="bi bi-person-plus"></i> Follow {{ selected_user.display_name }}
               </button>
